@@ -6,7 +6,7 @@ import re
 
 # Define folder paths
 input_folder = 'PS'
-output_folder = 'docs'  # For GitHub Pages
+output_folder = 'docs'
 html_subfolder = os.path.join(output_folder, 'HTML')
 photos_folder = 'Photos'
 
@@ -17,45 +17,36 @@ csv_file = os.path.join(output_folder, 'output.csv')
 for folder in [input_folder, output_folder, html_subfolder, photos_folder]:
     if not os.path.exists(folder):
         os.makedirs(folder)
-        if folder == input_folder:
-            print(f"Created '{input_folder}'. Please add 'result.json' and rerun the script.")
-            exit()
-        elif folder == photos_folder:
-            print(f"Created '{photos_folder}'. Add group photos as needed.")
-        else:
-            print(f"Created '{folder}'.")
+        print(f"Created directory: {folder}")
+    else:
+        print(f"Directory already exists: {folder}")
 
 # Path to result.json
 input_file = os.path.join(input_folder, 'result.json')
 
 # Verify file existence
 if not os.path.exists(input_file):
-    print(f"'result.json' not found in '{input_folder}'. Please add it and rerun the script.")
-    exit()
+    print(f"Error: 'result.json' not found in '{input_folder}'. Exiting.")
+    exit(1)
 
 # Load JSON data
+print(f"Loading {input_file}")
 with open(input_file, 'r', encoding='utf-8') as f:
     data = json.load(f)
 
 # Access chats list
-chats = data.get('get', {}).get('list', [])
+chats = data.get('chats', {}).get('list', [])
+print(f"Found {len(chats)} chats in result.json")
 if not chats:
     print("No chats found in 'result.json'. Please verify the file content.")
-    exit()
+    exit(1)
 
 # Define CSV columns
 csv_columns = [
-    'date',
-    'group name',
-    'total messages',
-    'Datedifference',
-    'count of the hashtag "#FIVE"',
-    'count of the hashtag "#FOUR"',
-    'count of the hashtag "#Three"',
-    'count of the hashtag "#SceneType"',
-    'score',
-    'rank',
-    'total titles'
+    'date', 'group name', 'total messages', 'Datedifference',
+    'count of the hashtag "#FIVE"', 'count of the hashtag "#FOUR"',
+    'count of the hashtag "#Three"', 'count of the hashtag "#SceneType"',
+    'score', 'rank', 'total titles'
 ]
 
 # Load existing CSV data for history
@@ -66,17 +57,14 @@ if os.path.exists(csv_file):
         for row in reader:
             group = row.get('group name', 'Unknown')
             try:
-                rank_str = row.get('rank', '0')
-                rank = int(float(rank_str))
+                rank = int(float(row.get('rank', '0')))
                 if group not in history_data:
                     history_data[group] = []
-                history_data[group].append({
-                    'date': row.get('date', ''),
-                    'rank': rank
-                })
+                history_data[group].append({'date': row.get('date', ''), 'rank': rank})
             except (ValueError, TypeError) as e:
                 print(f"Skipping invalid rank for group '{group}': {row}. Error: {e}")
-                continue
+else:
+    print(f"No existing {csv_file} found")
 
 # Initialize data storage
 all_data = []
@@ -95,16 +83,14 @@ for chat in chats:
     if chat.get('type') == 'private_supergroup':
         group_name = chat.get('name', 'Unknown Group')
         group_id = str(chat['id'])
-        if group_id.startswith('-100'):
-            telegram_group_id = group_id[4:]
-        else:
-            telegram_group_id = group_id
+        telegram_group_id = group_id[4:] if group_id.startswith('-100') else group_id
         messages = chat.get('messages', [])
+        print(f"Processing group: {group_name} (ID: {group_id})")
 
         total_messages = sum(1 for msg in messages if msg.get('type') == 'message')
         max_messages = max(max_messages, total_messages)
 
-        # Case-insensitive hashtag counting
+        # Hashtag counting
         hashtag_counts = {}
         for message in messages:
             if message.get('type') == 'message':
@@ -121,7 +107,7 @@ for chat in chats:
                                     hashtag = hashtag_upper
                                 hashtag_counts[hashtag] = hashtag_counts.get(hashtag, 0) + 1
 
-        # Calculate date_diff before using it
+        # Calculate date_diff
         dates = []
         for message in messages:
             if message.get('type') == 'message':
@@ -138,39 +124,22 @@ for chat in chats:
             today = datetime.now()
             date_diff = (today - newest_date).days
             date_diffs.append(date_diff)
+        print(f"Group {group_name}: Total messages = {total_messages}, Date diff = {date_diff}")
 
-        # Hashtag processing
+        # Hashtag lists
         special_ratings = ['#FIVE', '#FOUR', '#THREE']
         special_scene_types = ['#FM', '#FF', '#FFM', '#FFFM', '#FFFFM', '#FMM', '#FMMM', '#FMMMM', '#FFMM', '#FFFMMM', '#ORGY']
-        ratings_hashtag_list = ''
-        scene_types_hashtag_list = ''
-        other_hashtag_list = ''
-        
-        for hashtag in sorted(hashtag_counts.keys()):
-            count = hashtag_counts[hashtag]
-            if hashtag in special_ratings:
-                ratings_hashtag_list += f'<li class="hashtag-item">{hashtag}: {count}</li>\n'
-            elif hashtag in special_scene_types:
-                scene_types_hashtag_list += f'<li class="hashtag-item">{hashtag}: {count}</li>\n'
-            else:
-                other_hashtag_list += f'<li class="hashtag-item">{hashtag}: {count}</li>\n'
-        
-        if not ratings_hashtag_list:
-            ratings_hashtag_list = '<li>No rating hashtags (#FIVE, #FOUR, #Three) found</li>'
-        if not scene_types_hashtag_list:
-            scene_types_hashtag_list = '<li>No scene type hashtags found</li>'
-        if not other_hashtag_list:
-            other_hashtag_list = '<li>No other hashtags found</li>'
+        ratings_hashtag_list = ''.join(f'<li class="hashtag-item">{h}: {hashtag_counts[h]}</li>\n' for h in sorted(hashtag_counts) if h in special_ratings) or '<li>No rating hashtags (#FIVE, #FOUR, #Three) found</li>'
+        scene_types_hashtag_list = ''.join(f'<li class="hashtag-item">{h}: {hashtag_counts[h]}</li>\n' for h in sorted(hashtag_counts) if h in special_scene_types) or '<li>No scene type hashtags found</li>'
+        other_hashtag_list = ''.join(f'<li class="hashtag-item">{h}: {hashtag_counts[h]}</li>\n' for h in sorted(hashtag_counts) if h not in special_ratings and h not in special_scene_types) or '<li>No other hashtags found</li>'
 
         scene_type_count = sum(hashtag_counts.get(h, 0) for h in special_scene_types)
         date_diff_text = f'{date_diff} days' if date_diff is not None else 'N/A'
 
         # Titles
         titles = []
-        topic_created_count = 0
         for message in messages:
             if message.get('action') == 'topic_created':
-                topic_created_count += 1
                 title = message.get('title', '')
                 message_id = message.get('id')
                 date_str = message.get('date', '')
@@ -182,64 +151,28 @@ for chat in chats:
                         continue
         titles.sort(key=lambda x: x['title'])
         titles_count = len(titles)
-        titles_table = f"""
-            <p>Total Titles: {titles_count}</p>
-            <table class="titles-table" id="titlesTable">
-                <thead><tr><th onclick="sortTitlesTable(0)">Items</th><th onclick="sortTitlesTable(1)">Date</th></tr></thead>
-                <tbody id="titlesTableBody">
-        """
-        for title_data in titles:
-            title = title_data['title']
-            message_id = title_data['message_id']
-            date = title_data['date']
-            link = f'https://t.me/c/{telegram_group_id}/{message_id}'
-            titles_table += f'<tr><td><a href="{link}" target="_blank">{title}</a></td><td>{date}</td></tr>'
-        titles_table += '</tbody></table>' if titles else f'<p>No titles found (Total: {titles_count})</p>'
+        titles_table = f"<p>Total Titles: {titles_count}</p><table class='titles-table' id='titlesTable'><thead><tr><th onclick='sortTitlesTable(0)'>Items</th><th onclick='sortTitlesTable(1)'>Date</th></tr></thead><tbody id='titlesTableBody'>"
+        for t in titles:
+            titles_table += f"<tr><td><a href='https://t.me/c/{telegram_group_id}/{t['message_id']}' target='_blank'>{t['title']}</a></td><td>{t['date']}</td></tr>"
+        titles_table += f"</tbody></table>" if titles else f"<p>No titles found (Total: {titles_count})</p>"
 
-        # Photos and slideshow
+        # Photos
         photo_extensions = ['.jpg', '.jpeg', '.png', '.gif']
-        photo_paths = []
-        group_subfolder = os.path.join(photos_folder, group_name)
-        if os.path.exists(group_subfolder):
-            for file_name in os.listdir(group_subfolder):
-                if file_name.lower().endswith(tuple(photo_extensions)):
-                    photo_paths.append(f"../../{photos_folder}/{group_name}/{file_name}")
-        if not photo_paths:
-            photo_paths = ['https://via.placeholder.com/1920x800']
-
-        slideshow_content = '<div class="container">\n'
-        for i, photo_path in enumerate(photo_paths, 1):
-            slideshow_content += f"""
-                <div class="mySlides">
-                    <div class="numbertext">{i} / {len(photo_paths)}</div>
-                    <img src="{photo_path}" style="width:100%; height:100%;">
-                </div>
-            """
-        slideshow_content += """
+        photo_paths = [f"../../{photos_folder}/{group_name}/{f}" for f in os.listdir(group_subfolder) if f.lower().endswith(tuple(photo_extensions))] if os.path.exists(group_subfolder := os.path.join(photos_folder, group_name)) else ['https://via.placeholder.com/1920x800']
+        slideshow_content = '<div class="container">\n' + ''.join(f'<div class="mySlides"><div class="numbertext">{i} / {len(photo_paths)}</div><img src="{p}" style="width:100%; height:100%;"></div>' for i, p in enumerate(photo_paths, 1)) + """
             <a class="prev" onclick="plusSlides(-1)">❮</a>
             <a class="next" onclick="plusSlides(1)">❯</a>
             <div class="caption-container"><p id="caption"></p></div>
             <div class="row">
-        """
-        for i, photo_path in enumerate(photo_paths, 1):
-            slideshow_content += f"""
-                <div class="column">
-                    <img class="demo cursor" src="{photo_path}" style="width:100%" onclick="currentSlide({i})" alt="{group_name} Photo {i}">
-                </div>
-            """
-        slideshow_content += '</div></div>'
+        """ + ''.join(f'<div class="column"><img class="demo cursor" src="{p}" style="width:100%" onclick="currentSlide({i})" alt="{group_name} Photo {i}"></div>' for i, p in enumerate(photo_paths, 1)) + '</div></div>'
 
-        photo_file_name = None
-        for ext in photo_extensions:
-            photo_file = f"{group_name}{ext}"
-            full_path = os.path.join(photos_folder, photo_file)
-            if os.path.exists(full_path):
-                photo_file_name = photo_file
-                break
+        photo_file_name = next((f"{group_name}{ext}" for ext in photo_extensions if os.path.exists(os.path.join(photos_folder, f"{group_name}{ext}"))), None)
 
+        # Rank history
         rank_history = history_data.get(group_name, [])
         rank_history_json = json.dumps([{'date': entry['date'], 'rank': entry['rank']} for entry in rank_history])
 
+        # HTML content
         html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -314,7 +247,6 @@ for chat in chats:
             captionText.innerHTML = dots[slideIndex-1].alt;
         }}
         let autoSlide = setInterval(() => plusSlides(1), 3000);
-
         document.addEventListener('DOMContentLoaded', function() {{
             const ctx = document.getElementById('rankChart').getContext('2d');
             const historyData = {rank_history_json};
@@ -391,9 +323,10 @@ sorted_data = sorted(all_data, key=lambda x: x['score'], reverse=True)
 for i, entry in enumerate(sorted_data, 1):
     entry['rank'] = i
     html_content_with_rank = entry['html_content'].replace('RANK_PLACEHOLDER', str(i))
-    with open(os.path.join(html_subfolder, entry['html_file']), 'w', encoding='utf-8') as f:
+    html_path = os.path.join(html_subfolder, entry['html_file'])
+    with open(html_path, 'w', encoding='utf-8') as f:
         f.write(html_content_with_rank)
-    print(f"Group: {entry['group name']}, Rank assigned: {i}, HTML file: {entry['html_file']}")
+    print(f"Wrote HTML file: {html_path}")
 
 # Write CSV
 csv_data = [{k: (int(v) if k == 'rank' else v) for k, v in entry.items() if k in csv_columns} for entry in sorted_data]
@@ -401,36 +334,19 @@ with open(csv_file, 'w', newline='', encoding='utf-8') as f:
     writer = csv.DictWriter(f, fieldnames=csv_columns)
     writer.writeheader()
     writer.writerows(csv_data)
+print(f"Wrote CSV file: {csv_file}")
 
 # Generate ranking HTML
 total_groups = len(sorted_data)
 table_rows = ''
 for entry in sorted_data:
     group_name = entry['group name']
-    photo_rel_path = entry['photo_rel_path']
-    photo_src = photo_rel_path if photo_rel_path else 'https://via.placeholder.com/300'
+    photo_src = entry['photo_rel_path'] if entry['photo_rel_path'] else 'https://via.placeholder.com/300'
     html_link = f"HTML/{entry['html_file']}"
-    print(f"Group: {group_name}, Photo Source for Ranking: {photo_src}")
-
     table_rows += f"""
         <tr>
             <td>{entry['rank']}</td>
-            <td>
-                <div class="flip-card">
-                    <div class="flip-card-inner">
-                        <div class="flip-card-front">
-                            <a href="{html_link}" target="_blank">
-                                <img src="{photo_src}" alt="{group_name}" style="width:300px;height:300px;object-fit:cover;">
-                            </a>
-                        </div>
-                        <div class="flip-card-back">
-                            <a href="{html_link}" target="_blank" style="color: white; text-decoration: none;">
-                                <h1>{group_name}</h1>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </td>
+            <td><div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><a href="{html_link}" target="_blank"><img src="{photo_src}" alt="{group_name}" style="width:300px;height:300px;object-fit:cover;"></a></div><div class="flip-card-back"><a href="{html_link}" target="_blank" style="color: white; text-decoration: none;"><h1>{group_name}</h1></a></div></div></div></td>
             <td><a href="{html_link}" target="_blank">{group_name}</a></td>
             <td>{entry['total titles']}</td>
             <td>{entry['count of the hashtag "#FIVE"']}</td>
@@ -514,5 +430,6 @@ ranking_html_content = f"""<!DOCTYPE html>
 ranking_html_file = os.path.join(output_folder, 'index.html')
 with open(ranking_html_file, 'w', encoding='utf-8') as f:
     f.write(ranking_html_content)
+print(f"Wrote ranking HTML file: {ranking_html_file}")
 
-print(f"Processed {len(chats)} chats. Output files generated in '{output_folder}': 'index.html', 'output.csv', and HTML files in 'HTML' subfolder.")
+print(f"Processed {len(chats)} chats. Output files generated in '{output_folder}'")
