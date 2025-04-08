@@ -1,6 +1,7 @@
 import json
 import csv
 import os
+import shutil
 from datetime import datetime
 import re
 
@@ -9,6 +10,7 @@ input_folder = 'PS'
 output_folder = 'docs'
 html_subfolder = os.path.join(output_folder, 'HTML')
 photos_folder = 'Photos'
+docs_photos_folder = os.path.join(output_folder, 'Photos')  # Photos will be copied here
 
 # Define CSV output path
 csv_file = os.path.join(output_folder, 'output.csv')
@@ -20,6 +22,16 @@ for folder in [input_folder, output_folder, html_subfolder, photos_folder]:
         print(f"Created directory: {folder}")
     else:
         print(f"Directory already exists: {folder}")
+
+# Copy Photos/ to docs/Photos/ if it exists
+if os.path.exists(photos_folder):
+    if os.path.exists(docs_photos_folder):
+        shutil.rmtree(docs_photos_folder)  # Clean existing folder to avoid stale files
+    shutil.copytree(photos_folder, docs_photos_folder)
+    print(f"Copied {photos_folder}/ to {docs_photos_folder}/")
+else:
+    os.makedirs(docs_photos_folder)
+    print(f"Created empty {docs_photos_folder}/ (no photos found in {photos_folder}/)")
 
 # Path to result.json
 input_file = os.path.join(input_folder, 'result.json')
@@ -156,9 +168,19 @@ for chat in chats:
             titles_table += f"<tr><td><a href='https://t.me/c/{telegram_group_id}/{t['message_id']}' target='_blank'>{t['title']}</a></td><td>{t['date']}</td></tr>"
         titles_table += f"</tbody></table>" if titles else f"<p>No titles found (Total: {titles_count})</p>"
 
-        # Photos
+        # Photos (using docs/Photos/)
         photo_extensions = ['.jpg', '.jpeg', '.png', '.gif']
-        photo_paths = [f"../../{photos_folder}/{group_name}/{f}" for f in os.listdir(group_subfolder) if f.lower().endswith(tuple(photo_extensions))] if os.path.exists(group_subfolder := os.path.join(photos_folder, group_name)) else ['https://via.placeholder.com/1920x800']
+        group_subfolder = os.path.join(docs_photos_folder, group_name)
+        photo_paths = []
+        if os.path.exists(group_subfolder):
+            photo_paths = [f"../Photos/{group_name}/{f}" for f in os.listdir(group_subfolder) if f.lower().endswith(tuple(photo_extensions))]
+            print(f"Group {group_name}: Found {len(photo_paths)} photos in {group_subfolder}: {photo_paths}")
+        else:
+            print(f"Group {group_name}: No subfolder found at {group_subfolder}")
+        if not photo_paths:
+            photo_paths = ['https://via.placeholder.com/1920x800']
+            print(f"Group {group_name}: Using placeholder for slideshow")
+
         slideshow_content = '<div class="container">\n' + ''.join(f'<div class="mySlides"><div class="numbertext">{i} / {len(photo_paths)}</div><img src="{p}" style="width:100%; height:100%;"></div>' for i, p in enumerate(photo_paths, 1)) + """
             <a class="prev" onclick="plusSlides(-1)">❮</a>
             <a class="next" onclick="plusSlides(1)">❯</a>
@@ -166,7 +188,11 @@ for chat in chats:
             <div class="row">
         """ + ''.join(f'<div class="column"><img class="demo cursor" src="{p}" style="width:100%" onclick="currentSlide({i})" alt="{group_name} Photo {i}"></div>' for i, p in enumerate(photo_paths, 1)) + '</div></div>'
 
-        photo_file_name = next((f"{group_name}{ext}" for ext in photo_extensions if os.path.exists(os.path.join(photos_folder, f"{group_name}{ext}"))), None)
+        photo_file_name = next((f"{group_name}{ext}" for ext in photo_extensions if os.path.exists(os.path.join(docs_photos_folder, f"{group_name}{ext}"))), None)
+        if photo_file_name:
+            print(f"Group {group_name}: Found single photo at {docs_photos_folder}/{photo_file_name}")
+        else:
+            print(f"Group {group_name}: No single photo found in {docs_photos_folder}/")
 
         # Rank history
         rank_history = history_data.get(group_name, [])
@@ -297,7 +323,7 @@ for chat in chats:
             'total titles': titles_count,
             'html_file': html_file,
             'html_content': html_content,
-            'photo_rel_path': f"../{photos_folder}/{photo_file_name}" if photo_file_name else None
+            'photo_rel_path': f"Photos/{photo_file_name}" if photo_file_name else None  # Updated path
         })
 
 # Calculate scores
