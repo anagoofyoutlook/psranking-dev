@@ -10,8 +10,26 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout main branch
         uses: actions/checkout@v3
+        with:
+          ref: main
+
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v3
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Copy existing history.csv
+        run: |
+          if [ -f gh-pages/history.csv ]; then
+            mkdir -p docs
+            cp gh-pages/history.csv docs/history.csv
+            echo "Copied history.csv from gh-pages"
+          else
+            echo "No existing history.csv found in gh-pages"
+          fi
 
       - name: Set up Python
         uses: actions/setup-python@v4

@@ -11,7 +11,7 @@ output_folder = 'docs'
 html_subfolder = os.path.join(output_folder, 'HTML')
 photos_folder = 'Photos'
 docs_photos_folder = os.path.join(output_folder, 'Photos')
-history_csv_file = os.path.join(output_folder, 'history.csv')  # New history file
+history_csv_file = os.path.join(output_folder, 'history.csv')
 
 # Define CSV output path
 csv_file = os.path.join(output_folder, 'output.csv')
@@ -198,12 +198,11 @@ for chat in chats:
         else:
             print(f"Group {group_name}: No single photo found in {docs_photos_folder}/")
 
-        # Rank history for this group
+        # Initialize history for this group if not present
         if group_name not in history_data:
             history_data[group_name] = []
-        # Will append current rank after sorting
 
-        # HTML content with fixed titles table sorting
+        # HTML content
         html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -362,8 +361,10 @@ for entry in all_data:
 sorted_data = sorted(all_data, key=lambda x: x['score'], reverse=True)
 for i, entry in enumerate(sorted_data, 1):
     entry['rank'] = i
-    # Append current rank to history_data
-    history_data[entry['group name']].append({'date': current_date, 'rank': i})
+    # Append current rank to history_data only if it's a new date
+    current_entry = {'date': current_date, 'rank': i}
+    if not any(e['date'] == current_date for e in history_data[entry['group name']]):
+        history_data[entry['group name']].append(current_entry)
     html_content_with_rank = entry['html_content'].replace('RANK_PLACEHOLDER', str(i))
     html_path = os.path.join(html_subfolder, entry['html_file'])
     with open(html_path, 'w', encoding='utf-8') as f:
@@ -378,16 +379,25 @@ with open(csv_file, 'w', newline='', encoding='utf-8') as f:
     writer.writerows(csv_data)
 print(f"Wrote CSV file: {csv_file}")
 
-# Write cumulative history to history.csv
-history_rows = []
-for group, entries in history_data.items():
-    for entry in entries:
-        history_rows.append({'date': entry['date'], 'group name': group, 'rank': entry['rank']})
-with open(history_csv_file, 'w', newline='', encoding='utf-8') as f:
-    writer = csv.DictWriter(f, fieldnames=history_columns)
-    writer.writeheader()
-    writer.writerows(history_rows)
-print(f"Wrote history CSV file: {history_csv_file}")
+# Append new history entries to history.csv
+new_history_rows = []
+for entry in sorted_data:
+    # Only append if this date isn't already in history for this group
+    group = entry['group name']
+    if not any(h['date'] == current_date for h in history_data[group]):
+        new_history_rows.append({'date': current_date, 'group name': group, 'rank': entry['rank']})
+
+if new_history_rows:
+    # If history.csv doesn't exist, write header first
+    write_header = not os.path.exists(history_csv_file)
+    with open(history_csv_file, 'a', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=history_columns)
+        if write_header:
+            writer.writeheader()
+        writer.writerows(new_history_rows)
+    print(f"Appended {len(new_history_rows)} new entries to {history_csv_file}")
+else:
+    print(f"No new history entries to append to {history_csv_file}")
 
 # Generate ranking HTML
 total_groups = len(sorted_data)
