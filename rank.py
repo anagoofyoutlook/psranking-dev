@@ -203,7 +203,7 @@ for chat in chats:
         if group_name not in history_data:
             history_data[group_name] = []
 
-        # HTML content
+        # HTML content with updated Chart.js y-axis
         html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -288,7 +288,18 @@ for chat in chats:
             new Chart(ctx, {{
                 type: 'line',
                 data: {{ labels: dates, datasets: [{{ label: 'Rank Over Time', data: ranks, borderColor: '#003366', backgroundColor: 'rgba(0, 51, 102, 0.2)', fill: true, tension: 0.4 }}] }},
-                options: {{ scales: {{ y: {{ beginAtZero: true, reverse: true, title: {{ display: true, text: 'Rank' }}, ticks: {{ stepSize: 1 }} }}, x: {{ title: {{ display: true, text: 'Date' }} }} }}, plugins: {{ legend: {{ display: true }} }} }}
+                options: {{ 
+                    scales: {{ 
+                        y: {{ 
+                            beginAtZero: true, 
+                            title: {{ display: true, text: 'Rank' }}, 
+                            ticks: {{ stepSize: 1 }}, 
+                            suggestedMax: {len(chats) + 1} // Adjust max to number of groups + 1
+                        }}, 
+                        x: {{ title: {{ display: true, text: 'Date' }} }} 
+                    }}, 
+                    plugins: {{ legend: {{ display: true }} }} 
+                }}
             }});
         }});
 
@@ -362,7 +373,6 @@ for entry in all_data:
 sorted_data = sorted(all_data, key=lambda x: x['score'], reverse=True)
 for i, entry in enumerate(sorted_data, 1):
     entry['rank'] = i
-    # Always append current rank to history_data
     history_data[entry['group name']].append({'date': current_date, 'rank': i})
     html_content_with_rank = entry['html_content'].replace('RANK_PLACEHOLDER', str(i))
     html_path = os.path.join(html_subfolder, entry['html_file'])
