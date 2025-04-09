@@ -10,7 +10,8 @@ input_folder = 'PS'
 output_folder = 'docs'
 html_subfolder = os.path.join(output_folder, 'HTML')
 photos_folder = 'Photos'
-docs_photos_folder = os.path.join(output_folder, 'Photos')  # Photos will be copied here
+docs_photos_folder = os.path.join(output_folder, 'Photos')
+history_csv_file = os.path.join(output_folder, 'history.csv')  # New history file
 
 # Define CSV output path
 csv_file = os.path.join(output_folder, 'output.csv')
@@ -23,10 +24,10 @@ for folder in [input_folder, output_folder, html_subfolder, photos_folder]:
     else:
         print(f"Directory already exists: {folder}")
 
-# Copy Photos/ to docs/Photos/ if it exists
+# Copy Photos/ to docs/Photos/
 if os.path.exists(photos_folder):
     if os.path.exists(docs_photos_folder):
-        shutil.rmtree(docs_photos_folder)  # Clean existing folder to avoid stale files
+        shutil.rmtree(docs_photos_folder)
     shutil.copytree(photos_folder, docs_photos_folder)
     print(f"Copied {photos_folder}/ to {docs_photos_folder}/")
 else:
@@ -61,10 +62,13 @@ csv_columns = [
     'score', 'rank', 'total titles'
 ]
 
-# Load existing CSV data for history
+# Define history CSV columns
+history_columns = ['date', 'group name', 'rank']
+
+# Load existing history data
 history_data = {}
-if os.path.exists(csv_file):
-    with open(csv_file, 'r', encoding='utf-8') as f:
+if os.path.exists(history_csv_file):
+    with open(history_csv_file, 'r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
             group = row.get('group name', 'Unknown')
@@ -76,7 +80,7 @@ if os.path.exists(csv_file):
             except (ValueError, TypeError) as e:
                 print(f"Skipping invalid rank for group '{group}': {row}. Error: {e}")
 else:
-    print(f"No existing {csv_file} found")
+    print(f"No existing {history_csv_file} found")
 
 # Initialize data storage
 all_data = []
@@ -194,11 +198,12 @@ for chat in chats:
         else:
             print(f"Group {group_name}: No single photo found in {docs_photos_folder}/")
 
-        # Rank history
-        rank_history = history_data.get(group_name, [])
-        rank_history_json = json.dumps([{'date': entry['date'], 'rank': entry['rank']} for entry in rank_history])
+        # Rank history for this group
+        if group_name not in history_data:
+            history_data[group_name] = []
+        # Will append current rank after sorting
 
-        # HTML content
+        # HTML content with fixed titles table sorting
         html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -273,9 +278,11 @@ for chat in chats:
             captionText.innerHTML = dots[slideIndex-1].alt;
         }}
         let autoSlide = setInterval(() => plusSlides(1), 3000);
+
+        // Chart.js for rank history
         document.addEventListener('DOMContentLoaded', function() {{
             const ctx = document.getElementById('rankChart').getContext('2d');
-            const historyData = {rank_history_json};
+            const historyData = {json.dumps(history_data.get(group_name, []))};
             const dates = historyData.map(entry => entry.date);
             const ranks = historyData.map(entry => entry.rank);
             new Chart(ctx, {{
@@ -283,23 +290,30 @@ for chat in chats:
                 data: {{ labels: dates, datasets: [{{ label: 'Rank Over Time', data: ranks, borderColor: '#003366', backgroundColor: 'rgba(0, 51, 102, 0.2)', fill: true, tension: 0.4 }}] }},
                 options: {{ scales: {{ y: {{ beginAtZero: true, reverse: true, title: {{ display: true, text: 'Rank' }}, ticks: {{ stepSize: 1 }} }}, x: {{ title: {{ display: true, text: 'Date' }} }} }}, plugins: {{ legend: {{ display: true }} }} }}
             }});
-            let titlesSortDirections = [0, 0];
-            function sortTitlesTable(columnIndex) {{
-                const tbody = document.getElementById('titlesTableBody');
-                const rows = Array.from(tbody.getElementsByTagName('tr'));
-                const isNumeric = [false, false];
-                const direction = titlesSortDirections[columnIndex] === 1 ? -1 : 1;
-                rows.sort((a, b) => {{
-                    let aValue = a.cells[columnIndex].innerText;
-                    let bValue = b.cells[columnIndex].innerText;
-                    if (columnIndex === 1) {{ aValue = new Date(aValue); bValue = new Date(bValue); return direction * (aValue - bValue); }}
-                    else {{ return direction * aValue.localeCompare(bValue); }}
-                }});
-                while (tbody.firstChild) {{ tbody.removeChild(tbody.firstChild); }}
-                rows.forEach(row => tbody.appendChild(row));
-                titlesSortDirections = titlesSortDirections.map((d, i) => (i === columnIndex ? direction : 0));
-            }}
         }});
+
+        // Titles table sorting
+        let titlesSortDirections = [0, 0]; // 0: unsorted, 1: ascending, -1: descending
+        function sortTitlesTable(columnIndex) {{
+            const tbody = document.getElementById('titlesTableBody');
+            const rows = Array.from(tbody.getElementsByTagName('tr'));
+            const direction = titlesSortDirections[columnIndex] === 1 ? -1 : 1;
+            rows.sort((a, b) => {{
+                let aValue = a.cells[columnIndex].innerText;
+                let bValue = b.cells[columnIndex].innerText;
+                if (columnIndex === 1) {{ // Date column
+                    aValue = new Date(aValue);
+                    bValue = new Date(bValue);
+                    return direction * (aValue - bValue);
+                }} else {{ // Items column
+                    return direction * aValue.localeCompare(bValue);
+                }}
+            }});
+            while (tbody.firstChild) {{ tbody.removeChild(tbody.firstChild); }}
+            rows.forEach(row => tbody.appendChild(row));
+            titlesSortDirections[columnIndex] = direction;
+            titlesSortDirections[(columnIndex + 1) % 2] = 0; // Reset other column
+        }}
     </script>
 </body>
 </html>
@@ -316,14 +330,14 @@ for chat in chats:
             'Datedifference': date_diff if date_diff is not None else 'N/A',
             'count of the hashtag "#FIVE"': hashtag_counts.get('#FIVE', 0),
             'count of the hashtag "#FOUR"': hashtag_counts.get('#FOUR', 0),
-            'count of the hashtag "#Three"': hashtag_counts.get('#Three', 0),
+            'count of the hashtag "#Three"': hashtag_counts.get('#THREE', 0),
             'count of the hashtag "#SceneType"': scene_type_count,
             'score': 0,
             'rank': 0,
             'total titles': titles_count,
             'html_file': html_file,
             'html_content': html_content,
-            'photo_rel_path': f"Photos/{photo_file_name}" if photo_file_name else None  # Updated path
+            'photo_rel_path': f"Photos/{photo_file_name}" if photo_file_name else None
         })
 
 # Calculate scores
@@ -348,19 +362,32 @@ for entry in all_data:
 sorted_data = sorted(all_data, key=lambda x: x['score'], reverse=True)
 for i, entry in enumerate(sorted_data, 1):
     entry['rank'] = i
+    # Append current rank to history_data
+    history_data[entry['group name']].append({'date': current_date, 'rank': i})
     html_content_with_rank = entry['html_content'].replace('RANK_PLACEHOLDER', str(i))
     html_path = os.path.join(html_subfolder, entry['html_file'])
     with open(html_path, 'w', encoding='utf-8') as f:
         f.write(html_content_with_rank)
     print(f"Wrote HTML file: {html_path}")
 
-# Write CSV
+# Write current run to output.csv (overwritten each run)
 csv_data = [{k: (int(v) if k == 'rank' else v) for k, v in entry.items() if k in csv_columns} for entry in sorted_data]
 with open(csv_file, 'w', newline='', encoding='utf-8') as f:
     writer = csv.DictWriter(f, fieldnames=csv_columns)
     writer.writeheader()
     writer.writerows(csv_data)
 print(f"Wrote CSV file: {csv_file}")
+
+# Write cumulative history to history.csv
+history_rows = []
+for group, entries in history_data.items():
+    for entry in entries:
+        history_rows.append({'date': entry['date'], 'group name': group, 'rank': entry['rank']})
+with open(history_csv_file, 'w', newline='', encoding='utf-8') as f:
+    writer = csv.DictWriter(f, fieldnames=history_columns)
+    writer.writeheader()
+    writer.writerows(history_rows)
+print(f"Wrote history CSV file: {history_csv_file}")
 
 # Generate ranking HTML
 total_groups = len(sorted_data)
@@ -445,7 +472,8 @@ ranking_html_content = f"""<!DOCTYPE html>
             }});
             while (tbody.firstChild) {{ tbody.removeChild(tbody.firstChild); }}
             rows.forEach(row => tbody.appendChild(row));
-            sortDirections = sortDirections.map((d, i) => (i === columnIndex ? direction : 0));
+            sortDirections[columnIndex] = direction;
+            sortDirections = sortDirections.map((d, i) => (i === columnIndex ? d : 0));
         }}
     </script>
 </body>
