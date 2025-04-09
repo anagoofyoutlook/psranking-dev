@@ -79,6 +79,7 @@ if os.path.exists(history_csv_file):
                 history_data[group].append({'date': row.get('date', ''), 'rank': rank})
             except (ValueError, TypeError) as e:
                 print(f"Skipping invalid rank for group '{group}': {row}. Error: {e}")
+    print(f"Loaded {sum(len(v) for v in history_data.values())} history entries from {history_csv_file}")
 else:
     print(f"No existing {history_csv_file} found")
 
@@ -361,10 +362,8 @@ for entry in all_data:
 sorted_data = sorted(all_data, key=lambda x: x['score'], reverse=True)
 for i, entry in enumerate(sorted_data, 1):
     entry['rank'] = i
-    # Append current rank to history_data only if it's a new date
-    current_entry = {'date': current_date, 'rank': i}
-    if not any(e['date'] == current_date for e in history_data[entry['group name']]):
-        history_data[entry['group name']].append(current_entry)
+    # Always append current rank to history_data
+    history_data[entry['group name']].append({'date': current_date, 'rank': i})
     html_content_with_rank = entry['html_content'].replace('RANK_PLACEHOLDER', str(i))
     html_path = os.path.join(html_subfolder, entry['html_file'])
     with open(html_path, 'w', encoding='utf-8') as f:
@@ -380,15 +379,8 @@ with open(csv_file, 'w', newline='', encoding='utf-8') as f:
 print(f"Wrote CSV file: {csv_file}")
 
 # Append new history entries to history.csv
-new_history_rows = []
-for entry in sorted_data:
-    # Only append if this date isn't already in history for this group
-    group = entry['group name']
-    if not any(h['date'] == current_date for h in history_data[group]):
-        new_history_rows.append({'date': current_date, 'group name': group, 'rank': entry['rank']})
-
+new_history_rows = [{'date': current_date, 'group name': entry['group name'], 'rank': entry['rank']} for entry in sorted_data]
 if new_history_rows:
-    # If history.csv doesn't exist, write header first
     write_header = not os.path.exists(history_csv_file)
     with open(history_csv_file, 'a', newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=history_columns)
