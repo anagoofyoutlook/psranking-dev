@@ -174,7 +174,7 @@ for chat in chats:
         titles_table += f"</tbody></table>" if titles else f"<p>No titles found (Total: {titles_count})</p>"
 
         # Photos (using docs/Photos/)
-        photo_extensions = ['.jpg', '.jpeg', '.png', '.gif']
+        photo_extensions = ['.jpg', '.jpeg', '.png', '.gif','.webp']
         group_subfolder = os.path.join(docs_photos_folder, group_name)
         photo_paths = []
         if os.path.exists(group_subfolder):
