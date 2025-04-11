@@ -4,6 +4,7 @@ import os
 import shutil
 from datetime import datetime
 import re
+import zipfile
 
 # Define folder paths
 input_folder = 'PS'
@@ -34,18 +35,53 @@ else:
     os.makedirs(docs_photos_folder)
     print(f"Created empty {docs_photos_folder}/ (no photos found in {photos_folder}/)")
 
-# Path to result.json
-input_file = os.path.join(input_folder, 'result.json')
+# Path to result.zip
+zip_file = os.path.join(input_folder, 'result.zip')
+temp_json_file = os.path.join(input_folder, 'result.json')  # Temporary extraction path
 
-# Verify file existence
-if not os.path.exists(input_file):
-    print(f"Error: 'result.json' not found in '{input_folder}'. Exiting.")
+# Verify ZIP file existence and extract result.json
+if not os.path.exists(zip_file):
+    print(f"Error: 'result.zip' not found in '{input_folder}'. Exiting.")
+    exit(1)
+
+print(f"Extracting {zip_file}")
+try:
+    with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+        # Look for result.json in the ZIP
+        json_found = False
+        for file_info in zip_ref.infolist():
+            if file_info.filename.endswith('result.json'):
+                zip_ref.extract(file_info, input_folder)
+                # If the JSON is in a subfolder in the ZIP, move it to temp_json_file
+                extracted_path = os.path.join(input_folder, file_info.filename)
+                if extracted_path != temp_json_file:
+                    shutil.move(extracted_path, temp_json_file)
+                json_found = True
+                print(f"Extracted 'result.json' to {temp_json_file}")
+                break
+        if not json_found:
+            print(f"Error: 'result.json' not found in '{zip_file}'. Exiting.")
+            exit(1)
+except zipfile.BadZipFile:
+    print(f"Error: '{zip_file}' is not a valid ZIP file. Exiting.")
+    exit(1)
+
+# Verify extracted file existence
+if not os.path.exists(temp_json_file):
+    print(f"Error: Failed to extract 'result.json' from '{zip_file}'. Exiting.")
     exit(1)
 
 # Load JSON data
-print(f"Loading {input_file}")
-with open(input_file, 'r', encoding='utf-8') as f:
+print(f"Loading {temp_json_file}")
+with open(temp_json_file, 'r', encoding='utf-8') as f:
     data = json.load(f)
+
+# Clean up the temporary JSON file (optional)
+try:
+    os.remove(temp_json_file)
+    print(f"Cleaned up temporary file: {temp_json_file}")
+except OSError as e:
+    print(f"Warning: Could not remove {temp_json_file}: {e}")
 
 # Access chats list
 chats = data.get('chats', {}).get('list', [])
@@ -174,7 +210,7 @@ for chat in chats:
         titles_table += f"</tbody></table>" if titles else f"<p>No titles found (Total: {titles_count})</p>"
 
         # Photos (using docs/Photos/)
-        photo_extensions = ['.jpg', '.jpeg', '.png', '.gif','.webp']
+        photo_extensions = ['.jpg', '.jpeg', '.png', '.gif']
         group_subfolder = os.path.join(docs_photos_folder, group_name)
         photo_paths = []
         if os.path.exists(group_subfolder):
@@ -294,7 +330,7 @@ for chat in chats:
                             beginAtZero: true, 
                             title: {{ display: true, text: 'Rank' }}, 
                             ticks: {{ stepSize: 1 }}, 
-                            suggestedMax: {len(chats) + 1} // Adjust max to number of groups + 1
+                            suggestedMax: {len(chats) + 1} 
                         }}, 
                         x: {{ title: {{ display: true, text: 'Date' }} }} 
                     }}, 
