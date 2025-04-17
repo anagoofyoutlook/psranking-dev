@@ -5,6 +5,7 @@ import shutil
 from datetime import datetime
 import re
 import zipfile
+import random
 
 # Define folder paths
 input_folder = 'PS'
@@ -76,7 +77,7 @@ print(f"Loading {temp_json_file}")
 with open(temp_json_file, 'r', encoding='utf-8') as f:
     data = json.load(f)
 
-# Clean up the temporary JSON file (optional)
+# Clean up the temporary JSON file
 try:
     os.remove(temp_json_file)
     print(f"Cleaned up temporary file: {temp_json_file}")
@@ -204,20 +205,33 @@ for chat in chats:
                         continue
         titles.sort(key=lambda x: x['title'])
         titles_count = len(titles)
-        titles_table = f"<p>Total Titles: {titles_count}</p><table class='titles-table' id='titlesTable'><thead><tr><th onclick='sortTitlesTable(0)'>Items</th><th onclick='sortTitlesTable(1)'>Date</th></tr></thead><tbody id='titlesTableBody'>"
-        for t in titles:
-            titles_table += f"<tr><td><a href='https://t.me/c/{telegram_group_id}/{t['message_id']}' target='_blank'>{t['title']}</a></td><td>{t['date']}</td></tr>"
-        titles_table += f"</tbody></table>" if titles else f"<p>No titles found (Total: {titles_count})</p>"
 
-        # Photos (using docs/Photos/)
+        # Select a random thumbnail from Photos/<group_name>
         photo_extensions = ['.jpg', '.jpeg', '.png', '.gif']
         group_subfolder = os.path.join(docs_photos_folder, group_name)
+        thumbnail_path = 'https://via.placeholder.com/50'  # Default placeholder
+        if os.path.exists(group_subfolder):
+            photos = [f for f in os.listdir(group_subfolder) if f.lower().endswith(tuple(photo_extensions))]
+            if photos:
+                random_photo = random.choice(photos)
+                thumbnail_path = f"../Photos/{group_name}/{random_photo}"
+                print(f"Group {group_name}: Selected random thumbnail {thumbnail_path}")
+            else:
+                print(f"Group {group_name}: No photos found in {group_subfolder}, using placeholder")
+        else:
+            print(f"Group {group_name}: No subfolder found at {group_subfolder}, using placeholder")
+
+        # Titles table with thumbnail column
+        titles_table = f"<p>Total Titles: {titles_count}</p><table class='titles-table' id='titlesTable'><thead><tr><th onclick='sortTitlesTable(0)'>Thumbnail</th><th onclick='sortTitlesTable(1)'>Items</th><th onclick='sortTitlesTable(2)'>Date</th></tr></thead><tbody id='titlesTableBody'>"
+        for t in titles:
+            titles_table += f"<tr><td><img src='{thumbnail_path}' alt='Thumbnail' style='width:50px;height:50px;object-fit:cover;'></td><td><a href='https://t.me/c/{telegram_group_id}/{t['message_id']}' target='_blank'>{t['title']}</a></td><td>{t['date']}</td></tr>"
+        titles_table += f"</tbody></table>" if titles else f"<p>No titles found (Total: {titles_count})</p>"
+
+        # Photos for slideshow
         photo_paths = []
         if os.path.exists(group_subfolder):
             photo_paths = [f"../Photos/{group_name}/{f}" for f in os.listdir(group_subfolder) if f.lower().endswith(tuple(photo_extensions))]
             print(f"Group {group_name}: Found {len(photo_paths)} photos in {group_subfolder}: {photo_paths}")
-        else:
-            print(f"Group {group_name}: No subfolder found at {group_subfolder}")
         if not photo_paths:
             photo_paths = ['https://via.placeholder.com/1920x800']
             print(f"Group {group_name}: Using placeholder for slideshow")
@@ -239,7 +253,7 @@ for chat in chats:
         if group_name not in history_data:
             history_data[group_name] = []
 
-        # HTML content with updated Chart.js y-axis
+        # HTML content with updated titles table
         html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -260,14 +274,14 @@ for chat in chats:
         .chart-container {{ max-width: 400px; width: 100%; }}
         canvas {{ width: 100% !important; height: auto !important; }}
         .titles-table {{ width: 80%; margin: 20px auto; border-collapse: collapse; background-color: #cce6ff; }}
-        .titles-table th, .titles-table td {{ padding: 10px; border: 1px solid #99ccff; text-align: left; }}
+        .titles-table th, .titles-table td {{ padding: 10px; border: 1px solid #99ccff; text-align: left; vertical-align: middle; }}
         .titles-table th {{ background-color: #99ccff; color: #003366; cursor: pointer; }}
         .titles-table th:hover {{ background-color: #b3d9ff; }}
         a {{ color: #003366; text-decoration: none; }}
         a:hover {{ text-decoration: underline; }}
         .container {{ position: relative; width: 1920px; height: 800px; margin: auto; }}
         .mySlides {{ display: none; width: 100%; height: 100%; }}
-        img {{ vertical-align: middle; width: 100%; height: 100%; object-fit: cover; }}
+        img {{ vertical-align: middle; object-fit: cover; }}
         .cursor {{ cursor: pointer; }}
         .prev, .next {{ cursor: pointer; position: absolute; top: 40%; width: auto; padding: 16px; margin-top: -50px; color: white; font-weight: bold; font-size: 20px; border-radius: 0 3px 3px 0; user-select: none; -webkit-user-select: none; }}
         .next {{ right: 0; border-radius: 3px 0 0 3px; }}
@@ -340,26 +354,27 @@ for chat in chats:
         }});
 
         // Titles table sorting
-        let titlesSortDirections = [0, 0]; // 0: unsorted, 1: ascending, -1: descending
+        let titlesSortDirections = [0, 0, 0]; // 0: unsorted, 1: ascending, -1: descending
         function sortTitlesTable(columnIndex) {{
             const tbody = document.getElementById('titlesTableBody');
             const rows = Array.from(tbody.getElementsByTagName('tr'));
             const direction = titlesSortDirections[columnIndex] === 1 ? -1 : 1;
             rows.sort((a, b) => {{
-                let aValue = a.cells[columnIndex].innerText;
-                let bValue = b.cells[columnIndex].innerText;
-                if (columnIndex === 1) {{ // Date column
+                let aValue = columnIndex === 0 ? '' : a.cells[columnIndex].innerText;
+                let bValue = columnIndex === 0 ? '' : b.cells[columnIndex].innerText;
+                if (columnIndex === 2) {{ // Date column
                     aValue = new Date(aValue);
                     bValue = new Date(bValue);
                     return direction * (aValue - bValue);
-                }} else {{ // Items column
+                }} else if (columnIndex === 1) {{ // Items column
                     return direction * aValue.localeCompare(bValue);
                 }}
+                return 0; // No sorting for thumbnail column
             }});
             while (tbody.firstChild) {{ tbody.removeChild(tbody.firstChild); }}
             rows.forEach(row => tbody.appendChild(row));
             titlesSortDirections[columnIndex] = direction;
-            titlesSortDirections[(columnIndex + 1) % 2] = 0; // Reset other column
+            titlesSortDirections = titlesSortDirections.map((d, i) => (i === columnIndex ? d : 0));
         }}
     </script>
 </body>
