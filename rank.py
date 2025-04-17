@@ -6,6 +6,7 @@ from datetime import datetime
 import re
 import zipfile
 import random
+import difflib
 
 # Define folder paths
 input_folder = 'PS'
@@ -132,6 +133,19 @@ def sanitize_filename(name):
     name = re.sub(r'\s+', '_', name)
     return name.lower()
 
+# Function to find the best matching subfolder
+def find_best_match_folder(title, subfolders):
+    title_lower = title.lower()
+    best_match = None
+    highest_score = 0.0
+    for folder in subfolders:
+        folder_lower = folder.lower()
+        score = difflib.SequenceMatcher(None, title_lower, folder_lower).ratio()
+        if score > highest_score and title_lower in folder_lower or folder_lower in title_lower:
+            highest_score = score
+            best_match = folder
+    return best_match
+
 # Process each chat
 for chat in chats:
     if chat.get('type') == 'private_supergroup':
@@ -194,6 +208,7 @@ for chat in chats:
         titles = []
         photo_extensions = ['.jpg', '.jpeg', '.png', '.gif']
         group_subfolder = os.path.join(docs_photos_folder, group_name)
+        subfolders = [f for f in os.listdir(group_subfolder) if os.path.isdir(os.path.join(group_subfolder, f))] if os.path.exists(group_subfolder) else []
         for message in messages:
             if message.get('action') == 'topic_created':
                 title = message.get('title', '')
@@ -202,19 +217,23 @@ for chat in chats:
                 if title.strip() and message_id and date_str:
                     try:
                         date = datetime.fromisoformat(date_str).strftime('%Y-%m-%d')
-                        # Find thumbnail in Photos/<group_name>/<title_name>
+                        # Find best matching subfolder for the title
                         thumbnail_path = 'https://via.placeholder.com/100'  # Default placeholder
-                        title_subfolder = os.path.join(group_subfolder, title)
-                        if os.path.exists(title_subfolder):
-                            photos = [f for f in os.listdir(title_subfolder) if f.lower().endswith(tuple(photo_extensions))]
-                            if photos:
-                                random_photo = random.choice(photos)
-                                thumbnail_path = f"../Photos/{group_name}/{title}/{random_photo}"
-                                print(f"Group {group_name}, Title '{title}': Selected thumbnail {thumbnail_path}")
+                        if subfolders:
+                            best_match = find_best_match_folder(title, subfolders)
+                            if best_match:
+                                title_subfolder = os.path.join(group_subfolder, best_match)
+                                photos = [f for f in os.listdir(title_subfolder) if f.lower().endswith(tuple(photo_extensions))]
+                                if photos:
+                                    random_photo = random.choice(photos)
+                                    thumbnail_path = f"../Photos/{group_name}/{best_match}/{random_photo}"
+                                    print(f"Group {group_name}, Title '{title}': Matched subfolder '{best_match}', selected thumbnail {thumbnail_path}")
+                                else:
+                                    print(f"Group {group_name}, Title '{title}': No photos in matched subfolder '{best_match}', using placeholder")
                             else:
-                                print(f"Group {group_name}, Title '{title}': No photos in {title_subfolder}, using placeholder")
+                                print(f"Group {group_name}, Title '{title}': No matching subfolder found, using placeholder")
                         else:
-                            print(f"Group {group_name}, Title '{title}': No subfolder {title_subfolder}, using placeholder")
+                            print(f"Group {group_name}, Title '{title}': No subfolders in {group_subfolder}, using placeholder")
                         titles.append({'title': title, 'message_id': message_id, 'date': date, 'thumbnail': thumbnail_path})
                     except ValueError:
                         continue
