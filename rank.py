@@ -228,7 +228,7 @@ for chat in chats:
                     try:
                         date = datetime.fromisoformat(date_str).strftime('%Y-%m-%d')
                         # Find best matching media file in thumbs/
-                        media_path = 'https://via.placeholder.com/300x600'  # Default placeholder
+                        media_path = 'https://via.placeholder.com/600x300'  # Default placeholder
                         is_gif = False
                         if media_files:
                             best_match = find_best_match_media(title, media_files)
@@ -260,8 +260,8 @@ for chat in chats:
         titles_grid = f"<p>Total Titles: {titles_count}</p><div class='titles-grid' id='titlesGrid'>"
         for t in titles:
             media_element = (
-                f"<img src='{t['media_path']}' alt='Media for {t['title']}' style='width:300px;height:600px;object-fit:cover;'>"
-                if t['is_gif'] or t['media_path'] == 'https://via.placeholder.com/300x600'
+                f"<img src='{t['media_path']}' alt='Media for {t['title']}' style='width:600px;height:300px;object-fit:cover;'>"
+                if t['is_gif'] or t['media_path'] == 'https://via.placeholder.com/600x300'
                 else f"<video src='{t['media_path']}' style='width:600px;height:300px;object-fit:cover;' autoplay loop muted playsinline></video>"
             )
             titles_grid += f"""
@@ -272,6 +272,12 @@ for chat in chats:
                 </div>
             """
         titles_grid += f"</div>" if titles else f"<p>No titles found (Total: {titles_count})</p>"
+
+        # Titles table (without thumbnails)
+        titles_table = f"<table class='titles-table' id='titlesTable'><thead><tr><th onclick='sortTitlesTable(0)'>Items</th><th onclick='sortTitlesTable(1)'>Date</th></tr></thead><tbody id='titlesTableBody'>"
+        for t in titles:
+            titles_table += f"<tr><td><a href='https://t.me/c/{telegram_group_id}/{t['message_id']}' target='_blank'>{t['title']}</a></td><td>{t['date']}</td></tr>"
+        titles_table += f"</tbody></table>" if titles else f"<p>No titles found</p>"
 
         # Photos for slideshow
         photo_paths = []
@@ -299,7 +305,7 @@ for chat in chats:
         if group_name not in history_data:
             history_data[group_name] = []
 
-        # HTML content with updated titles grid
+        # HTML content with grid and table
         html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -321,10 +327,10 @@ for chat in chats:
         canvas {{ width: 100% !important; height: auto !important; }}
         .titles-grid {{ 
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr)); 
             gap: 20px; 
             margin: 20px auto; 
-            max-width: 1200px; 
+            max-width: 1800px; 
         }}
         .grid-item {{ 
             background-color: #cce6ff; 
@@ -350,6 +356,26 @@ for chat in chats:
             margin: 0; 
             font-size: 14px; 
             color: #666; 
+        }}
+        .titles-table {{ 
+            width: 80%; 
+            margin: 20px auto; 
+            border-collapse: collapse; 
+            background-color: #cce6ff; 
+        }}
+        .titles-table th, .titles-table td {{ 
+            padding: 10px; 
+            border: 1px solid #99ccff; 
+            text-align: left; 
+            vertical-align: middle; 
+        }}
+        .titles-table th {{ 
+            background-color: #99ccff; 
+            color: #003366; 
+            cursor: pointer; 
+        }}
+        .titles-table th:hover {{ 
+            background-color: #b3d9ff; 
         }}
         a {{ color: #003366; text-decoration: none; }}
         a:hover {{ text-decoration: underline; }}
@@ -382,7 +408,11 @@ for chat in chats:
         <h2>Scene Type Hashtag Counts</h2><ul class="hashtags">{scene_types_hashtag_list}</ul>
         <h2>Other Hashtag Counts</h2><ul class="hashtags">{other_hashtag_list}</ul>
     </div>
-    <div class="info"><h2>Titles</h2>{titles_grid}</div>
+    <div class="info">
+        <h2>Titles</h2>
+        {titles_grid}
+        {titles_table}
+    </div>
     <script>
         let slideIndex = 1;
         showSlides(slideIndex);
@@ -426,6 +456,30 @@ for chat in chats:
                 }}
             }});
         }});
+
+        // Titles table sorting
+        let titlesSortDirections = [0, 0]; // 0: unsorted, 1: ascending, -1: descending
+        function sortTitlesTable(columnIndex) {{
+            const tbody = document.getElementById('titlesTableBody');
+            const rows = Array.from(tbody.getElementsByTagName('tr'));
+            const direction = titlesSortDirections[columnIndex] === 1 ? -1 : 1;
+            rows.sort((a, b) => {{
+                let aValue = a.cells[columnIndex].innerText;
+                let bValue = b.cells[columnIndex].innerText;
+                if (columnIndex === 1) {{ // Date column
+                    aValue = new Date(aValue);
+                    bValue = new Date(bValue);
+                    return direction * (aValue - bValue);
+                }} else if (columnIndex === 0) {{ // Items column
+                    return direction * aValue.localeCompare(bValue);
+                }}
+                return 0;
+            }});
+            while (tbody.firstChild) {{ tbody.removeChild(tbody.firstChild); }}
+            rows.forEach(row => tbody.appendChild(row));
+            titlesSortDirections[columnIndex] = direction;
+            titlesSortDirections = titlesSortDirections.map((d, i) => (i === columnIndex ? d : 0));
+        }}
     </script>
 </body>
 </html>
