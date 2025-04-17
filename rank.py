@@ -6,7 +6,6 @@ from datetime import datetime
 import re
 import zipfile
 import random
-import difflib
 
 # Define folder paths
 input_folder = 'PS'
@@ -133,24 +132,16 @@ def sanitize_filename(name):
     name = re.sub(r'\s+', '_', name)
     return name.lower()
 
-# Function to find the best matching media file
-def find_best_match_media(title, media_files):
-    title_lower = title.lower()
-    best_match = None
-    highest_score = 0.5  # Minimum similarity threshold
-    print(f"Matching title '{title}' against media files: {media_files}")
+# Function to find media file by serial number
+def find_serial_match_media(serial_number, media_files):
+    print(f"Searching for serial number '{serial_number}' in media files: {media_files}")
     for media in media_files:
-        media_lower = os.path.splitext(media)[0].lower()  # Remove extension
-        score = difflib.SequenceMatcher(None, title_lower, media_lower).ratio()
-        print(f"  Comparing '{title_lower}' to '{media_lower}': score = {score:.2f}")
-        if score > highest_score or title_lower in media_lower or media_lower in title_lower:
-            highest_score = score
-            best_match = media
-    if best_match:
-        print(f"  Best match for '{title}': '{best_match}' (score: {highest_score:.2f})")
-    else:
-        print(f"  No match for '{title}' above threshold")
-    return best_match
+        media_base = os.path.splitext(media)[0]  # Remove extension
+        if media_base == str(serial_number):
+            print(f"Match found for serial number '{serial_number}': '{media}'")
+            return media
+    print(f"No match found for serial number '{serial_number}'")
+    return None
 
 # Process each chat
 for chat in chats:
@@ -210,7 +201,7 @@ for chat in chats:
         scene_type_count = sum(hashtag_counts.get(h, 0) for h in special_scene_types)
         date_diff_text = f'{date_diff} days' if date_diff is not None else 'N/A'
 
-        # Titles
+        # Titles with serial numbers
         titles = []
         media_extensions = ['.mp4', '.webm', '.ogg', '.gif']
         group_subfolder = os.path.join(docs_photos_folder, group_name)
@@ -219,6 +210,7 @@ for chat in chats:
         # Fallback photos in group folder
         fallback_photos = [f for f in os.listdir(group_subfolder) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')) and os.path.isfile(os.path.join(group_subfolder, f))] if os.path.exists(group_subfolder) else []
         print(f"Group {group_name}: Thumbs media files = {media_files}, Fallback photos = {fallback_photos}")
+        serial_number = 1
         for message in messages:
             if message.get('action') == 'topic_created':
                 title = message.get('title', '')
@@ -227,17 +219,17 @@ for chat in chats:
                 if title.strip() and message_id and date_str:
                     try:
                         date = datetime.fromisoformat(date_str).strftime('%Y-%m-%d')
-                        # Find best matching media file in thumbs/
+                        # Find media file by serial number in thumbs/
                         media_path = 'https://via.placeholder.com/600x300'  # Default placeholder
                         is_gif = False
                         if media_files:
-                            best_match = find_best_match_media(title, media_files)
-                            if best_match:
-                                media_path = f"../Photos/{group_name}/thumbs/{best_match}"
-                                is_gif = best_match.lower().endswith('.gif')
-                                print(f"Group {group_name}, Title '{title}': Matched media '{best_match}', selected path {media_path}")
+                            serial_match = find_serial_match_media(serial_number, media_files)
+                            if serial_match:
+                                media_path = f"../Photos/{group_name}/thumbs/{serial_match}"
+                                is_gif = serial_match.lower().endswith('.gif')
+                                print(f"Group {group_name}, Title '{title}' (S.No {serial_number}): Matched media '{serial_match}', selected path {media_path}")
                         else:
-                            print(f"Group {group_name}, Title '{title}': No media files in {thumbs_subfolder}")
+                            print(f"Group {group_name}, Title '{title}' (S.No {serial_number}): No media files in {thumbs_subfolder}")
                             # Fallback to group folder photos
                             if fallback_photos:
                                 random_photo = random.choice(fallback_photos)
@@ -249,8 +241,10 @@ for chat in chats:
                             'message_id': message_id,
                             'date': date,
                             'media_path': media_path,
-                            'is_gif': is_gif
+                            'is_gif': is_gif,
+                            'serial_number': serial_number
                         })
+                        serial_number += 1
                     except ValueError:
                         continue
         titles.sort(key=lambda x: x['title'])
@@ -268,15 +262,15 @@ for chat in chats:
                 <div class='grid-item'>
                     {media_element}
                     <p class='title'><a href='https://t.me/c/{telegram_group_id}/{t['message_id']}' target='_blank'>{t['title']}</a></p>
-                    <p class='date'>{t['date']}</p>
+                    <p class='date'>S.No: {t['serial_number']} | {t['date']}</p>
                 </div>
             """
         titles_grid += f"</div>" if titles else f"<p>No titles found (Total: {titles_count})</p>"
 
         # Titles table with serial number
         titles_table = f"<table class='titles-table' id='titlesTable'><thead><tr><th>S.No</th><th onclick='sortTitlesTable(1)'>Items</th><th onclick='sortTitlesTable(2)'>Date</th></tr></thead><tbody id='titlesTableBody'>"
-        for i, t in enumerate(titles, 1):
-            titles_table += f"<tr><td>{i}</td><td><a href='https://t.me/c/{telegram_group_id}/{t['message_id']}' target='_blank'>{t['title']}</a></td><td>{t['date']}</td></tr>"
+        for t in titles:
+            titles_table += f"<tr><td>{t['serial_number']}</td><td><a href='https://t.me/c/{telegram_group_id}/{t['message_id']}' target='_blank'>{t['title']}</a></td><td>{t['date']}</td></tr>"
         titles_table += f"</tbody></table>" if titles else f"<p>No titles found</p>"
 
         # Photos for slideshow
@@ -571,10 +565,6 @@ for chat in chats:
                     return direction * aValue.localeCompare(bValue);
                 }}
                 return 0;
-            }});
-            // Reassign serial numbers after sorting
-            rows.forEach((row, index) => {{
-                row.cells[0].innerText = index + 1;
             }});
             while (tbody.firstChild) {{ 
                 tbody.removeChild(tbody.firstChild); 
