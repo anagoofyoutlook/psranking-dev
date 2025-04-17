@@ -192,6 +192,8 @@ for chat in chats:
 
         # Titles
         titles = []
+        photo_extensions = ['.jpg', '.jpeg', '.png', '.gif']
+        group_subfolder = os.path.join(docs_photos_folder, group_name)
         for message in messages:
             if message.get('action') == 'topic_created':
                 title = message.get('title', '')
@@ -200,37 +202,35 @@ for chat in chats:
                 if title.strip() and message_id and date_str:
                     try:
                         date = datetime.fromisoformat(date_str).strftime('%Y-%m-%d')
-                        titles.append({'title': title, 'message_id': message_id, 'date': date})
+                        # Find thumbnail in Photos/<group_name>/<title_name>
+                        thumbnail_path = 'https://via.placeholder.com/100'  # Default placeholder
+                        title_subfolder = os.path.join(group_subfolder, title)
+                        if os.path.exists(title_subfolder):
+                            photos = [f for f in os.listdir(title_subfolder) if f.lower().endswith(tuple(photo_extensions))]
+                            if photos:
+                                random_photo = random.choice(photos)
+                                thumbnail_path = f"../Photos/{group_name}/{title}/{random_photo}"
+                                print(f"Group {group_name}, Title '{title}': Selected thumbnail {thumbnail_path}")
+                            else:
+                                print(f"Group {group_name}, Title '{title}': No photos in {title_subfolder}, using placeholder")
+                        else:
+                            print(f"Group {group_name}, Title '{title}': No subfolder {title_subfolder}, using placeholder")
+                        titles.append({'title': title, 'message_id': message_id, 'date': date, 'thumbnail': thumbnail_path})
                     except ValueError:
                         continue
         titles.sort(key=lambda x: x['title'])
         titles_count = len(titles)
 
-        # Select a random thumbnail from Photos/<group_name>
-        photo_extensions = ['.jpg', '.jpeg', '.png', '.gif']
-        group_subfolder = os.path.join(docs_photos_folder, group_name)
-        thumbnail_path = 'https://via.placeholder.com/50'  # Default placeholder
-        if os.path.exists(group_subfolder):
-            photos = [f for f in os.listdir(group_subfolder) if f.lower().endswith(tuple(photo_extensions))]
-            if photos:
-                random_photo = random.choice(photos)
-                thumbnail_path = f"../Photos/{group_name}/{random_photo}"
-                print(f"Group {group_name}: Selected random thumbnail {thumbnail_path}")
-            else:
-                print(f"Group {group_name}: No photos found in {group_subfolder}, using placeholder")
-        else:
-            print(f"Group {group_name}: No subfolder found at {group_subfolder}, using placeholder")
-
         # Titles table with thumbnail column
         titles_table = f"<p>Total Titles: {titles_count}</p><table class='titles-table' id='titlesTable'><thead><tr><th onclick='sortTitlesTable(0)'>Thumbnail</th><th onclick='sortTitlesTable(1)'>Items</th><th onclick='sortTitlesTable(2)'>Date</th></tr></thead><tbody id='titlesTableBody'>"
         for t in titles:
-            titles_table += f"<tr><td><img src='{thumbnail_path}' alt='Thumbnail' style='width:50px;height:50px;object-fit:cover;'></td><td><a href='https://t.me/c/{telegram_group_id}/{t['message_id']}' target='_blank'>{t['title']}</a></td><td>{t['date']}</td></tr>"
+            titles_table += f"<tr><td><img src='{t['thumbnail']}' alt='Thumbnail for {t['title']}' style='width:100px;height:100px;object-fit:cover;'></td><td><a href='https://t.me/c/{telegram_group_id}/{t['message_id']}' target='_blank'>{t['title']}</a></td><td>{t['date']}</td></tr>"
         titles_table += f"</tbody></table>" if titles else f"<p>No titles found (Total: {titles_count})</p>"
 
         # Photos for slideshow
         photo_paths = []
         if os.path.exists(group_subfolder):
-            photo_paths = [f"../Photos/{group_name}/{f}" for f in os.listdir(group_subfolder) if f.lower().endswith(tuple(photo_extensions))]
+            photo_paths = [f"../Photos/{group_name}/{f}" for f in os.listdir(group_subfolder) if f.lower().endswith(tuple(photo_extensions)) and os.path.isfile(os.path.join(group_subfolder, f))]
             print(f"Group {group_name}: Found {len(photo_paths)} photos in {group_subfolder}: {photo_paths}")
         if not photo_paths:
             photo_paths = ['https://via.placeholder.com/1920x800']
