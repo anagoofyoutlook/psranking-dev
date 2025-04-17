@@ -262,7 +262,7 @@ for chat in chats:
             media_element = (
                 f"<img src='{t['media_path']}' alt='Media for {t['title']}' style='width:300px;height:600px;object-fit:cover;'>"
                 if t['is_gif'] or t['media_path'] == 'https://via.placeholder.com/300x600'
-                else f"<video src='{t['media_path']}' style='width:300px;height:600px;object-fit:cover;' autoplay loop muted playsinline></video>"
+                else f"<video src='{t['media_path']}' style='width:600px;height:300px;object-fit:cover;' autoplay loop muted playsinline></video>"
             )
             titles_grid += f"""
                 <div class='grid-item'>
@@ -336,8 +336,8 @@ for chat in chats:
             align-items: center; 
         }}
         .grid-item video, .grid-item img {{ 
-            width: 300px; 
-            height: 600px; 
+            width: 600px; 
+            height: 300px; 
             object-fit: cover; 
             border-radius: 5px; 
         }}
