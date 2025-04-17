@@ -273,10 +273,10 @@ for chat in chats:
             """
         titles_grid += f"</div>" if titles else f"<p>No titles found (Total: {titles_count})</p>"
 
-        # Titles table (without thumbnails)
-        titles_table = f"<table class='titles-table' id='titlesTable'><thead><tr><th onclick='sortTitlesTable(0)'>Items</th><th onclick='sortTitlesTable(1)'>Date</th></tr></thead><tbody id='titlesTableBody'>"
-        for t in titles:
-            titles_table += f"<tr><td><a href='https://t.me/c/{telegram_group_id}/{t['message_id']}' target='_blank'>{t['title']}</a></td><td>{t['date']}</td></tr>"
+        # Titles table (with serial number)
+        titles_table = f"<table class='titles-table' id='titlesTable'><thead><tr><th>S.No</th><th onclick='sortTitlesTable(1)'>Items</th><th onclick='sortTitlesTable(2)'>Date</th></tr></thead><tbody id='titlesTableBody'>"
+        for i, t in enumerate(titles, 1):
+            titles_table += f"<tr><td>{i}</td><td><a href='https://t.me/c/{telegram_group_id}/{t['message_id']}' target='_blank'>{t['title']}</a></td><td>{t['date']}</td></tr>"
         titles_table += f"</tbody></table>" if titles else f"<p>No titles found</p>"
 
         # Photos for slideshow
@@ -305,7 +305,7 @@ for chat in chats:
         if group_name not in history_data:
             history_data[group_name] = []
 
-        # HTML content with grid and table
+        # HTML content with updated grid, table, and slideshow
         html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -327,10 +327,11 @@ for chat in chats:
         canvas {{ width: 100% !important; height: auto !important; }}
         .titles-grid {{ 
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr)); 
+            grid-template-columns: repeat(3, 600px); 
             gap: 20px; 
             margin: 20px auto; 
             max-width: 1800px; 
+            justify-content: center; 
         }}
         .grid-item {{ 
             background-color: #cce6ff; 
@@ -374,25 +375,93 @@ for chat in chats:
             color: #003366; 
             cursor: pointer; 
         }}
-        .titles-table th:hover {{ 
+        .titles-table th:first-child {{ 
+            cursor: default; 
+        }}
+        .titles-table th:not(:first-child):hover {{ 
             background-color: #b3d9ff; 
         }}
         a {{ color: #003366; text-decoration: none; }}
         a:hover {{ text-decoration: underline; }}
-        .container {{ position: relative; width: 1920px; height: 800px; margin: auto; }}
-        .mySlides {{ display: none; width: 100%; height: 100%; }}
-        img {{ vertical-align: middle; object-fit: cover; }}
+        .container {{ 
+            position: relative; 
+            width: 80%; 
+            margin: auto; 
+            height: auto; 
+        }}
+        .mySlides {{ 
+            display: none; 
+            width: 100%; 
+            height: auto; 
+        }}
+        .mySlides img {{ 
+            width: 100%; 
+            height: auto; 
+            object-fit: contain; 
+        }}
         .cursor {{ cursor: pointer; }}
-        .prev, .next {{ cursor: pointer; position: absolute; top: 40%; width: auto; padding: 16px; margin-top: -50px; color: white; font-weight: bold; font-size: 20px; border-radius: 0 3px 3px 0; user-select: none; -webkit-user-select: none; }}
-        .next {{ right: 0; border-radius: 3px 0 0 3px; }}
-        .prev:hover, .next:hover {{ background-color: rgba(0, 0, 0, 0.8); }}
-        .numbertext {{ color: #f2f2f2; font-size: 12px; padding: 8px 12px; position: absolute; top: 0; }}
-        .caption-container {{ text-align: center; background-color: #222; padding: 2px 16px; color: white; }}
-        .row:after {{ content: ""; display: table; clear: both; }}
-        .column {{ float: left; width: {100 / len(photo_paths) if photo_paths else 100}%; }}
-        .demo {{ opacity: 0.6; }}
-        .active, .demo:hover {{ opacity: 1; }}
-        @media only screen and (max-width: 1920px) {{ .container {{ width: 100%; height: auto; }} }}
+        .prev, .next {{ 
+            cursor: pointer; 
+            position: absolute; 
+            top: 50%; 
+            width: auto; 
+            padding: 16px; 
+            margin-top: -22px; 
+            color: white; 
+            font-weight: bold; 
+            font-size: 18px; 
+            border-radius: 0 3px 3px 0; 
+            user-select: none; 
+            -webkit-user-select: none; 
+        }}
+        .next {{ 
+            right: 0; 
+            border-radius: 3px 0 0 3px; 
+        }}
+        .prev:hover, .next:hover {{ 
+            background-color: rgba(0, 0, 0, 0.8); 
+        }}
+        .numbertext {{ 
+            color: #f2f2f2; 
+            font-size: 12px; 
+            padding: 8px 12px; 
+            position: absolute; 
+            top: 0; 
+        }}
+        .caption-container {{ 
+            text-align: center; 
+            background-color: #222; 
+            padding: 2px 16px; 
+            color: white; 
+        }}
+        .row:after {{ 
+            content: ""; 
+            display: table; 
+            clear: both; 
+        }}
+        .column {{ 
+            float: left; 
+            width: {100 / len(photo_paths) if photo_paths else 100}%; 
+        }}
+        .demo {{ 
+            opacity: 0.6; 
+        }}
+        .active, .demo:hover {{ 
+            opacity: 1; 
+        }}
+        @media only screen and (max-width: 1200px) {{ 
+            .container {{ 
+                width: 80%; 
+            }} 
+            .titles-grid {{ 
+                grid-template-columns: repeat(2, 600px); 
+            }} 
+        }}
+        @media only screen and (max-width: 800px) {{ 
+            .titles-grid {{ 
+                grid-template-columns: 600px; 
+            }} 
+        }}
     </style>
 </head>
 <body>
@@ -416,8 +485,16 @@ for chat in chats:
     <script>
         let slideIndex = 1;
         showSlides(slideIndex);
-        function plusSlides(n) {{ clearInterval(autoSlide); showSlides(slideIndex += n); autoSlide = setInterval(() => plusSlides(1), 3000); }}
-        function currentSlide(n) {{ clearInterval(autoSlide); showSlides(slideIndex = n); autoSlide = setInterval(() => plusSlides(1), 3000); }}
+        function plusSlides(n) {{ 
+            clearInterval(autoSlide); 
+            showSlides(slideIndex += n); 
+            autoSlide = setInterval(() => plusSlides(1), 3000); 
+        }}
+        function currentSlide(n) {{ 
+            clearInterval(autoSlide); 
+            showSlides(slideIndex = n); 
+            autoSlide = setInterval(() => plusSlides(1), 3000); 
+        }}
         function showSlides(n) {{
             let i;
             let slides = document.getElementsByClassName("mySlides");
@@ -425,8 +502,12 @@ for chat in chats:
             let captionText = document.getElementById("caption");
             if (n > slides.length) {{ slideIndex = 1 }}
             if (n < 1) {{ slideIndex = slides.length }}
-            for (i = 0; i < slides.length; i++) {{ slides[i].style.display = "none"; }}
-            for (i = 0; i < dots.length; i++) {{ dots[i].className = dots[i].className.replace(" active", ""); }}
+            for (i = 0; i < slides.length; i++) {{ 
+                slides[i].style.display = "none"; 
+            }}
+            for (i = 0; i < dots.length; i++) {{ 
+                dots[i].className = dots[i].className.replace(" active", ""); 
+            }}
             slides[slideIndex-1].style.display = "block";
             dots[slideIndex-1].className += " active";
             captionText.innerHTML = dots[slideIndex-1].alt;
@@ -441,7 +522,17 @@ for chat in chats:
             const ranks = historyData.map(entry => entry.rank);
             new Chart(ctx, {{
                 type: 'line',
-                data: {{ labels: dates, datasets: [{{ label: 'Rank Over Time', data: ranks, borderColor: '#003366', backgroundColor: 'rgba(0, 51, 102, 0.2)', fill: true, tension: 0.4 }}] }},
+                data: {{ 
+                    labels: dates, 
+                    datasets: [{{
+                        label: 'Rank Over Time', 
+                        data: ranks, 
+                        borderColor: '#003366', 
+                        backgroundColor: 'rgba(0, 51, 102, 0.2)', 
+                        fill: true, 
+                        tension: 0.4 
+                    }}]
+                }},
                 options: {{ 
                     scales: {{ 
                         y: {{ 
@@ -450,32 +541,39 @@ for chat in chats:
                             ticks: {{ stepSize: 1 }}, 
                             suggestedMax: {len(chats) + 1} 
                         }}, 
-                        x: {{ title: {{ display: true, text: 'Date' }} }} 
+                        x: {{ 
+                            title: {{ display: true, text: 'Date' }} 
+                        }} 
                     }}, 
-                    plugins: {{ legend: {{ display: true }} }} 
+                    plugins: {{ 
+                        legend: {{ display: true }} 
+                    }} 
                 }}
             }});
         }});
 
         // Titles table sorting
-        let titlesSortDirections = [0, 0]; // 0: unsorted, 1: ascending, -1: descending
+        let titlesSortDirections = [0, 0, 0]; // 0: unsorted, 1: ascending, -1: descending
         function sortTitlesTable(columnIndex) {{
+            if (columnIndex === 0) return; // Skip sorting on S.No
             const tbody = document.getElementById('titlesTableBody');
             const rows = Array.from(tbody.getElementsByTagName('tr'));
             const direction = titlesSortDirections[columnIndex] === 1 ? -1 : 1;
             rows.sort((a, b) => {{
                 let aValue = a.cells[columnIndex].innerText;
                 let bValue = b.cells[columnIndex].innerText;
-                if (columnIndex === 1) {{ // Date column
+                if (columnIndex === 2) {{ // Date column
                     aValue = new Date(aValue);
                     bValue = new Date(bValue);
                     return direction * (aValue - bValue);
-                }} else if (columnIndex === 0) {{ // Items column
+                }} else if (columnIndex === 1) {{ // Items column
                     return direction * aValue.localeCompare(bValue);
                 }}
                 return 0;
             }});
-            while (tbody.firstChild) {{ tbody.removeChild(tbody.firstChild); }}
+            while (tbody.firstChild) {{ 
+                tbody.removeChild(tbody.firstChild); 
+            }}
             rows.forEach(row => tbody.appendChild(row));
             titlesSortDirections[columnIndex] = direction;
             titlesSortDirections = titlesSortDirections.map((d, i) => (i === columnIndex ? d : 0));
@@ -634,10 +732,18 @@ ranking_html_content = f"""<!DOCTYPE html>
             rows.sort((a, b) => {{
                 let aValue = a.cells[columnIndex].innerText;
                 let bValue = b.cells[columnIndex].innerText;
-                if (isNumeric) {{ aValue = parseFloat(aValue) || 0; bValue = parseFloat(bValue) || 0; return direction * (aValue - bValue); }}
-                else {{ return direction * aValue.localeCompare(bValue); }}
+                if (isNumeric) {{ 
+                    aValue = parseFloat(aValue) || 0; 
+                    bValue = parseFloat(bValue) || 0; 
+                    return direction * (aValue - bValue); 
+                }}
+                else {{ 
+                    return direction * aValue.localeCompare(bValue); 
+                }}
             }});
-            while (tbody.firstChild) {{ tbody.removeChild(tbody.firstChild); }}
+            while (tbody.firstChild) {{ 
+                tbody.removeChild(tbody.firstChild); 
+            }}
             rows.forEach(row => tbody.appendChild(row));
             sortDirections[columnIndex] = direction;
             sortDirections = sortDirections.map((d, i) => (i === columnIndex ? d : 0));
