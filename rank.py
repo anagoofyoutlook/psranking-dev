@@ -6,6 +6,7 @@ from datetime import datetime
 import re
 import zipfile
 import random
+import difflib
 
 # Define folder paths
 input_folder = 'PS'
@@ -126,23 +127,30 @@ max_messages = 0
 date_diffs = []
 current_date = datetime.now().strftime('%Y-%m-%d')
 
-# Function to sanitize filenames and titles
+# Function to sanitize filenames
 def sanitize_filename(name):
-    name = re.sub(r'[^\w\s-]', '', name)  # Remove special characters
-    name = re.sub(r'\s+', '_', name)      # Replace spaces with underscores
+    name = re.sub(r'[^\w\s-]', '', name)
+    name = re.sub(r'\s+', '_', name)
     return name.lower()
 
-# Function to find exact matching media file
-def find_exact_match_media(title, media_files):
-    sanitized_title = sanitize_filename(title)
-    print(f"Searching for exact match of sanitized title '{sanitized_title}' in media files: {media_files}")
+# Function to find the best matching media file
+def find_best_match_media(title, media_files):
+    title_lower = title.lower()
+    best_match = None
+    highest_score = 0.5  # Minimum similarity threshold
+    print(f"Matching title '{title}' against media files: {media_files}")
     for media in media_files:
-        media_base = os.path.splitext(media)[0].lower()  # Remove extension
-        if sanitized_title == media_base:
-            print(f"Exact match found for title '{title}': '{media}'")
-            return media
-    print(f"No exact match found for title '{title}'")
-    return None
+        media_lower = os.path.splitext(media)[0].lower()  # Remove extension
+        score = difflib.SequenceMatcher(None, title_lower, media_lower).ratio()
+        print(f"  Comparing '{title_lower}' to '{media_lower}': score = {score:.2f}")
+        if score > highest_score or title_lower in media_lower or media_lower in title_lower:
+            highest_score = score
+            best_match = media
+    if best_match:
+        print(f"  Best match for '{title}': '{best_match}' (score: {highest_score:.2f})")
+    else:
+        print(f"  No match for '{title}' above threshold")
+    return best_match
 
 # Process each chat
 for chat in chats:
@@ -219,15 +227,15 @@ for chat in chats:
                 if title.strip() and message_id and date_str:
                     try:
                         date = datetime.fromisoformat(date_str).strftime('%Y-%m-%d')
-                        # Find exact matching media file in thumbs/
+                        # Find best matching media file in thumbs/
                         media_path = 'https://via.placeholder.com/600x300'  # Default placeholder
                         is_gif = False
                         if media_files:
-                            exact_match = find_exact_match_media(title, media_files)
-                            if exact_match:
-                                media_path = f"../Photos/{group_name}/thumbs/{exact_match}"
-                                is_gif = exact_match.lower().endswith('.gif')
-                                print(f"Group {group_name}, Title '{title}': Exact match media '{exact_match}', selected path {media_path}")
+                            best_match = find_best_match_media(title, media_files)
+                            if best_match:
+                                media_path = f"../Photos/{group_name}/thumbs/{best_match}"
+                                is_gif = best_match.lower().endswith('.gif')
+                                print(f"Group {group_name}, Title '{title}': Matched media '{best_match}', selected path {media_path}")
                         else:
                             print(f"Group {group_name}, Title '{title}': No media files in {thumbs_subfolder}")
                             # Fallback to group folder photos
