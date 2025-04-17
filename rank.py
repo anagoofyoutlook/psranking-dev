@@ -6,7 +6,6 @@ from datetime import datetime
 import re
 import zipfile
 import random
-import difflib
 
 # Define folder paths
 input_folder = 'PS'
@@ -127,30 +126,23 @@ max_messages = 0
 date_diffs = []
 current_date = datetime.now().strftime('%Y-%m-%d')
 
-# Function to sanitize filenames
+# Function to sanitize filenames and titles
 def sanitize_filename(name):
-    name = re.sub(r'[^\w\s-]', '', name)
-    name = re.sub(r'\s+', '_', name)
+    name = re.sub(r'[^\w\s-]', '', name)  # Remove special characters
+    name = re.sub(r'\s+', '_', name)      # Replace spaces with underscores
     return name.lower()
 
-# Function to find the best matching media file
-def find_best_match_media(title, media_files):
-    title_lower = title.lower()
-    best_match = None
-    highest_score = 0.5  # Minimum similarity threshold
-    print(f"Matching title '{title}' against media files: {media_files}")
+# Function to find exact matching media file
+def find_exact_match_media(title, media_files):
+    sanitized_title = sanitize_filename(title)
+    print(f"Searching for exact match of sanitized title '{sanitized_title}' in media files: {media_files}")
     for media in media_files:
-        media_lower = os.path.splitext(media)[0].lower()  # Remove extension
-        score = difflib.SequenceMatcher(None, title_lower, media_lower).ratio()
-        print(f"  Comparing '{title_lower}' to '{media_lower}': score = {score:.2f}")
-        if score > highest_score or title_lower in media_lower or media_lower in title_lower:
-            highest_score = score
-            best_match = media
-    if best_match:
-        print(f"  Best match for '{title}': '{best_match}' (score: {highest_score:.2f})")
-    else:
-        print(f"  No match for '{title}' above threshold")
-    return best_match
+        media_base = os.path.splitext(media)[0].lower()  # Remove extension
+        if sanitized_title == media_base:
+            print(f"Exact match found for title '{title}': '{media}'")
+            return media
+    print(f"No exact match found for title '{title}'")
+    return None
 
 # Process each chat
 for chat in chats:
@@ -227,15 +219,15 @@ for chat in chats:
                 if title.strip() and message_id and date_str:
                     try:
                         date = datetime.fromisoformat(date_str).strftime('%Y-%m-%d')
-                        # Find best matching media file in thumbs/
+                        # Find exact matching media file in thumbs/
                         media_path = 'https://via.placeholder.com/600x300'  # Default placeholder
                         is_gif = False
                         if media_files:
-                            best_match = find_best_match_media(title, media_files)
-                            if best_match:
-                                media_path = f"../Photos/{group_name}/thumbs/{best_match}"
-                                is_gif = best_match.lower().endswith('.gif')
-                                print(f"Group {group_name}, Title '{title}': Matched media '{best_match}', selected path {media_path}")
+                            exact_match = find_exact_match_media(title, media_files)
+                            if exact_match:
+                                media_path = f"../Photos/{group_name}/thumbs/{exact_match}"
+                                is_gif = exact_match.lower().endswith('.gif')
+                                print(f"Group {group_name}, Title '{title}': Exact match media '{exact_match}', selected path {media_path}")
                         else:
                             print(f"Group {group_name}, Title '{title}': No media files in {thumbs_subfolder}")
                             # Fallback to group folder photos
@@ -273,7 +265,7 @@ for chat in chats:
             """
         titles_grid += f"</div>" if titles else f"<p>No titles found (Total: {titles_count})</p>"
 
-        # Titles table (with serial number)
+        # Titles table with serial number
         titles_table = f"<table class='titles-table' id='titlesTable'><thead><tr><th>S.No</th><th onclick='sortTitlesTable(1)'>Items</th><th onclick='sortTitlesTable(2)'>Date</th></tr></thead><tbody id='titlesTableBody'>"
         for i, t in enumerate(titles, 1):
             titles_table += f"<tr><td>{i}</td><td><a href='https://t.me/c/{telegram_group_id}/{t['message_id']}' target='_blank'>{t['title']}</a></td><td>{t['date']}</td></tr>"
@@ -288,7 +280,7 @@ for chat in chats:
             photo_paths = ['https://via.placeholder.com/1920x800']
             print(f"Group {group_name}: Using placeholder for slideshow")
 
-        slideshow_content = '<div class="container">\n' + ''.join(f'<div class="mySlides"><div class="numbertext">{i} / {len(photo_paths)}</div><img src="{p}" style="width:100%; height:100%;"></div>' for i, p in enumerate(photo_paths, 1)) + """
+        slideshow_content = '<div class="container">\n' + ''.join(f'<div class="mySlides"><div class="numbertext">{i} / {len(photo_paths)}</div><img src="{p}" style="width:100%;height:auto;"></div>' for i, p in enumerate(photo_paths, 1)) + """
             <a class="prev" onclick="plusSlides(-1)">❮</a>
             <a class="next" onclick="plusSlides(1)">❯</a>
             <div class="caption-container"><p id="caption"></p></div>
@@ -327,11 +319,10 @@ for chat in chats:
         canvas {{ width: 100% !important; height: auto !important; }}
         .titles-grid {{ 
             display: grid; 
-            grid-template-columns: repeat(3, 600px); 
+            grid-template-columns: repeat(3, 1fr); 
             gap: 20px; 
             margin: 20px auto; 
             max-width: 1800px; 
-            justify-content: center; 
         }}
         .grid-item {{ 
             background-color: #cce6ff; 
@@ -373,10 +364,9 @@ for chat in chats:
         .titles-table th {{ 
             background-color: #99ccff; 
             color: #003366; 
-            cursor: pointer; 
         }}
-        .titles-table th:first-child {{ 
-            cursor: default; 
+        .titles-table th:not(:first-child) {{ 
+            cursor: pointer; 
         }}
         .titles-table th:not(:first-child):hover {{ 
             background-color: #b3d9ff; 
@@ -387,29 +377,29 @@ for chat in chats:
             position: relative; 
             width: 80%; 
             margin: auto; 
-            height: auto; 
+            height: 800px; 
         }}
         .mySlides {{ 
             display: none; 
             width: 100%; 
-            height: auto; 
+            height: 100%; 
         }}
         .mySlides img {{ 
             width: 100%; 
             height: auto; 
-            object-fit: contain; 
+            object-fit: cover; 
         }}
         .cursor {{ cursor: pointer; }}
         .prev, .next {{ 
             cursor: pointer; 
             position: absolute; 
-            top: 50%; 
+            top: 40%; 
             width: auto; 
             padding: 16px; 
-            margin-top: -22px; 
+            margin-top: -50px; 
             color: white; 
             font-weight: bold; 
-            font-size: 18px; 
+            font-size: 20px; 
             border-radius: 0 3px 3px 0; 
             user-select: none; 
             -webkit-user-select: none; 
@@ -449,17 +439,20 @@ for chat in chats:
         .active, .demo:hover {{ 
             opacity: 1; 
         }}
-        @media only screen and (max-width: 1200px) {{ 
-            .container {{ 
-                width: 80%; 
-            }} 
+        @media only screen and (max-width: 1800px) {{ 
             .titles-grid {{ 
-                grid-template-columns: repeat(2, 600px); 
+                grid-template-columns: repeat(2, 1fr); 
             }} 
         }}
-        @media only screen and (max-width: 800px) {{ 
+        @media only screen and (max-width: 1200px) {{ 
             .titles-grid {{ 
-                grid-template-columns: 600px; 
+                grid-template-columns: 1fr; 
+            }} 
+        }}
+        @media only screen and (max-width: 768px) {{ 
+            .container {{ 
+                width: 80%; 
+                height: auto; 
             }} 
         }}
     </style>
@@ -524,14 +517,14 @@ for chat in chats:
                 type: 'line',
                 data: {{ 
                     labels: dates, 
-                    datasets: [{{
+                    datasets: [{{ 
                         label: 'Rank Over Time', 
                         data: ranks, 
                         borderColor: '#003366', 
                         backgroundColor: 'rgba(0, 51, 102, 0.2)', 
                         fill: true, 
                         tension: 0.4 
-                    }}]
+                    }}] 
                 }},
                 options: {{ 
                     scales: {{ 
@@ -555,7 +548,7 @@ for chat in chats:
         // Titles table sorting
         let titlesSortDirections = [0, 0, 0]; // 0: unsorted, 1: ascending, -1: descending
         function sortTitlesTable(columnIndex) {{
-            if (columnIndex === 0) return; // Skip sorting on S.No
+            if (columnIndex === 0) return; // Skip sorting for S.No column
             const tbody = document.getElementById('titlesTableBody');
             const rows = Array.from(tbody.getElementsByTagName('tr'));
             const direction = titlesSortDirections[columnIndex] === 1 ? -1 : 1;
@@ -570,6 +563,10 @@ for chat in chats:
                     return direction * aValue.localeCompare(bValue);
                 }}
                 return 0;
+            }});
+            // Reassign serial numbers after sorting
+            rows.forEach((row, index) => {{
+                row.cells[0].innerText = index + 1;
             }});
             while (tbody.firstChild) {{ 
                 tbody.removeChild(tbody.firstChild); 
