@@ -227,7 +227,7 @@ for chat in chats:
                     try:
                         date = datetime.fromisoformat(date_str).strftime('%Y-%m-%d')
                         # Find best matching subfolder for the title
-                        thumbnail_path = 'https://via.placeholder.com/100'  # Default placeholder
+                        thumbnail_path = 'https://via.placeholder.com/300'  # Default placeholder
                         if subfolders:
                             best_match = find_best_match_folder(title, subfolders)
                             if best_match:
@@ -260,7 +260,7 @@ for chat in chats:
         # Titles table with thumbnail column
         titles_table = f"<p>Total Titles: {titles_count}</p><table class='titles-table' id='titlesTable'><thead><tr><th onclick='sortTitlesTable(0)'>Thumbnail</th><th onclick='sortTitlesTable(1)'>Items</th><th onclick='sortTitlesTable(2)'>Date</th></tr></thead><tbody id='titlesTableBody'>"
         for t in titles:
-            titles_table += f"<tr><td><img src='{t['thumbnail']}' alt='Thumbnail for {t['title']}' style='width:100px;height:100px;object-fit:cover;'></td><td><a href='https://t.me/c/{telegram_group_id}/{t['message_id']}' target='_blank'>{t['title']}</a></td><td>{t['date']}</td></tr>"
+            titles_table += f"<tr><td><img src='{t['thumbnail']}' alt='Thumbnail for {t['title']}' style='width:300px;height:300px;object-fit:cover;'></td><td><a href='https://t.me/c/{telegram_group_id}/{t['message_id']}' target='_blank'>{t['title']}</a></td><td>{t['date']}</td></tr>"
         titles_table += f"</tbody></table>" if titles else f"<p>No titles found (Total: {titles_count})</p>"
 
         # Photos for slideshow
@@ -309,8 +309,8 @@ for chat in chats:
         .rank-number::before {{ content: "0"; animation: countUp 2s ease-out forwards; display: inline-block; min-width: 60px; }}
         .chart-container {{ max-width: 400px; width: 100%; }}
         canvas {{ width: 100% !important; height: auto !important; }}
-        .titles-table {{ width: 80%; margin: 20px auto; border-collapse: collapse; background-color: #cce6ff; }}
-        .titles-table th, .titles-table td {{ padding: 10px; border: 1px solid #99ccff; text-align: left; vertical-align: middle; }}
+        .titles-table {{ width: 90%; margin: 20px auto; border-collapse: collapse; background-color: #cce6ff; }}
+        .titles-table th, .titles-table td {{ padding: 15px; border: 1px solid #99ccff; text-align: left; vertical-align: middle; }}
         .titles-table th {{ background-color: #99ccff; color: #003366; cursor: pointer; }}
         .titles-table th:hover {{ background-color: #b3d9ff; }}
         a {{ color: #003366; text-decoration: none; }}
