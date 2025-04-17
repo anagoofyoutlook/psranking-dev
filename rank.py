@@ -137,13 +137,19 @@ def sanitize_filename(name):
 def find_best_match_folder(title, subfolders):
     title_lower = title.lower()
     best_match = None
-    highest_score = 0.0
+    highest_score = 0.5  # Minimum similarity threshold
+    print(f"Matching title '{title}' against subfolders: {subfolders}")
     for folder in subfolders:
         folder_lower = folder.lower()
         score = difflib.SequenceMatcher(None, title_lower, folder_lower).ratio()
-        if score > highest_score and title_lower in folder_lower or folder_lower in title_lower:
+        print(f"  Comparing '{title_lower}' to '{folder_lower}': score = {score:.2f}")
+        if score > highest_score or title_lower in folder_lower or folder_lower in title_lower:
             highest_score = score
             best_match = folder
+    if best_match:
+        print(f"  Best match for '{title}': '{best_match}' (score: {highest_score:.2f})")
+    else:
+        print(f"  No match for '{title}' above threshold")
     return best_match
 
 # Process each chat
@@ -209,6 +215,9 @@ for chat in chats:
         photo_extensions = ['.jpg', '.jpeg', '.png', '.gif']
         group_subfolder = os.path.join(docs_photos_folder, group_name)
         subfolders = [f for f in os.listdir(group_subfolder) if os.path.isdir(os.path.join(group_subfolder, f))] if os.path.exists(group_subfolder) else []
+        # Fallback photos in group folder
+        fallback_photos = [f for f in os.listdir(group_subfolder) if f.lower().endswith(tuple(photo_extensions)) and os.path.isfile(os.path.join(group_subfolder, f))] if os.path.exists(group_subfolder) else []
+        print(f"Group {group_name}: Subfolders = {subfolders}, Fallback photos = {fallback_photos}")
         for message in messages:
             if message.get('action') == 'topic_created':
                 title = message.get('title', '')
@@ -229,11 +238,19 @@ for chat in chats:
                                     thumbnail_path = f"../Photos/{group_name}/{best_match}/{random_photo}"
                                     print(f"Group {group_name}, Title '{title}': Matched subfolder '{best_match}', selected thumbnail {thumbnail_path}")
                                 else:
-                                    print(f"Group {group_name}, Title '{title}': No photos in matched subfolder '{best_match}', using placeholder")
-                            else:
-                                print(f"Group {group_name}, Title '{title}': No matching subfolder found, using placeholder")
+                                    print(f"Group {group_name}, Title '{title}': No photos in matched subfolder '{best_match}'")
+                                    # Fallback to group folder photos
+                                    if fallback_photos:
+                                        random_photo = random.choice(fallback_photos)
+                                        thumbnail_path = f"../Photos/{group_name}/{random_photo}"
+                                        print(f"  Using fallback photo: {thumbnail_path}")
                         else:
-                            print(f"Group {group_name}, Title '{title}': No subfolders in {group_subfolder}, using placeholder")
+                            print(f"Group {group_name}, Title '{title}': No subfolders in {group_subfolder}")
+                            # Fallback to group folder photos
+                            if fallback_photos:
+                                random_photo = random.choice(fallback_photos)
+                                thumbnail_path = f"../Photos/{group_name}/{random_photo}"
+                                print(f"  Using fallback photo: {thumbnail_path}")
                         titles.append({'title': title, 'message_id': message_id, 'date': date, 'thumbnail': thumbnail_path})
                     except ValueError:
                         continue
