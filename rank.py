@@ -133,19 +133,19 @@ def sanitize_filename(name):
     name = re.sub(r'\s+', '_', name)
     return name.lower()
 
-# Function to find the best matching subfolder
-def find_best_match_folder(title, subfolders):
+# Function to find the best matching media file
+def find_best_match_media(title, media_files):
     title_lower = title.lower()
     best_match = None
     highest_score = 0.5  # Minimum similarity threshold
-    print(f"Matching title '{title}' against subfolders: {subfolders}")
-    for folder in subfolders:
-        folder_lower = folder.lower()
-        score = difflib.SequenceMatcher(None, title_lower, folder_lower).ratio()
-        print(f"  Comparing '{title_lower}' to '{folder_lower}': score = {score:.2f}")
-        if score > highest_score or title_lower in folder_lower or folder_lower in title_lower:
+    print(f"Matching title '{title}' against media files: {media_files}")
+    for media in media_files:
+        media_lower = os.path.splitext(media)[0].lower()  # Remove extension
+        score = difflib.SequenceMatcher(None, title_lower, media_lower).ratio()
+        print(f"  Comparing '{title_lower}' to '{media_lower}': score = {score:.2f}")
+        if score > highest_score or title_lower in media_lower or media_lower in title_lower:
             highest_score = score
-            best_match = folder
+            best_match = media
     if best_match:
         print(f"  Best match for '{title}': '{best_match}' (score: {highest_score:.2f})")
     else:
@@ -212,12 +212,13 @@ for chat in chats:
 
         # Titles
         titles = []
-        photo_extensions = ['.jpg', '.jpeg', '.png', '.gif']
+        media_extensions = ['.mp4', '.webm', '.ogg', '.gif']
         group_subfolder = os.path.join(docs_photos_folder, group_name)
-        subfolders = [f for f in os.listdir(group_subfolder) if os.path.isdir(os.path.join(group_subfolder, f))] if os.path.exists(group_subfolder) else []
+        thumbs_subfolder = os.path.join(group_subfolder, 'thumbs')
+        media_files = [f for f in os.listdir(thumbs_subfolder) if f.lower().endswith(tuple(media_extensions))] if os.path.exists(thumbs_subfolder) else []
         # Fallback photos in group folder
-        fallback_photos = [f for f in os.listdir(group_subfolder) if f.lower().endswith(tuple(photo_extensions)) and os.path.isfile(os.path.join(group_subfolder, f))] if os.path.exists(group_subfolder) else []
-        print(f"Group {group_name}: Subfolders = {subfolders}, Fallback photos = {fallback_photos}")
+        fallback_photos = [f for f in os.listdir(group_subfolder) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')) and os.path.isfile(os.path.join(group_subfolder, f))] if os.path.exists(group_subfolder) else []
+        print(f"Group {group_name}: Thumbs media files = {media_files}, Fallback photos = {fallback_photos}")
         for message in messages:
             if message.get('action') == 'topic_created':
                 title = message.get('title', '')
@@ -226,47 +227,56 @@ for chat in chats:
                 if title.strip() and message_id and date_str:
                     try:
                         date = datetime.fromisoformat(date_str).strftime('%Y-%m-%d')
-                        # Find best matching subfolder for the title
-                        thumbnail_path = 'https://via.placeholder.com/300'  # Default placeholder
-                        if subfolders:
-                            best_match = find_best_match_folder(title, subfolders)
+                        # Find best matching media file in thumbs/
+                        media_path = 'https://via.placeholder.com/300x600'  # Default placeholder
+                        is_gif = False
+                        if media_files:
+                            best_match = find_best_match_media(title, media_files)
                             if best_match:
-                                title_subfolder = os.path.join(group_subfolder, best_match)
-                                photos = [f for f in os.listdir(title_subfolder) if f.lower().endswith(tuple(photo_extensions))]
-                                if photos:
-                                    random_photo = random.choice(photos)
-                                    thumbnail_path = f"../Photos/{group_name}/{best_match}/{random_photo}"
-                                    print(f"Group {group_name}, Title '{title}': Matched subfolder '{best_match}', selected thumbnail {thumbnail_path}")
-                                else:
-                                    print(f"Group {group_name}, Title '{title}': No photos in matched subfolder '{best_match}'")
-                                    # Fallback to group folder photos
-                                    if fallback_photos:
-                                        random_photo = random.choice(fallback_photos)
-                                        thumbnail_path = f"../Photos/{group_name}/{random_photo}"
-                                        print(f"  Using fallback photo: {thumbnail_path}")
+                                media_path = f"../Photos/{group_name}/thumbs/{best_match}"
+                                is_gif = best_match.lower().endswith('.gif')
+                                print(f"Group {group_name}, Title '{title}': Matched media '{best_match}', selected path {media_path}")
                         else:
-                            print(f"Group {group_name}, Title '{title}': No subfolders in {group_subfolder}")
+                            print(f"Group {group_name}, Title '{title}': No media files in {thumbs_subfolder}")
                             # Fallback to group folder photos
                             if fallback_photos:
                                 random_photo = random.choice(fallback_photos)
-                                thumbnail_path = f"../Photos/{group_name}/{random_photo}"
-                                print(f"  Using fallback photo: {thumbnail_path}")
-                        titles.append({'title': title, 'message_id': message_id, 'date': date, 'thumbnail': thumbnail_path})
+                                media_path = f"../Photos/{group_name}/{random_photo}"
+                                is_gif = random_photo.lower().endswith('.gif')
+                                print(f"  Using fallback photo: {media_path}")
+                        titles.append({
+                            'title': title,
+                            'message_id': message_id,
+                            'date': date,
+                            'media_path': media_path,
+                            'is_gif': is_gif
+                        })
                     except ValueError:
                         continue
         titles.sort(key=lambda x: x['title'])
         titles_count = len(titles)
 
-        # Titles table with thumbnail column
-        titles_table = f"<p>Total Titles: {titles_count}</p><table class='titles-table' id='titlesTable'><thead><tr><th onclick='sortTitlesTable(0)'>Thumbnail</th><th onclick='sortTitlesTable(1)'>Items</th><th onclick='sortTitlesTable(2)'>Date</th></tr></thead><tbody id='titlesTableBody'>"
+        # Titles grid
+        titles_grid = f"<p>Total Titles: {titles_count}</p><div class='titles-grid' id='titlesGrid'>"
         for t in titles:
-            titles_table += f"<tr><td><img src='{t['thumbnail']}' alt='Thumbnail for {t['title']}' style='width:300px;height:300px;object-fit:cover;'></td><td><a href='https://t.me/c/{telegram_group_id}/{t['message_id']}' target='_blank'>{t['title']}</a></td><td>{t['date']}</td></tr>"
-        titles_table += f"</tbody></table>" if titles else f"<p>No titles found (Total: {titles_count})</p>"
+            media_element = (
+                f"<img src='{t['media_path']}' alt='Media for {t['title']}' style='width:300px;height:600px;object-fit:cover;'>"
+                if t['is_gif'] or t['media_path'] == 'https://via.placeholder.com/300x600'
+                else f"<video src='{t['media_path']}' style='width:300px;height:600px;object-fit:cover;' autoplay loop muted playsinline></video>"
+            )
+            titles_grid += f"""
+                <div class='grid-item'>
+                    {media_element}
+                    <p class='title'><a href='https://t.me/c/{telegram_group_id}/{t['message_id']}' target='_blank'>{t['title']}</a></p>
+                    <p class='date'>{t['date']}</p>
+                </div>
+            """
+        titles_grid += f"</div>" if titles else f"<p>No titles found (Total: {titles_count})</p>"
 
         # Photos for slideshow
         photo_paths = []
         if os.path.exists(group_subfolder):
-            photo_paths = [f"../Photos/{group_name}/{f}" for f in os.listdir(group_subfolder) if f.lower().endswith(tuple(photo_extensions)) and os.path.isfile(os.path.join(group_subfolder, f))]
+            photo_paths = [f"../Photos/{group_name}/{f}" for f in os.listdir(group_subfolder) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')) and os.path.isfile(os.path.join(group_subfolder, f))]
             print(f"Group {group_name}: Found {len(photo_paths)} photos in {group_subfolder}: {photo_paths}")
         if not photo_paths:
             photo_paths = ['https://via.placeholder.com/1920x800']
@@ -279,7 +289,7 @@ for chat in chats:
             <div class="row">
         """ + ''.join(f'<div class="column"><img class="demo cursor" src="{p}" style="width:100%" onclick="currentSlide({i})" alt="{group_name} Photo {i}"></div>' for i, p in enumerate(photo_paths, 1)) + '</div></div>'
 
-        photo_file_name = next((f"{group_name}{ext}" for ext in photo_extensions if os.path.exists(os.path.join(docs_photos_folder, f"{group_name}{ext}"))), None)
+        photo_file_name = next((f"{group_name}{ext}" for ext in ('.jpg', '.jpeg', '.png', '.gif') if os.path.exists(os.path.join(docs_photos_folder, f"{group_name}{ext}"))), None)
         if photo_file_name:
             print(f"Group {group_name}: Found single photo at {docs_photos_folder}/{photo_file_name}")
         else:
@@ -289,7 +299,7 @@ for chat in chats:
         if group_name not in history_data:
             history_data[group_name] = []
 
-        # HTML content with updated titles table
+        # HTML content with updated titles grid
         html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -309,10 +319,38 @@ for chat in chats:
         .rank-number::before {{ content: "0"; animation: countUp 2s ease-out forwards; display: inline-block; min-width: 60px; }}
         .chart-container {{ max-width: 400px; width: 100%; }}
         canvas {{ width: 100% !important; height: auto !important; }}
-        .titles-table {{ width: 90%; margin: 20px auto; border-collapse: collapse; background-color: #cce6ff; }}
-        .titles-table th, .titles-table td {{ padding: 15px; border: 1px solid #99ccff; text-align: left; vertical-align: middle; }}
-        .titles-table th {{ background-color: #99ccff; color: #003366; cursor: pointer; }}
-        .titles-table th:hover {{ background-color: #b3d9ff; }}
+        .titles-grid {{ 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            gap: 20px; 
+            margin: 20px auto; 
+            max-width: 1200px; 
+        }}
+        .grid-item {{ 
+            background-color: #cce6ff; 
+            padding: 10px; 
+            border-radius: 5px; 
+            text-align: center; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }}
+        .grid-item video, .grid-item img {{ 
+            width: 300px; 
+            height: 600px; 
+            object-fit: cover; 
+            border-radius: 5px; 
+        }}
+        .grid-item .title {{ 
+            margin: 10px 0 5px; 
+            font-size: 16px; 
+            font-weight: bold; 
+        }}
+        .grid-item .date {{ 
+            margin: 0; 
+            font-size: 14px; 
+            color: #666; 
+        }}
         a {{ color: #003366; text-decoration: none; }}
         a:hover {{ text-decoration: underline; }}
         .container {{ position: relative; width: 1920px; height: 800px; margin: auto; }}
@@ -344,7 +382,7 @@ for chat in chats:
         <h2>Scene Type Hashtag Counts</h2><ul class="hashtags">{scene_types_hashtag_list}</ul>
         <h2>Other Hashtag Counts</h2><ul class="hashtags">{other_hashtag_list}</ul>
     </div>
-    <div class="info"><h2>Titles</h2>{titles_table}</div>
+    <div class="info"><h2>Titles</h2>{titles_grid}</div>
     <script>
         let slideIndex = 1;
         showSlides(slideIndex);
@@ -388,30 +426,6 @@ for chat in chats:
                 }}
             }});
         }});
-
-        // Titles table sorting
-        let titlesSortDirections = [0, 0, 0]; // 0: unsorted, 1: ascending, -1: descending
-        function sortTitlesTable(columnIndex) {{
-            const tbody = document.getElementById('titlesTableBody');
-            const rows = Array.from(tbody.getElementsByTagName('tr'));
-            const direction = titlesSortDirections[columnIndex] === 1 ? -1 : 1;
-            rows.sort((a, b) => {{
-                let aValue = columnIndex === 0 ? '' : a.cells[columnIndex].innerText;
-                let bValue = columnIndex === 0 ? '' : b.cells[columnIndex].innerText;
-                if (columnIndex === 2) {{ // Date column
-                    aValue = new Date(aValue);
-                    bValue = new Date(bValue);
-                    return direction * (aValue - bValue);
-                }} else if (columnIndex === 1) {{ // Items column
-                    return direction * aValue.localeCompare(bValue);
-                }}
-                return 0; // No sorting for thumbnail column
-            }});
-            while (tbody.firstChild) {{ tbody.removeChild(tbody.firstChild); }}
-            rows.forEach(row => tbody.appendChild(row));
-            titlesSortDirections[columnIndex] = direction;
-            titlesSortDirections = titlesSortDirections.map((d, i) => (i === columnIndex ? d : 0));
-        }}
     </script>
 </body>
 </html>
