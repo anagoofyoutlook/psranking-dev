@@ -299,7 +299,7 @@ for chat in chats:
         if group_name not in history_data:
             history_data[group_name] = []
 
-        # HTML content with name and rank at top, larger h1
+        # HTML content with fixed slideshow size and position
         html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -393,34 +393,39 @@ for chat in chats:
             position: relative; 
             width: 80%; 
             margin: 20px auto; 
-            height: 800px; 
+            height: auto; 
+            max-height: 600px; 
             display: block; 
+            overflow: hidden; 
         }}
         .mySlides {{ 
             display: none; 
             width: 100%; 
-            height: 100%; 
+            height: auto; 
+            aspect-ratio: 16/9; 
         }}
         .mySlides img {{ 
             width: 100%; 
             height: auto; 
-            object-fit: cover; 
+            object-fit: contain; 
         }}
         .cursor {{ cursor: pointer; }}
         .prev, .next {{ 
             cursor: pointer; 
             position: absolute; 
-            top: 40%; 
+            top: 50%; 
+            transform: translateY(-50%); 
             width: auto; 
             padding: 16px; 
-            margin-top: -50px; 
             color: white; 
             font-weight: bold; 
             font-size: 20px; 
             border-radius: 0 3px 3px 0; 
             user-select: none; 
             -webkit-user-select: none; 
+            z-index: 10; 
         }}
+        .prev {{ left: 0; }}
         .next {{ 
             right: 0; 
             border-radius: 3px 0 0 3px; 
@@ -434,6 +439,7 @@ for chat in chats:
             padding: 8px 12px; 
             position: absolute; 
             top: 0; 
+            z-index: 10; 
         }}
         .caption-container {{ 
             text-align: center; 
@@ -441,17 +447,22 @@ for chat in chats:
             padding: 2px 16px; 
             color: white; 
         }}
-        .row:after {{ 
-            content: ""; 
-            display: table; 
-            clear: both; 
+        .row {{ 
+            display: flex; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            margin-top: 10px; 
         }}
         .column {{ 
-            float: left; 
-            width: {100 / len(photo_paths) if photo_paths else 100}%; 
+            flex: 0 0 {100 / len(photo_paths) if photo_paths else 100}%; 
+            max-width: 100px; 
+            padding: 5px; 
         }}
         .demo {{ 
             opacity: 0.6; 
+            width: 100%; 
+            height: auto; 
+            object-fit: cover; 
         }}
         .active, .demo:hover {{ 
             opacity: 1; 
@@ -469,7 +480,7 @@ for chat in chats:
         @media only screen and (max-width: 768px) {{ 
             .container {{ 
                 width: 80%; 
-                height: auto; 
+                max-height: 400px; 
             }} 
             h1 {{ 
                 width: 80%; 
@@ -483,6 +494,13 @@ for chat in chats:
             }} 
             .chart-container {{ 
                 max-width: 100%; 
+            }} 
+            .column {{ 
+                flex: 0 0 80px; 
+                max-width: 80px; 
+            }} 
+            .mySlides img {{ 
+                object-fit: contain; 
             }} 
         }}
     </style>
@@ -639,11 +657,11 @@ for entry in all_data:
     diff = entry['Datedifference']
 
     hashtag_score = (10 * five_count) + (5 * four_count) + (1 * three_count)
-    messages_score = (messages / max_messages) * 10 if max_messages > 0 else 0
+    images_score = (messages / max_messages) * 10 if max_messages > 0 else 0
     date_score = 0
     if diff != 'N/A' and date_diffs:
         date_score = 10 * (1 - (diff - min_date_diff) / max_date_diff_denom) if max_date_diff_denom > 0 else 10
-    entry['score'] = hashtag_score + messages_score + date_score
+    entry['score'] = hashtag_score + images_score + date_score
 
 # Sort by score and assign ranks
 sorted_data = sorted(all_data, key=lambda x: x['score'], reverse=True)
