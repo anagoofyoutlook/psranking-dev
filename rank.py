@@ -299,7 +299,7 @@ for chat in chats:
         if group_name not in history_data:
             history_data[group_name] = []
 
-        # HTML content with updated layout: slideshow, then name, then chart
+        # HTML content with centered elements
         html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -309,11 +309,24 @@ for chat in chats:
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <style>
         body {{ font-family: Arial, sans-serif; margin: 20px; background-color: #e6f2ff; color: #003366; text-align: center; }}
-        h1 {{ color: #003366; margin-top: 20px; }}
+        h1 {{ 
+            color: #003366; 
+            width: 80%; 
+            margin: 20px auto; 
+            text-align: center; 
+        }}
         .info {{ background-color: #cce6ff; padding: 10px; border-radius: 5px; margin-bottom: 20px; }}
         .hashtags {{ list-style-type: none; padding: 0; }}
         .hashtag-item {{ background-color: #99ccff; margin: 5px 0; padding: 5px; border-radius: 3px; display: inline-block; width: 200px; }}
-        .rank-container {{ display: flex; justify-content: center; align-items: center; margin: 20px 0; gap: 20px; flex-wrap: wrap; }}
+        .rank-container {{ 
+            width: 80%; 
+            margin: 20px auto; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 20px; 
+            flex-wrap: wrap; 
+        }}
         .rank-number {{ font-size: 48px; font-weight: bold; color: #003366; display: inline-block; }}
         @keyframes countUp {{ from {{ content: "0"; }} to {{ content: attr(data-rank); }} }}
         .rank-number::before {{ content: "0"; animation: countUp 2s ease-out forwards; display: inline-block; min-width: 60px; }}
@@ -380,6 +393,7 @@ for chat in chats:
             width: 80%; 
             margin: 20px auto; 
             height: 800px; 
+            display: block; 
         }}
         .mySlides {{ 
             display: none; 
@@ -456,7 +470,12 @@ for chat in chats:
                 width: 80%; 
                 height: auto; 
             }} 
+            h1 {{ 
+                width: 80%; 
+                margin: 10px auto; 
+            }}
             .rank-container {{ 
+                width: 80%; 
                 flex-direction: column; 
                 gap: 10px; 
             }} 
