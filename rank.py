@@ -299,7 +299,7 @@ for chat in chats:
         if group_name not in history_data:
             history_data[group_name] = []
 
-        # HTML content with centered elements
+        # HTML content with name and rank at top, larger h1
         html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -314,6 +314,7 @@ for chat in chats:
             width: 80%; 
             margin: 20px auto; 
             text-align: center; 
+            font-size: 36px; 
         }}
         .info {{ background-color: #cce6ff; padding: 10px; border-radius: 5px; margin-bottom: 20px; }}
         .hashtags {{ list-style-type: none; padding: 0; }}
@@ -473,6 +474,7 @@ for chat in chats:
             h1 {{ 
                 width: 80%; 
                 margin: 10px auto; 
+                font-size: 30px; 
             }}
             .rank-container {{ 
                 width: 80%; 
@@ -486,12 +488,12 @@ for chat in chats:
     </style>
 </head>
 <body>
-    {slideshow_content}
     <h1>{group_name}</h1>
     <div class="rank-container">
         <div class="chart-container"><h2>Rank History</h2><canvas id="rankChart"></canvas></div>
         <p>Rank: <span class="rank-number" data-rank="RANK_PLACEHOLDER"></span></p>
     </div>
+    {slideshow_content}
     <div class="info"><p>Scenes: {total_messages}</p><p>Last Scene: {date_diff_text}</p></div>
     <div class="info">
         <h2>Rating Hashtag Counts (#FIVE, #FOUR, #Three)</h2><ul class="hashtags">{ratings_hashtag_list}</ul>
