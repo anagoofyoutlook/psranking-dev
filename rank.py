@@ -299,7 +299,7 @@ for chat in chats:
         if group_name not in history_data:
             history_data[group_name] = []
 
-        # HTML content with updated grid, table, and slideshow
+        # HTML content with updated layout: slideshow, then name, then chart
         html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -309,7 +309,7 @@ for chat in chats:
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <style>
         body {{ font-family: Arial, sans-serif; margin: 20px; background-color: #e6f2ff; color: #003366; text-align: center; }}
-        h1 {{ color: #003366; }}
+        h1 {{ color: #003366; margin-top: 20px; }}
         .info {{ background-color: #cce6ff; padding: 10px; border-radius: 5px; margin-bottom: 20px; }}
         .hashtags {{ list-style-type: none; padding: 0; }}
         .hashtag-item {{ background-color: #99ccff; margin: 5px 0; padding: 5px; border-radius: 3px; display: inline-block; width: 200px; }}
@@ -378,7 +378,7 @@ for chat in chats:
         .container {{ 
             position: relative; 
             width: 80%; 
-            margin: auto; 
+            margin: 20px auto; 
             height: 800px; 
         }}
         .mySlides {{ 
@@ -455,6 +455,13 @@ for chat in chats:
             .container {{ 
                 width: 80%; 
                 height: auto; 
+            }} 
+            .rank-container {{ 
+                flex-direction: column; 
+                gap: 10px; 
+            }} 
+            .chart-container {{ 
+                max-width: 100%; 
             }} 
         }}
     </style>
