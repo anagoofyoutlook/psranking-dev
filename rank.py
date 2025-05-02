@@ -256,7 +256,7 @@ for chat in chats:
             media_element = (
                 f"<img src='{t['media_path']}' alt='Media for {t['title']}' style='width:600px;height:300px;object-fit:cover;'>"
                 if t['is_gif'] or t['media_path'] == 'https://via.placeholder.com/600x300'
-                else f"<video src='{t['media_path']}' style='width:600px;height:300px;object-fit:cover;' autoplay loop muted playsinline></video>"
+                else f"<video src='{t['media_path']}' style='width:600px;height:300px;object-fit:cover;' loop muted playsinline></video>"
             )
             titles_grid += f"""
                 <div class='grid-item'>
@@ -299,7 +299,7 @@ for chat in chats:
         if group_name not in history_data:
             history_data[group_name] = []
 
-        # HTML content with fixed slideshow size and position
+        # HTML content with hover-to-play videos
         html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -591,6 +591,19 @@ for chat in chats:
                     }} 
                 }}
             }});
+
+            // Add hover-to-play for videos in titles grid
+            const videos = document.querySelectorAll('.grid-item video');
+            videos.forEach(video => {{
+                video.addEventListener('mouseover', () => {{
+                    video.play().catch(error => {{
+                        console.error('Error playing video:', error);
+                    }});
+                }});
+                video.addEventListener('mouseout', () => {{
+                    video.pause();
+                }});
+            }});
         }});
 
         // Titles table sorting
@@ -657,11 +670,11 @@ for entry in all_data:
     diff = entry['Datedifference']
 
     hashtag_score = (10 * five_count) + (5 * four_count) + (1 * three_count)
-    images_score = (messages / max_messages) * 10 if max_messages > 0 else 0
+    messages_score = (messages / max_messages) * 10 if max_messages > 0 else 0
     date_score = 0
     if diff != 'N/A' and date_diffs:
         date_score = 10 * (1 - (diff - min_date_diff) / max_date_diff_denom) if max_date_diff_denom > 0 else 10
-    entry['score'] = hashtag_score + images_score + date_score
+    entry['score'] = hashtag_score + messages_score + date_score
 
 # Sort by score and assign ranks
 sorted_data = sorted(all_data, key=lambda x: x['score'], reverse=True)
