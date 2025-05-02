@@ -268,7 +268,7 @@ for chat in chats:
         titles_grid += f"</div>" if titles else f"<p>No titles found (Total: {titles_count})</p>"
 
         # Titles table with serial number
-        titles_table = f"<table class='titles-table' id='titlesTable'><thead><tr><th>S.No</th><th onclick='sortTitlesTable(1)'>Items</th><th onclick='sortTitlesTable(2)'>Date</th></tr></thead><tbody id='titlesTableBody'>"
+        titles_table = f"<table class='titles-table' id='titlesTable'><thead><tr><th onclick='sortTitlesTable(0)'>S.No</th><th onclick='sortTitlesTable(1)'>Items</th><th onclick='sortTitlesTable(2)'>Date</th></tr></thead><tbody id='titlesTableBody'>"
         for t in titles:
             titles_table += f"<tr><td>{t['serial_number']}</td><td><a href='https://t.me/c/{telegram_group_id}/{t['message_id']}' target='_blank'>{t['title']}</a></td><td>{t['date']}</td></tr>"
         titles_table += f"</tbody></table>" if titles else f"<p>No titles found</p>"
@@ -299,7 +299,7 @@ for chat in chats:
         if group_name not in history_data:
             history_data[group_name] = []
 
-        # HTML content with hover-to-play videos
+        # HTML content with sortable S.No column
         html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -380,11 +380,9 @@ for chat in chats:
         .titles-table th {{ 
             background-color: #99ccff; 
             color: #003366; 
-        }}
-        .titles-table th:not(:first-child) {{ 
             cursor: pointer; 
         }}
-        .titles-table th:not(:first-child):hover {{ 
+        .titles-table th:hover {{ 
             background-color: #b3d9ff; 
         }}
         a {{ color: #003366; text-decoration: none; }}
@@ -609,14 +607,17 @@ for chat in chats:
         // Titles table sorting
         let titlesSortDirections = [0, 0, 0]; // 0: unsorted, 1: ascending, -1: descending
         function sortTitlesTable(columnIndex) {{
-            if (columnIndex === 0) return; // Skip sorting for S.No column
             const tbody = document.getElementById('titlesTableBody');
             const rows = Array.from(tbody.getElementsByTagName('tr'));
             const direction = titlesSortDirections[columnIndex] === 1 ? -1 : 1;
             rows.sort((a, b) => {{
                 let aValue = a.cells[columnIndex].innerText;
                 let bValue = b.cells[columnIndex].innerText;
-                if (columnIndex === 2) {{ // Date column
+                if (columnIndex === 0) {{ // S.No column
+                    aValue = parseInt(aValue);
+                    bValue = parseInt(bValue);
+                    return direction * (aValue - bValue);
+                }} else if (columnIndex === 2) {{ // Date column
                     aValue = new Date(aValue);
                     bValue = new Date(bValue);
                     return direction * (aValue - bValue);
@@ -779,7 +780,7 @@ ranking_html_content = f"""<!DOCTYPE html>
     <script>
         let sortDirections = [0, 0, 0, 0, 0, 0, 0, 0, 0];
         function sortTable(columnIndex) {{
-            const tbody = document.getElementById('tableBody');
+            const tbody = document.getElementsById('tableBody');
             const rows = Array.from(tbody.getElementsByTagName('tr'));
             const isNumeric = [true, false, false, true, true, true, true, true, true][columnIndex];
             const direction = sortDirections[columnIndex] === 1 ? -1 : 1;
