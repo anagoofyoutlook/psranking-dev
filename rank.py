@@ -299,7 +299,7 @@ for chat in chats:
         if group_name not in history_data:
             history_data[group_name] = []
 
-        # HTML content with sortable S.No column
+        # HTML content for group pages (unchanged)
         html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -716,11 +716,13 @@ for entry in sorted_data:
     group_name = entry['group name']
     photo_src = entry['photo_rel_path'] if entry['photo_rel_path'] else 'https://via.placeholder.com/300'
     html_link = f"HTML/{entry['html_file']}"
+    last_scene = f"{entry['Datedifference']} days" if entry['Datedifference'] != 'N/A' else 'N/A'
     table_rows += f"""
         <tr>
             <td>{entry['rank']}</td>
             <td><div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><a href="{html_link}" target="_blank"><img src="{photo_src}" alt="{group_name}" style="width:300px;height:300px;object-fit:cover;"></a></div><div class="flip-card-back"><a href="{html_link}" target="_blank" style="color: white; text-decoration: none;"><h1>{group_name}</h1></a></div></div></div></td>
             <td><a href="{html_link}" target="_blank">{group_name}</a></td>
+            <td>{last_scene}</td>
             <td>{entry['total titles']}</td>
             <td>{entry['count of the hashtag "#FIVE"']}</td>
             <td>{entry['count of the hashtag "#FOUR"']}</td>
@@ -765,12 +767,13 @@ ranking_html_content = f"""<!DOCTYPE html>
                 <th onclick="sortTable(0)">Rank</th>
                 <th>Photo</th>
                 <th onclick="sortTable(2)">Group Name</th>
-                <th onclick="sortTable(3)">Total Titles</th>
-                <th onclick="sortTable(4)">#FIVE</th>
-                <th onclick="sortTable(5)">#FOUR</th>
-                <th onclick="sortTable(6)">#Three</th>
-                <th onclick="sortTable(7)">#SceneType</th>
-                <th onclick="sortTable(8)">Score</th>
+                <th onclick="sortTable(3)">Last Scene</th>
+                <th onclick="sortTable(4)">Total Titles</th>
+                <th onclick="sortTable(5)">#FIVE</th>
+                <th onclick="sortTable(6)">#FOUR</th>
+                <th onclick="sortTable(7)">#Three</th>
+                <th onclick="sortTable(8)">#SceneType</th>
+                <th onclick="sortTable(9)">Score</th>
             </tr>
         </thead>
         <tbody id="tableBody">
@@ -778,23 +781,30 @@ ranking_html_content = f"""<!DOCTYPE html>
         </tbody>
     </table>
     <script>
-        let sortDirections = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+        let sortDirections = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         function sortTable(columnIndex) {{
-            const tbody = document.getElementsById('tableBody');
+            if (columnIndex === 1) return; // Skip Photo column
+            const tbody = document.getElementById('tableBody');
             const rows = Array.from(tbody.getElementsByTagName('tr'));
-            const isNumeric = [true, false, false, true, true, true, true, true, true][columnIndex];
+            const isNumeric = [true, false, false, true, true, true, true, true, true, true];
             const direction = sortDirections[columnIndex] === 1 ? -1 : 1;
             rows.sort((a, b) => {{
                 let aValue = a.cells[columnIndex].innerText;
                 let bValue = b.cells[columnIndex].innerText;
-                if (isNumeric) {{ 
+                if (columnIndex === 3) {{ // Last Scene column
+                    if (aValue === 'N/A' && bValue === 'N/A') return 0;
+                    if (aValue === 'N/A') return direction * 1;
+                    if (bValue === 'N/A') return direction * -1;
+                    aValue = parseInt(aValue);
+                    bValue = parseInt(bValue);
+                    return direction * (aValue - bValue);
+                }}
+                if (isNumeric[columnIndex]) {{ 
                     aValue = parseFloat(aValue) || 0; 
                     bValue = parseFloat(bValue) || 0; 
                     return direction * (aValue - bValue); 
                 }}
-                else {{ 
-                    return direction * aValue.localeCompare(bValue); 
-                }}
+                return direction * aValue.localeCompare(bValue);
             }});
             while (tbody.firstChild) {{ 
                 tbody.removeChild(tbody.firstChild); 
