@@ -7,6 +7,7 @@ import re
 import zipfile
 import random
 
+
 # Define folder paths
 input_folder = 'PS'
 output_folder = 'docs'
