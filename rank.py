@@ -600,16 +600,16 @@ for chat in chats:
                 }});
             }});
 
-            // Initialize titles table sorted by date descending
-            sortTitlesTable(2); // Sort by Date column, newest first
+            // Initialize titles table sorted by date descending (newest at top)
+            sortTitlesTable(2, -1); // Sort by Date column, newest first
         }});
 
         // Titles table and grid sorting
         let titlesSortDirections = [0, 0, -1]; // 0: unsorted, 1: ascending, -1: descending (Date starts descending)
-        function sortTitlesTable(columnIndex) {{
+        function sortTitlesTable(columnIndex, forceDirection) {{
             const tbody = document.getElementById('titlesTableBody');
             const rows = Array.from(tbody.getElementsByTagName('tr'));
-            const direction = columnIndex === 2 ? (titlesSortDirections[columnIndex] === -1 ? 1 : -1) : (titlesSortDirections[columnIndex] === 1 ? -1 : 1);
+            const direction = forceDirection !== undefined ? forceDirection : (columnIndex === 2 ? (titlesSortDirections[columnIndex] === -1 ? 1 : -1) : (titlesSortDirections[columnIndex] === 1 ? -1 : 1));
             rows.sort((a, b) => {{
                 let aValue = a.cells[columnIndex].innerText;
                 let bValue = b.cells[columnIndex].innerText;
@@ -620,7 +620,7 @@ for chat in chats:
                 }} else if (columnIndex === 2) {{ // Date column
                     aValue = new Date(aValue);
                     bValue = new Date(bValue);
-                    return direction * (aValue - bValue);
+                    return direction * (bValue - aValue); // Reversed for newest first when direction = -1
                 }} else if (columnIndex === 1) {{ // Items column
                     return direction * aValue.localeCompare(bValue);
                 }}
@@ -629,7 +629,7 @@ for chat in chats:
             while (tbody.firstChild) {{ 
                 tbody.removeChild(tbody.firstChild); 
             }}
-            rows.forEach(row => tbody.appendChild(row));
+            rows.forEach(row => tbody.insertBefore(row, tbody.firstChild)); // Prepend to show newest at top
             titlesSortDirections[columnIndex] = direction;
             titlesSortDirections = titlesSortDirections.map((d, i) => (i === columnIndex ? d : 0));
             // Sync grid with table
@@ -652,14 +652,14 @@ for chat in chats:
                 }} else if (columnIndex === 2) {{ // Date
                     aValue = new Date(a.querySelector('.date').innerText.split(' | ')[1]);
                     bValue = new Date(b.querySelector('.date').innerText.split(' | ')[1]);
-                    return direction * (aValue - bValue);
+                    return direction * (bValue - aValue); // Reversed for newest first when direction = -1
                 }}
                 return 0;
             }});
             while (grid.firstChild) {{ 
                 grid.removeChild(grid.firstChild); 
             }}
-            items.forEach(item => grid.appendChild(item));
+            items.forEach(item => grid.insertBefore(item, grid.firstChild)); // Prepend to show newest at top
         }}
     </script>
 </body>
@@ -749,7 +749,6 @@ for entry in sorted_data:
         <tr>
             <td>{entry['rank']}</td>
             <td><div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><a href="{html_link}" target="_blank"><img src="{photo_src}" alt="{group_name}" style="width:300px;height:300px;object-fit:cover;"></a></div><div class="flip-card-back"><a href="{html_link}" target="_blank" style="color: #ffcc00; text-decoration: none;"><h1>{group_name}</h1></a></div></div></div></td>
-            <td><a href="{html_link}" target="_blank">{group_name}</a></td>
             <td>{last_scene}</td>
             <td>{entry['total titles']}</td>
             <td>{entry['count of the hashtag "#FIVE"']}</td>
@@ -792,14 +791,13 @@ ranking_html_content = f"""<!DOCTYPE html>
             <tr>
                 <th onclick="sortTable(0)">Rank</th>
                 <th>Photo</th>
-                <th onclick="sortTable(2)">Group Name</th>
-                <th onclick="sortTable(3)">Last Scene</th>
-                <th onclick="sortTable(4)">Total Titles</th>
-                <th onclick="sortTable(5)">#FIVE</th>
-                <th onclick="sortTable(6)">#FOUR</th>
-                <th onclick="sortTable(7)">#Three</th>
-                <th onclick="sortTable(8)">#SceneType</th>
-                <th onclick="sortTable(9)">Score</th>
+                <th onclick="sortTable(2)">Last Scene</th>
+                <th onclick="sortTable(3)">Total Titles</th>
+                <th onclick="sortTable(4)">#FIVE</th>
+                <th onclick="sortTable(5)">#FOUR</th>
+                <th onclick="sortTable(6)">#Three</th>
+                <th onclick="sortTable(7)">#SceneType</th>
+                <th onclick="sortTable(8)">Score</th>
             </tr>
         </thead>
         <tbody id="tableBody">
@@ -807,17 +805,17 @@ ranking_html_content = f"""<!DOCTYPE html>
         </tbody>
     </table>
     <script>
-        let sortDirections = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        let sortDirections = [0, 0, 0, 0, 0, 0, 0, 0, 0];
         function sortTable(columnIndex) {{
             if (columnIndex === 1) return; // Skip Photo column
             const tbody = document.getElementById('tableBody');
             const rows = Array.from(tbody.getElementsByTagName('tr'));
-            const isNumeric = [true, false, false, true, true, true, true, true, true, true];
+            const isNumeric = [true, false, true, true, true, true, true, true, true];
             const direction = sortDirections[columnIndex] === 1 ? -1 : 1;
             rows.sort((a, b) => {{
                 let aValue = a.cells[columnIndex].innerText;
                 let bValue = b.cells[columnIndex].innerText;
-                if (columnIndex === 3) {{ // Last Scene column
+                if (columnIndex === 2) {{ // Last Scene column
                     if (aValue === 'N/A' && bValue === 'N/A') return 0;
                     if (aValue === 'N/A') return direction * 1;
                     if (bValue === 'N/A') return direction * -1;
