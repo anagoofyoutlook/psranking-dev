@@ -38,598 +38,6 @@ else:
 
 # Path to result.zip
 zip_file = os.path.join(input_folder, 'result.zip')
-temp_json_file = os.path.join(input_folder, 'result.json')  # Temporary extraction path
-
-# Verify ZIP file existence and extract result.json
-if not os.path.exists(zip_file):
-    print(f"Error: 'result.zip' not found in '{input_folder}'. Exiting.")
-    exit(1)
-
-print(f"Extracting {zip_file}")
-try:
-    with zipfile.ZipFile(zip_file, 'r') as zip_ref:
-        # Look for result.json in the ZIP
-        json_found = False
-        for file_info in zip_ref.infolist():
-            if file_info.filename.endswith('result.json'):
-                zip_ref.extract(file_info, input_folder)
-                extracted_path = os.path.join(input_folder, file_info.filename)
-                if extracted_path != temp_json_file:
-                    shutil.move(extracted_path, temp_json_file)
-                json_found = True
-                print(f"Extracted 'result.json' to {temp_json_file}")
-                break
-        if not json_found:
-            print(f"Error: 'result.json' not found in '{zip_file}'. Exiting.")
-            exit(1)
-except zipfile.BadZipFile:
-    print(f"Error: '{zip_file}' is not a valid ZIP file. Exiting.")
-    exit(1)
-
-# Verify extracted file existence
-if not os.path.exists(temp_json_file):
-    print(f"Error: Failed to extract 'result.json' from '{zip_file}'. Exiting.")
-    exit(1)
-
-# Load JSON data
-print(f"Loading {temp_json_file}")
-with open(temp_json_file, 'r', encoding='utf-8') as f:
-    data = json.load(f)
-
-# Clean up the temporary JSON file
-try:
-    os.remove(temp_json_file)
-    print(f"Cleaned up temporary file: {temp_json_file}")
-except OSError as e:
-    print(f"Warning: Could not remove {temp_json_file}: {e}")
-
-# Access chats list
-chats = data.get('chats', {}).get('list', [])
-print(f"Found {len(chats)} chats in result.json")
-if not chats:
-    print("No chats found in 'result.json'. Please verify the file content.")
-    exit(1)
-
-# Define CSV columns
-csv_columns = [
-    'date', 'group name', 'total messages', 'Datedifference',
-    'count of the hashtag "#FIVE"', 'count of the hashtag "#FOUR"',
-    'count of the hashtag "#Three"', 'count of the hashtag "#SceneType"',
-    'score', 'rank', 'total titles'
-]
-
-# Define history CSV columns
-history_columns = ['date', 'group name', 'rank']
-
-# Load existing history data
-history_data = {}
-if os.path.exists(history_csv_file):
-    with open(history_csv_file, 'r', encoding='utf-8') as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            group = row.get('group name', 'Unknown')
-            try:
-                rank = int(float(row.get('rank', '0')))
-                if group not in history_data:
-                    history_data[group] = []
-                history_data[group].append({'date': row.get('date', ''), 'rank': rank})
-            except (ValueError, TypeError) as e:
-                print(f"Skipping invalid rank for group '{group}': {row}. Error: {e}")
-    print(f"Loaded {sum(len(v) for v in history_data.values())} history entries from {history_csv_file}")
-else:
-    print(f"No existing {history_csv_file} found")
-
-# Initialize data storage
-all_data = []
-max_messages = 0
-date_diffs = []
-current_date = datetime.now().strftime('%Y-%m-%d')
-
-# Function to sanitize filenames
-def sanitize_filename(name):
-    name = re.sub(r'[^\w\s-]', '', name)
-    name = re.sub(r'\s+', '_', name)
-    return name.lower()
-
-# Function to find media file by serial number
-def find_serial_match_media(serial_number, media_files):
-    print(f"Searching for serial number '{serial_number}' in media files: {media_files}")
-    for media in media_files:
-        media_base = os.path.splitext(media)[0]
-        if media_base == str(serial_number):
-            print(f"Match found for serial number '{serial_number}': '{media}'")
-            return media
-    print(f"No match found for serial number '{serial_number}'")
-    return None
-
-# Process each chat
-for chat in chats:
-    if chat.get('type') == 'private_supergroup':
-        group_name = chat.get('name', 'Unknown Group')
-        group_id = str(chat['id'])
-        telegram_group_id = group_id[4:] if group_id.startswith('-100') else group_id
-        messages = chat.get('messages', [])
-        print(f"Processing group: {group_name} (ID: {group_id})")
-
-        total_messages = sum(1 for msg in messages if msg.get('type') == 'message')
-        max_messages = max(max_messages, total_messages)
-
-        # Hashtag counting
-        hashtag_counts = {}
-        for message in messages:
-            if message.get('type') == 'message':
-                text = message.get('text', '')
-                if isinstance(text, list):
-                    for entity in text:
-                        if isinstance(entity, dict) and entity.get('type') == 'hashtag':
-                            hashtag = entity.get('text')
-                            if hashtag:
-                                hashtag_upper = hashtag.upper()
-                                special_ratings = ['#FIVE', '#FOUR', '#THREE']
-                                special_scene_types = ['#FM', '#FF', '#FFM', '#FFFM', '#FFFFM', '#FMM', '#FMMM', '#FMMMM', '#FFMM', '#FFFMMM', '#ORGY']
-                                if hashtag_upper in special_ratings + special_scene_types:
-                                    hashtag = hashtag_upper
-                                hashtag_counts[hashtag] = hashtag_counts.get(hashtag, 0) + 1
-
-        # Calculate date_diff
-        dates = []
-        for message in messages:
-            if message.get('type') == 'message':
-                date_str = message.get('date')
-                if date_str:
-                    try:
-                        date = datetime.fromisoformat(date_str)
-                        dates.append(date)
-                    except ValueError:
-                        continue
-        date_diff = None
-        if dates:
-            newest_date = max(dates)
-            today = datetime.now()
-            date_diff = (today - newest_date).days
-            date_diffs.append(date_diff)
-        print(f"Group {group_name}: Total messages = {total_messages}, Date diff = {date_diff}")
-
-        # Hashtag lists
-        special_ratings = ['#FIVE', '#FOUR', '#THREE']
-        special_scene_types = ['#FM', '#FF', '#FFM', '#FFFM', '#FFFFM', '#FMM', '#FMMM', '#FMMMM', '#FFMM', '#FFFMMM', '#ORGY']
-        ratings_hashtag_list = ''.join(f'<li class="hashtag-item">{h}: {hashtag_counts[h]}</li>\n' for h in sorted(hashtag_counts) if h in special_ratings) or '<li>No rating hashtags (#FIVE, #FOUR, #Three) found</li>'
-        scene_types_hashtag_list = ''.join(f'<li class="hashtag-item">{h}: {hashtag_counts[h]}</li>\n' for h in sorted(hashtag_counts) if h in special_scene_types) or '<li>No scene type hashtags found</li>'
-        other_hashtag_list = ''.join(f'<li class="hashtag-item">{h}: {hashtag_counts[h]}</li>\n' for h in sorted(hashtag_counts) if h not in special_ratings and h not in special_scene_types) or '<li>No other hashtags found</li>'
-
-        scene_type_count = sum(hashtag_counts.get(h, 0) for h in special_scene_types)
-        date_diff_text = f'{date_diff} days' if date_diff is not None else 'N/A'
-
-        # Titles with serial numbers
-        titles = []
-        media_extensions = ['.mp4', '.webm', '.ogg', '.gif']
-        group_subfolder = os.path.join(docs_photos_folder, group_name)
-        thumbs_subfolder = os.path.join(group_subfolder, 'thumbs')
-        media_files = [f for f in os.listdir(thumbs_subfolder) if f.lower().endswith(tuple(media_extensions))] if os.path.exists(thumbs_subfolder) else []
-        fallback_photos = [f for f in os.listdir(group_subfolder) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')) and os.path.isfile(os.path.join(group_subfolder, f))] if os.path.exists(group_subfolder) else []
-        print(f"Group {group_name}: Thumbs media files = {media_files}, Fallback photos = {fallback_photos}")
-        serial_number = 1
-        for message in messages:
-            if message.get('action') == 'topic_created':
-                title = message.get('title', '')
-                message_id = message.get('id')
-                date_str = message.get('date', '')
-                if title.strip() and message_id and date_str:
-                    try:
-                        date = datetime.fromisoformat(date_str).strftime('%Y-%m-%d')
-                        media_path = 'https://via.placeholder.com/600x300'
-                        is_gif = False
-                        if media_files:
-                            serial_match = find_serial_match_media(serial_number, media_files)
-                            if serial_match:
-                                media_path = f"../Photos/{group_name}/thumbs/{serial_match}"
-                                is_gif = serial_match.lower().endswith('.gif')
-                                print(f"Group {group_name}, Title '{title}' (S.No {serial_number}): Matched media '{serial_match}', selected path {media_path}")
-                        else:
-                            print(f"Group {group_name}, Title '{title}' (S.No {serial_number}): No media files in {thumbs_subfolder}")
-                            if fallback_photos:
-                                random_photo = random.choice(fallback_photos)
-                                media_path = f"../Photos/{group_name}/{random_photo}"
-                                is_gif = random_photo.lower().endswith('.gif')
-                                print(f"  Using fallback photo: {media_path}")
-                        titles.append({
-                            'title': title,
-                            'message_id': message_id,
-                            'date': date,
-                            'media_path': media_path,
-                            'is_gif': is_gif,
-                            'serial_number': serial_number
-                        })
-                        serial_number += 1
-                    except ValueError:
-                        continue
-        titles.sort(key=lambda x: x['date'], reverse=True)  # Sort by date, newest first
-        titles_count = len(titles)
-
-        # Titles grid
-        titles_grid = f"<p>Total Titles: {titles_count}</p><div class='titles-grid' id='titlesGrid'>"
-        for t in titles:
-            media_element = (
-                f"<img src='{t['media_path']}' alt='Media for {t['title']}' style='width:600px;height:300px;object-fit:cover;'>"
-                if t['is_gif'] or t['media_path'] == 'https://via.placeholder.com/600x300'
-                else f"<video src='{t['media_path']}' style='width:600px;height:300px;object-fit:cover;' loop muted playsinline></video>"
-            )
-            titles_grid += f"""
-                <div class='grid-item'>
-                    {media_element}
-                    <p class='title'><a href='https://t.me/c/{telegram_group_id}/{t['message_id']}' target='_blank'>{t['title']}</a></p>
-                    <p class='date'>S.No: {t['serial_number']} | {t['date']}</p>
-                </div>
-            """
-        titles_grid += f"</div>" if titles else f"<p>No titles found (Total: {titles_count})</p>"
-
-        # Titles table
-        titles_table = f"<table class='titles-table' id='titlesTable'><thead><tr><th onclick='sortTitlesTable(0)'>S.No</th><th onclick='sortTitlesTable(1)'>Items</th><th onclick='sortTitlesTable(2)'>Date</th></tr></thead><tbody id='titlesTableBody'>"
-        for t in titles:
-            titles_table += f"<tr><td>{t['serial_number']}</td><td><a href='https://t.me/c/{telegram_group_id}/{t['message_id']}' target='_blank'>{t['title']}</a></td><td>{t['date']}</td></tr>"
-        titles_table += f"</tbody></table>" if titles else f"<p>No titles found</p>"
-
-        # Photos for slideshow
-        photo_paths = []
-        if os.path.exists(group_subfolder):
-            photo_paths = [f"../Photos/{group_name}/{f}" for f in os.listdir(group_subfolder) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')) and os.path.isfile(os.path.join(group_subfolder, f))]
-            print(f"Group {group_name}: Found {len(photo_paths)} photos in {group_subfolder}: {photo_paths}")
-        if not photo_paths:
-            photo_paths = ['https://via.placeholder.com/1920x800']
-            print(f"Group {group_name}: Using placeholder for slideshow")
-
-        slideshow_content = '<div class="container">\n' + ''.join(f'<div class="mySlides"><div class="numbertext">{i} / {len(photo_paths)}</div><img src="{p}" style="width:100%;height:auto;"></div>' for i, p in enumerate(photo_paths, 1)) + """
-            <a class="prev" onclick="plusSlides(-1)">❮</a>
-            <a class="next" onclick="plusSlides(1)">❯</a>
-            <div class="caption-container"><p id="caption"></p></div>
-            <div class="row">
-        """ + ''.join(f'<div class="column"><img class="demo cursor" src="{p}" style="width:100%" onclick="currentSlide({i})" alt="{group_name} Photo {i}"></div>' for i, p in enumerate(photo_paths, 1)) + '</div></div>'
-
-        photo_file_name = next((f"{group_name}{ext}" for ext in ('.jpg', '.jpeg', '.png', '.gif') if os.path.exists(os.path.join(docs_photos_folder, f"{group_name}{ext}"))), None)
-        if photo_file_name:
-            print(f"Group {group_name}: Found single photo at {docs_photos_folder}/{photo_file_name}")
-        else:
-            print(f"Group {group_name}: No single photo found in {docs_photos_folder}/")
-
-        if group_name not in history_data:
-            history_data[group_name] = []
-
-        # HTML content for group pages
-        html_content = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{group_name}</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-    <style>
-        body {{ font-family: Arial, sans-serif; margin: 20px; background-color: #1e2a44; color: #ffffff; text-align: center; }}
-        h1, h2 {{ color: #ffcc00; width: 80%; margin: 20px auto; text-align: center; font-size: 36px; }}
-        .info {{ background-color: #2a3a5c; padding: 10px; border-radius: 5px; margin-bottom: 20px; }}
-        .hashtags {{ list-style-type: none; padding: 0; }}
-        .hashtag-item {{ background-color: #3b4a6b; margin: 5px 0; padding: 5px; border-radius: 3px; display: inline-block; width: 200px; color: #ffffff; }}
-        .rank-container {{ 
-            width: 80%; 
-            margin: 20px auto; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            gap: 20px; 
-            flex-wrap: wrap; 
-        }}
-        .rank-number {{ font-size: 48px; font-weight: bold; color: #ffcc00; display: inline-block; }}
-        @keyframes countUp {{ from {{ content: "0"; }} to {{ content: attr(data-rank); }} }}
-        .rank-number::before {{ content: "0"; animation: countUp 2s ease-out forwards; display: inline-block; min-width: 60px; }}
-        .chart-container {{ max-width: 400px; width: 100%; background-color: #2a3a5c; padding: 10px; border-radius: 5px; }}
-        canvas {{ width: 100% !important; height: auto !important; }}
-        .titles-grid {{ 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 20px; 
-            margin: 20px auto; 
-            max-width: 1800px; 
-        }}
-        .grid-item {{ 
-            background-color: #2a3a5c; 
-            padding: 10px; 
-            border-radius: 5px; 
-            text-align: center; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-        }}
-        .grid-item video, .grid-item img {{ 
-            width: 600px; 
-            height: 300px; 
-            object-fit: cover; 
-            border-radius: 5px; 
-        }}
-        .grid-item .title {{ 
-            margin: 10px 0 5px; 
-            font-size: 16px; 
-            font-weight: bold; 
-            color: #ffcc00; 
-        }}
-        .grid-item .date {{ 
-            margin: 0; 
-            font-size: 14px; 
-            color: #cccccc; 
-        }}
-        .titles-table {{ 
-            width: 80%; 
-            margin: 20px auto; 
-            border-collapse: collapse; 
-            background-color: #2a3a5c; 
-        }}
-        .titles-table th, .titles-table td {{ 
-            padding: 10px; 
-            border: 1px solid #3b4a6b; 
-            text-align: left; 
-            vertical-align: middle; 
-            color: #ffffff; 
-        }}
-        .titles-table th {{ 
-            background-color: #ffcc00; 
-            color: #1e2a44; 
-            cursor: pointer; 
-        }}
-        .titles-table th:hover {{ 
-            background-color: #cc0000; 
-        }}
-        a {{ color: #ffcc00; text-decoration: none; }}
-        a:hover {{ color: #cc0000; text-decoration: underline; }}
-        .container {{ 
-            position: relative; 
-            width: 80%; 
-            margin: 20px auto; 
-            height: auto; 
-            max-height: 600px; 
-            display: block; 
-            overflow: hidden; 
-            background-color: #2a3a5c; 
-        }}
-        .mySlides {{ 
-            display: none; 
-            width: 100%; 
-            height: auto; 
-            aspect-ratio: 16/9; 
-        }}
-        .mySlides img {{ 
-            width: 100%; 
-            height: auto; 
-            object-fit: contain; 
-        }}
-        .cursor {{ cursor: pointer; }}
-        .prev, .next {{ 
-            cursor: pointer; 
-            position: absolute; 
-            top: 50%; 
-            transform: translateY(-50%); 
-            width: auto; 
-            padding: 16px; 
-            color: #ffcc00; 
-            font-weight: bold; 
-            font-size: 20px; 
-            border-radius: 0 3px 3px 0; 
-            user-select: none; 
-            -webkit-user-select: none; 
-            z-index: 10; 
-        }}
-        .prev {{ left: 0; }}
-        .next {{ 
-            right: 0; 
-            border-radius: 3px 0 0 3px; 
-        }}
-        .prev:hover, .next:hover {{ 
-            background-color: #cc0000; 
-        }}
-        .numbertext {{ 
-            color: #ffcc00; 
-            font-size: 12px; 
-            padding: 8px 12px; 
-            position: absolute; 
-            top: 0; 
-            z-index: 10; 
-        }}
-        .caption-container {{ 
-            text-align: center; 
-            background-color: #1e2a44; 
-            padding: 2px 16px; 
-            color: #ffcc00; 
-        }}
-        .row {{ 
-            display: flex; 
-            flex-wrap: wrap; 
-            justify-content: center; 
-            margin-top: 10px; 
-        }}
-        .column {{ 
-            flex: 0 0 {100 / len(photo_paths) if photo_paths else 100}%; 
-            max-width: 100px; 
-            padding: 5px; 
-        }}
-        .demo {{ 
-            opacity: 0.6; 
-            width: 100%; 
-            height: auto; 
-            object-fit: cover; 
-        }}
-        .active, .demo:hover {{ 
-            opacity: 1; 
-        }}
-        @media only screen and (max-width: 1800px) {{ 
-            .titles-grid {{ 
-                grid-template-columns: repeat(2, 1fr); 
-            }} 
-        }}
-        @media only screen and (max-width: 1200px) {{ 
-            .titles-grid {{ 
-                grid-template-columns: 1fr; 
-            }} 
-        }}
-        @media only screen and (max-width: 768px) {{ 
-            .container {{ 
-                width: 80%; 
-                max-height: 400px; 
-            }} 
-            h1 {{ 
-                width: 80%; 
-                margin: 10px auto; 
-                font-size: 30px; 
-            }}
-            .rank-container {{ 
-                width: 80%; 
-                flex-direction: column; 
-                gap: 10px; 
-            }} 
-            .chart-container {{ 
-                max-width: 100%; 
-            }} 
-            .column {{ 
-                flex: 0 0 80px; 
-                max-width: 80px; 
-            }} 
-            .mySlides img {{ 
-                object-fit: contain; 
-            }} 
-        }}
-    </style>
-</head>
-<body>
-    <h1>{group_name}</h1>
-    <div class="rank-container">
-        <div class="chart-container"><h2>Rank History</h2><canvas id="rankChart"></canvas></div>
-        <p>Rank: <span class="rank-number" data-rank="RANK_PLACEHOLDER"></span></p>
-    </div>
-    {slideshow_content}
-    <div class="info"><p>Scenes: {total_messages}</p><p>Last Scene: {date_diff_text}</p></div>
-    <div class="info">
-        <h2>Rating Hashtag Counts (#FIVE, #FOUR, #Three)</h2><ul class="hashtags">{ratings_hashtag_list}</ul>
-        <h2>Scene Type Hashtag Counts</h2><ul class="hashtags">{scene_types_hashtag_list}</ul>
-        <h2>Other Hashtag Counts</h2><ul class="hashtags">{other_hashtag_list}</ul>
-    </div>
-    <div class="info">
-        <h2>Titles</h2>
-        {titles_grid}
-        {titles_table}
-    </div>
-    <script>
-        let slideIndex = 1;
-        showSlides(slideIndex);
-        function plusSlides(n) {{ 
-            clearInterval(autoSlide); 
-            showSlides(slideIndex += n); 
-            autoSlide = setInterval(() => plusSlides(1), 3000); 
-        }}
-        function currentSlide(n) {{ 
-            clearInterval(autoSlide); 
-            showSlides(slideIndex = n); 
-            autoSlide = setInterval(() => plusSlides(1), 3000); 
-        }}
-        function showSlides(n) {{
-            let i;
-            let slides = document.getElementsByClassName("mySlides");
-            let dots = document.getElementsByClassName("demo");
-            let captionText = document.getElementById("caption");
-            if (n > slides.length) {{ slideIndex = 1 }}
-            if (n < 1) {{ slideIndex = slides.length }}
-```
-
-System: I notice the provided `rank.py` code is incomplete, ending mid-script. To fully address your request—implementing a dark theme with dark blue, yellow, and red colors, and sorting videos by newest date first—I need to ensure the entire script is updated correctly. Below, I’ve completed and modified the script based on your requirements and the previous context, ensuring all functionality is preserved and the changes are applied consistently.
-
-### Requirements Recap
-- **Dark Theme**:
-  - Main page (`index.html`): Ranking table, flip-card, background, text.
-  - Group pages (`HTML/*.html`): Titles table, titles grid, slideshow, rank chart.
-  - Colors:
-    - Dark blue (`#1e2a44` for backgrounds, `#2a3a5c` for containers/tables).
-    - Yellow (`#ffcc00` for headers, links, accents).
-    - Red (`#cc0000` for hover effects, highlights).
-  - Ensure readability and contrast.
-- **Video Sorting**:
-  - Titles grid and table on group pages sorted by date, newest first (descending, e.g., 2025-05-23 before 2025-01-01).
-  - Preserve titles table sorting (S.No, Items, Date clickable).
-  - Sync grid and table order.
-- **Preserve**:
-  - Main page: 10-column ranking table (Rank, Photo, Group Name, Last Scene, etc.), flip-card, sorting.
-  - Group pages: Titles table (S.No, Items, Date sortable), grid (3/2/1 columns), slideshow (80% width, max 600px), video hover-to-play.
-  - Serial number matching (`1.mp4`, `2.gif`).
-  - Chart, slideshow navigation, responsive design (1800px, 1200px, 768px).
-
-### Approach
-1. **Theme Update**:
-   - **Main Page (`index.html`)**:
-     - Background: `#1e2a44`.
-     - Table: `#2a3a5c` cells, `#ffcc00` headers, `#cc0000` hover.
-     - Text: `#ffffff` body, `#ffcc00` headers/links, `#cc0000` link hover.
-     - Flip-card: `#2a3a5c` front, `#3b4a6b` back, `#ffcc00` text.
-   - **Group Pages**:
-     - Background: `#1e2a44`.
-     - Titles table/grid: `#2a3a5c` background, `#ffcc00` headers, `#cc0000` hover.
-     - Slideshow: `#2a3a5c` container, `#ffcc00` text, `#cc0000` hover.
-     - Chart: `#2a3a5c` background, `#ffcc00` lines.
-     - Text: `#ffffff` body, `#ffcc00` headers/links, `#cc0000` hover.
-   - Ensure responsive styles maintain layout.
-
-2. **Video Sorting**:
-   - Python: Change `titles.sort(key=lambda x: x['title'])` to `titles.sort(key=lambda x: x['date'], reverse=True)`.
-   - JavaScript:
-     - Initialize titles table with descending date order (`sortTitlesTable(2)` on load).
-     - Add `sortTitlesGrid` to sync titles grid with table order.
-     - Preserve S.No (numeric), Items (alphabetical), Date (chronological) sorting.
-   - Ensure clicking Date column toggles ascending/descending.
-
-3. **Preserve**:
-   - Main page: Ranking table structure, sorting, flip-card.
-   - Group pages: Titles table/grid, slideshow, video hover-to-play, serial number matching.
-   - CSV outputs (`output.csv`, `history.csv`).
-   - Responsive design and functionality.
-
-### Updated `rank.py`
-
-This completes the script, incorporating the dark theme and video sorting changes. The CSS is updated for both `ranking_html_content` and `html_content`, and sorting is adjusted for newest-first date order.
-
-<xaiArtifact artifact_id="0ea13c0a-bc58-4be5-a661-27da16851608" artifact_version_id="92ab36ee-fe86-4ed9-a6a5-e448adf8f141" title="rank.py" contentType="text/python">
-import json
-import csv
-import os
-import shutil
-from datetime import datetime
-import re
-import zipfile
-import random
-
-# Define folder paths
-input_folder = 'PS'
-output_folder = 'docs'
-html_subfolder = os.path.join(output_folder, 'HTML')
-photos_folder = 'Photos'
-docs_photos_folder = os.path.join(output_folder, 'Photos')
-history_csv_file = os.path.join(output_folder, 'history.csv')
-
-# Define CSV output path
-csv_file = os.path.join(output_folder, 'output.csv')
-
-# Ensure directories exist
-for folder in [input_folder, output_folder, html_subfolder, photos_folder]:
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-        print(f"Created directory: {folder}")
-    else:
-        print(f"Directory already exists: {folder}")
-
-# Copy Photos/ to docs/Photos/
-if os.path.exists(photos_folder):
-    if os.path.exists(docs_photos_folder):
-        shutil.rmtree(docs_photos_folder)
-    shutil.copytree(photos_folder, docs_photos_folder)
-    print(f"Copied {photos_folder}/ to {docs_photos_folder}/")
-else:
-    os.makedirs(docs_photos_folder)
-    print(f"Created empty {docs_photos_folder}/ (no photos found in {photos_folder}/)")
-
-# Path to result.zip
-zip_file = os.path.join(input_folder, 'result.zip')
 temp_json_file = os.path.join(input_folder, 'result.json')
 
 # Verify ZIP file existence and extract result.json
@@ -885,6 +293,9 @@ for chat in chats:
         if group_name not in history_data:
             history_data[group_name] = []
 
+        # Pre-compute JSON for history data to avoid f-string issue
+        history_data_json = json.dumps(history_data.get(group_name, []))
+
         # HTML content for group pages
         html_content = f"""<!DOCTYPE html>
 <html lang="en">
@@ -1139,7 +550,7 @@ for chat in chats:
         // Chart.js for rank history
         document.addEventListener('DOMContentLoaded', function() {{
             const ctx = document.getElementById('rankChart').getContext('2d');
-            const historyData = {json.dumps(history_data.get(group_name, []))};
+            const historyData = {history_data_json};
             const dates = historyData.map(entry => entry.date);
             const ranks = historyData.map(entry => entry.rank);
             new Chart(ctx, {{
@@ -1388,4 +799,55 @@ ranking_html_content = f"""<!DOCTYPE html>
                 <th onclick="sortTable(6)">#FOUR</th>
                 <th onclick="sortTable(7)">#Three</th>
                 <th onclick="sortTable(8)">#SceneType</th>
-                <th
+                <th onclick="sortTable(9)">Score</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            {table_rows}
+        </tbody>
+    </table>
+    <script>
+        let sortDirections = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        function sortTable(columnIndex) {{
+            if (columnIndex === 1) return; // Skip Photo column
+            const tbody = document.getElementById('tableBody');
+            const rows = Array.from(tbody.getElementsByTagName('tr'));
+            const isNumeric = [true, false, false, true, true, true, true, true, true, true];
+            const direction = sortDirections[columnIndex] === 1 ? -1 : 1;
+            rows.sort((a, b) => {{
+                let aValue = a.cells[columnIndex].innerText;
+                let bValue = b.cells[columnIndex].innerText;
+                if (columnIndex === 3) {{ // Last Scene column
+                    if (aValue === 'N/A' && bValue === 'N/A') return 0;
+                    if (aValue === 'N/A') return direction * 1;
+                    if (bValue === 'N/A') return direction * -1;
+                    aValue = parseInt(aValue);
+                    bValue = parseInt(bValue);
+                    return direction * (aValue - bValue);
+                }}
+                if (isNumeric[columnIndex]) {{ 
+                    aValue = parseFloat(aValue) || 0; 
+                    bValue = parseFloat(bValue) || 0; 
+                    return direction * (aValue - bValue); 
+                }}
+                return direction * aValue.localeCompare(bValue);
+            }});
+            while (tbody.firstChild) {{ 
+                tbody.removeChild(tbody.firstChild); 
+            }}
+            rows.forEach(row => tbody.appendChild(row));
+            sortDirections[columnIndex] = direction;
+            sortDirections = sortDirections.map((d, i) => (i === columnIndex ? d : 0));
+        }}
+    </script>
+</body>
+</html>
+"""
+
+# Write ranking HTML file
+ranking_html_file = os.path.join(output_folder, 'index.html')
+with open(ranking_html_file, 'w', encoding='utf-8') as f:
+    f.write(ranking_html_content)
+print(f"Wrote ranking HTML file: {ranking_html_file}")
+
+print(f"Processed {len(chats)} chats. Output files generated in '{output_folder}'")
