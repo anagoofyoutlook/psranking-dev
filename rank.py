@@ -205,7 +205,7 @@ for chat in chats:
         group_subfolder = os.path.join(docs_photos_folder, group_name)
         thumbs_subfolder = os.path.join(group_subfolder, 'thumbs')
         media_files = [f for f in os.listdir(thumbs_subfolder) if f.lower().endswith(tuple(media_extensions))] if os.path.exists(thumbs_subfolder) else []
-        fallback_photos = [f for f in os.listdir(group_subfolder) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')) and os.path.isfile(os.path.join(group_subfolder, f))] if os.path.exists(group_subfolder) else []
+        fallback_photos = [f for f in os.listdir(group_subfolder) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) and os.path.isfile(os.path.join(group_subfolder, f))] if os.path.exists(group_subfolder) else []
         print(f"Group {group_name}: Thumbs media files = {media_files}, Fallback photos = {fallback_photos}")
         serial_number = 1
         for message in messages:
@@ -271,7 +271,7 @@ for chat in chats:
         # Photos for slideshow
         photo_paths = []
         if os.path.exists(group_subfolder):
-            photo_paths = [f"../Photos/{group_name}/{f}" for f in os.listdir(group_subfolder) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')) and os.path.isfile(os.path.join(group_subfolder, f))]
+            photo_paths = [f"../Photos/{group_name}/{f}" for f in os.listdir(group_subfolder) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) and os.path.isfile(os.path.join(group_subfolder, f))]
             print(f"Group {group_name}: Found {len(photo_paths)} photos in {group_subfolder}: {photo_paths}")
         if not photo_paths:
             photo_paths = ['https://via.placeholder.com/1920x800']
@@ -284,7 +284,7 @@ for chat in chats:
             <div class="row">
         """ + ''.join(f'<div class="column"><img class="demo cursor" src="{p}" style="width:100%" onclick="currentSlide({i})" alt="{group_name} Photo {i}"></div>' for i, p in enumerate(photo_paths, 1)) + '</div></div>'
 
-        photo_file_name = next((f"{group_name}{ext}" for ext in ('.jpg', '.jpeg', '.png', '.gif') if os.path.exists(os.path.join(docs_photos_folder, f"{group_name}{ext}"))), None)
+        photo_file_name = next((f"{group_name}{ext}" for ext in ('.jpg', '.jpeg', '.png', '.gif', '.webp') if os.path.exists(os.path.join(docs_photos_folder, f"{group_name}{ext}"))), None)
         if photo_file_name:
             print(f"Group {group_name}: Found single photo at {docs_photos_folder}/{photo_file_name}")
         else:
@@ -306,7 +306,7 @@ for chat in chats:
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <style>
         body {{ font-family: Arial, sans-serif; margin: 20px; background-color: #1e2a44; color: #ffffff; text-align: center; }}
-        h1, h2 {{ color: #ffcc00; width: 80%; margin: 20px auto; text-align: center; font-size: 36px; }}
+        h1, h2 {{ color: #e6b800; width: 80%; margin: 20px auto; text-align: center; font-size: 36px; }}
         .info {{ background-color: #2a3a5c; padding: 10px; border-radius: 5px; margin-bottom: 20px; }}
         .hashtags {{ list-style-type: none; padding: 0; }}
         .hashtag-item {{ background-color: #3b4a6b; margin: 5px 0; padding: 5px; border-radius: 3px; display: inline-block; width: 200px; color: #ffffff; }}
@@ -319,7 +319,7 @@ for chat in chats:
             gap: 20px; 
             flex-wrap: wrap; 
         }}
-        .rank-number {{ font-size: 48px; font-weight: bold; color: #ffcc00; display: inline-block; }}
+        .rank-number {{ font-size: 48px; font-weight: bold; color: #e6b800; display: inline-block; }}
         @keyframes countUp {{ from {{ content: "0"; }} to {{ content: attr(data-rank); }} }}
         .rank-number::before {{ content: "0"; animation: countUp 2s ease-out forwards; display: inline-block; min-width: 60px; }}
         .chart-container {{ max-width: 400px; width: 100%; background-color: #2a3a5c; padding: 10px; border-radius: 5px; }}
@@ -350,7 +350,7 @@ for chat in chats:
             margin: 10px 0 5px; 
             font-size: 16px; 
             font-weight: bold; 
-            color: #ffcc00; 
+            color: #e6b800; 
         }}
         .grid-item .date {{ 
             margin: 0; 
@@ -371,15 +371,15 @@ for chat in chats:
             color: #ffffff; 
         }}
         .titles-table th {{ 
-            background-color: #ffcc00; 
+            background-color: #e6b800; 
             color: #1e2a44; 
             cursor: pointer; 
         }}
         .titles-table th:hover {{ 
-            background-color: #cc0000; 
+            background-color: #b30000; 
         }}
-        a {{ color: #ffcc00; text-decoration: none; }}
-        a:hover {{ color: #cc0000; text-decoration: underline; }}
+        a {{ color: #e6b800; text-decoration: none; }}
+        a:hover {{ color: #b30000; text-decoration: underline; }}
         .container {{ 
             position: relative; 
             width: 80%; 
@@ -409,7 +409,7 @@ for chat in chats:
             transform: translateY(-50%); 
             width: auto; 
             padding: 16px; 
-            color: #ffcc00; 
+            color: #e6b800; 
             font-weight: bold; 
             font-size: 20px; 
             border-radius: 0 3px 3px 0; 
@@ -423,10 +423,10 @@ for chat in chats:
             border-radius: 3px 0 0 3px; 
         }}
         .prev:hover, .next:hover {{ 
-            background-color: #cc0000; 
+            background-color: #b30000; 
         }}
         .numbertext {{ 
-            color: #ffcc00; 
+            color: #e6b800; 
             font-size: 12px; 
             padding: 8px 12px; 
             position: absolute; 
@@ -437,7 +437,7 @@ for chat in chats:
             text-align: center; 
             background-color: #1e2a44; 
             padding: 2px 16px; 
-            color: #ffcc00; 
+            color: #e6b800; 
         }}
         .row {{ 
             display: flex; 
@@ -459,6 +459,41 @@ for chat in chats:
         .active, .demo:hover {{ 
             opacity: 1; 
         }}
+        .tab {{ 
+            overflow: hidden; 
+            margin: 20px auto; 
+            width: 80%; 
+            background-color: #2a3a5c; 
+            border-radius: 5px 5px 0 0; 
+        }}
+        .tab button {{ 
+            background-color: #2a3a5c; 
+            color: #e6b800; 
+            float: left; 
+            border: none; 
+            outline: none; 
+            cursor: pointer; 
+            padding: 14px 16px; 
+            transition: 0.3s; 
+            font-size: 17px; 
+            width: 50%; 
+        }}
+        .tab button:hover {{ 
+            background-color: #b30000; 
+        }}
+        .tab button.active {{ 
+            background-color: #3b4a6b; 
+        }}
+        .tabcontent {{ 
+            display: none; 
+            padding: 6px 12px; 
+            border-top: none; 
+            background-color: #2a3a5c; 
+            margin: 0 auto; 
+            width: 80%; 
+            border-radius: 0 0 5px 5px; 
+        }}
+        #Videos {{ display: block; }}
         @media only screen and (max-width: 1800px) {{ 
             .titles-grid {{ 
                 grid-template-columns: repeat(2, 1fr); 
@@ -494,6 +529,10 @@ for chat in chats:
             .mySlides img {{ 
                 object-fit: contain; 
             }} 
+            .tab button {{ 
+                font-size: 14px; 
+                padding: 10px; 
+            }}
         }}
     </style>
 </head>
@@ -512,8 +551,16 @@ for chat in chats:
     </div>
     <div class="info">
         <h2>Titles</h2>
-        {titles_grid}
-        {titles_table}
+        <div class="tab">
+            <button class="tablinks active" onclick="openTab(event, 'Videos')">Videos</button>
+            <button class="tablinks" onclick="openTab(event, 'Table')">Table</button>
+        </div>
+        <div id="Videos" class="tabcontent">
+            {titles_grid}
+        </div>
+        <div id="Table" class="tabcontent">
+            {titles_table}
+        </div>
     </div>
     <script>
         let slideIndex = 1;
@@ -547,6 +594,20 @@ for chat in chats:
         }}
         let autoSlide = setInterval(() => plusSlides(1), 3000);
 
+        function openTab(evt, tabName) {{
+            let i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {{
+                tabcontent[i].style.display = "none";
+            }}
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {{
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }}
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }}
+
         // Chart.js for rank history
         document.addEventListener('DOMContentLoaded', function() {{
             const ctx = document.getElementById('rankChart').getContext('2d');
@@ -560,8 +621,8 @@ for chat in chats:
                     datasets: [{{ 
                         label: 'Rank Over Time', 
                         data: ranks, 
-                        borderColor: '#ffcc00', 
-                        backgroundColor: 'rgba(255, 204, 0, 0.2)', 
+                        borderColor: '#e6b800', 
+                        backgroundColor: 'rgba(230, 184, 0, 0.2)', 
                         fill: true, 
                         tension: 0.4 
                     }}] 
@@ -570,19 +631,19 @@ for chat in chats:
                     scales: {{ 
                         y: {{ 
                             beginAtZero: true, 
-                            title: {{ display: true, text: 'Rank', color: '#ffcc00' }}, 
+                            title: {{ display: true, text: 'Rank', color: '#e6b800' }}, 
                             ticks: {{ stepSize: 1, color: '#ffffff' }}, 
                             suggestedMax: {len(chats) + 1},
                             grid: {{ color: '#3b4a6b' }}
                         }}, 
                         x: {{ 
-                            title: {{ display: true, text: 'Date', color: '#ffcc00' }},
+                            title: {{ display: true, text: 'Date', color: '#e6b800' }},
                             ticks: {{ color: '#ffffff' }},
                             grid: {{ color: '#3b4a6b' }}
                         }} 
                     }}, 
                     plugins: {{ 
-                        legend: {{ display: true, labels: {{ color: '#ffcc00' }} }} 
+                        legend: {{ display: true, labels: {{ color: '#e6b800' }} }} 
                     }} 
                 }}
             }});
@@ -748,7 +809,8 @@ for entry in sorted_data:
     table_rows += f"""
         <tr>
             <td>{entry['rank']}</td>
-            <td><div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><a href="{html_link}" target="_blank"><img src="{photo_src}" alt="{group_name}" style="width:300px;height:300px;object-fit:cover;"></a></div><div class="flip-card-back"><a href="{html_link}" target="_blank" style="color: #ffcc00; text-decoration: none;"><h1>{group_name}</h1></a></div></div></div></td>
+            <td><div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="{photo_src}" alt="{group_name}" style="width:300px;height:300px;object-fit:cover;"></div><div class="flip-card-back"><a href="{html_link}" target="_blank" style="color: #e6b800; text-decoration: none;"><h1>{group_name}</h1></a></div></div></div></td>
+            <td></td>
             <td>{last_scene}</td>
             <td>{entry['total titles']}</td>
             <td>{entry['count of the hashtag "#FIVE"']}</td>
@@ -767,19 +829,20 @@ ranking_html_content = f"""<!DOCTYPE html>
     <title>PS Ranking - {current_date}</title>
     <style>
         body {{ font-family: Arial, Helvetica, sans-serif; background-color: #1e2a44; color: #ffffff; margin: 20px; text-align: center; }}
-        h1, h2 {{ color: #ffcc00; }}
+        h1, h2 {{ color: #e6b800; }}
         table {{ width: 90%; margin: 20px auto; border-collapse: collapse; background-color: #2a3a5c; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); }}
         th, td {{ padding: 15px; border: 1px solid #3b4a6b; text-align: center; vertical-align: middle; color: #ffffff; }}
-        th {{ background-color: #ffcc00; color: #1e2a44; cursor: pointer; }}
-        th:hover {{ background-color: #cc0000; }}
+        th {{ background-color: #e6b800; color: #1e2a44; cursor: pointer; }}
+        th:hover {{ background-color: #b30000; }}
         tr:hover {{ background-color: #3b4a6b; }}
-        a {{ color: #ffcc00; text-decoration: none; }}
-        a:hover {{ color: #cc0000; text-decoration: underline; }}
+        a {{ color: #e6b800; text-decoration: none; }}
+        a:hover {{ color: #b30000; text-decoration: underline; }}
         .flip-card {{ background-color: transparent; width: 300px; height: 300px; perspective: 1000px; }}
         .flip-card-inner {{ position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); }}
         .flip-card:hover .flip-card-inner {{ transform: rotateY(180deg); }}
+        .flip-card-front, .flip-card-back {{ position: absolute; width: 100%; height: 100%; backface-visibility: hidden; }}
         .flip-card-front {{ background-color: #2a3a5c; color: #ffffff; }}
-        .flip-card-back {{ background-color: #3b4a6b; color: #ffcc00; transform: rotateY(180deg); display: flex; justify-content: center; align-items: center; flex-direction: column; }}
+        .flip-card-back {{ background-color: #3b4a6b; color: #e6b800; transform: rotateY(180deg); display: flex; justify-content: center; align-items: center; flex-direction: column; }}
         .flip-card-back h1 {{ margin: 0; font-size: 24px; word-wrap: break-word; padding: 10px; }}
     </style>
 </head>
@@ -791,13 +854,14 @@ ranking_html_content = f"""<!DOCTYPE html>
             <tr>
                 <th onclick="sortTable(0)">Rank</th>
                 <th>Photo</th>
-                <th onclick="sortTable(2)">Last Scene</th>
-                <th onclick="sortTable(3)">Total Titles</th>
-                <th onclick="sortTable(4)">#FIVE</th>
-                <th onclick="sortTable(5)">#FOUR</th>
-                <th onclick="sortTable(6)">#Three</th>
-                <th onclick="sortTable(7)">#SceneType</th>
-                <th onclick="sortTable(8)">Score</th>
+                <th>Group Name</th>
+                <th onclick="sortTable(3)">Last Scene</th>
+                <th onclick="sortTable(4)">Total Titles</th>
+                <th onclick="sortTable(5)">#FIVE</th>
+                <th onclick="sortTable(6)">#FOUR</th>
+                <th onclick="sortTable(7)">#Three</th>
+                <th onclick="sortTable(8)">#SceneType</th>
+                <th onclick="sortTable(9)">Score</th>
             </tr>
         </thead>
         <tbody id="tableBody">
@@ -805,17 +869,17 @@ ranking_html_content = f"""<!DOCTYPE html>
         </tbody>
     </table>
     <script>
-        let sortDirections = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+        let sortDirections = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         function sortTable(columnIndex) {{
-            if (columnIndex === 1) return; // Skip Photo column
+            if (columnIndex === 1 || columnIndex === 2) return; // Skip Photo and Group Name columns
             const tbody = document.getElementById('tableBody');
             const rows = Array.from(tbody.getElementsByTagName('tr'));
-            const isNumeric = [true, false, true, true, true, true, true, true, true];
+            const isNumeric = [true, false, false, true, true, true, true, true, true, true];
             const direction = sortDirections[columnIndex] === 1 ? -1 : 1;
             rows.sort((a, b) => {{
                 let aValue = a.cells[columnIndex].innerText;
                 let bValue = b.cells[columnIndex].innerText;
-                if (columnIndex === 2) {{ // Last Scene column
+                if (columnIndex === 3) {{ // Last Scene column
                     if (aValue === 'N/A' && bValue === 'N/A') return 0;
                     if (aValue === 'N/A') return direction * 1;
                     if (bValue === 'N/A') return direction * -1;
