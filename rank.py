@@ -6,6 +6,7 @@ from datetime import datetime
 import re
 import zipfile
 import random
+from html import escape
 
 # Define folder paths
 input_folder = 'PS'
@@ -507,23 +508,7 @@ for chat in chats:
         @media only screen and (max-width: 1200px) {{ 
             .titles-grid {{ 
                 grid-template-columns: 1fr; 
-                width: 80%;
-                max-width: 600px;
-                margin-left: auto;
-                margin-right: auto;
             }} 
-            .grid-item {{ 
-                width: 100%;
-                max-width: 600px;
-                margin-left: auto;
-                margin-right: auto;
-            }}
-            .grid-item video, .grid-item img {{ 
-                width: 100%;
-                max-width: 600px;
-                height: auto;
-                object-fit: contain;
-            }}
         }}
         @media only screen and (max-width: 768px) {{ 
             .container {{ 
@@ -639,7 +624,7 @@ for chat in chats:
                 type: 'line',
                 data: {{ 
                     labels: dates, 
-                    datasets: [{{ 
+                    datasets: [{{
                         label: 'Rank Over Time', 
                         data: ranks, 
                         borderColor: '#e6b800', 
@@ -691,7 +676,7 @@ for chat in chats:
         function sortTitlesTable(columnIndex, forceDirection) {{
             const tbody = document.getElementById('titlesTableBody');
             const rows = Array.from(tbody.getElementsByTagName('tr'));
-            const direction = forceDirection !== undefined ? forceDirection : (columnIndex === 2 ? (titlesSortDirections[columnIndex] === -1 ? 1 : -1) : (titlesSortDirections[columnIndex] === 1 ? -1 : 1));
+            const direction = forceDirection !== undefined ? forceDirection : (columnIndex === 2 ? (titlesSortDirections[columnIndex] === -1 ? 1 : -1) : (titlesSortDirections[columnIndex].1 ? -1 : 1));
             rows.sort((a, b) => {{
                 let aValue = a.cells[columnIndex].innerText;
                 let bValue = b.cells[columnIndex].innerText;
@@ -708,10 +693,7 @@ for chat in chats:
                 }}
                 return 0;
             }});
-            while (tbody.firstChild) {{ 
-                tbody.removeChild(tbody.firstChild); 
-            }}
-            rows.forEach(row => tbody.insertBefore(row, tbody.firstChild)); // Prepend to show newest at top
+            rows.forEach(row => tbody.appendChild(row)); // Insert to preserve order
             titlesSortDirections[columnIndex] = direction;
             titlesSortDirections = titlesSortDirections.map((d, i) => (i === columnIndex ? d : 0));
             // Sync grid with table
@@ -734,14 +716,11 @@ for chat in chats:
                 }} else if (columnIndex === 2) {{ // Date
                     aValue = new Date(a.querySelector('.date').innerText.split(' | ')[1]);
                     bValue = new Date(b.querySelector('.date').innerText.split(' | ')[1]);
-                    return direction * (bValue - aValue); // Reversed for newest first when direction = -1
+                    return direction * (bValue - bValue); // Reversed for newest first when direction = -1
                 }}
                 return 0;
             }});
-            while (grid.firstChild) {{ 
-                grid.removeChild(grid.firstChild); 
-            }}
-            items.forEach(item => grid.insertBefore(item, grid.firstChild)); // Prepend to show newest at top
+            items.forEach(item => grid.appendChild(item)); // Insert items in sorted order
         }}
     </script>
 </body>
@@ -762,16 +741,16 @@ for chat in chats:
             'count of the hashtag "#Three"': hashtag_counts.get('#THREE', 0),
             'count of the hashtag "#SceneType"': scene_type_count,
             'score': 0,
-            'rank': 0,
+            'sortable': 0,
             'total titles': titles_count,
             'html_file': html_file,
             'html_content': html_content,
-            'photo_rel_path': f"Photos/{photo_file_name}" if photo_file_name else None
+            'photo_file_name': f"Photos/{photo_file_name}" if photo_file_name else None
         })
 
 # Calculate scores
 min_date_diff = min(date_diffs) if date_diffs else 0
-max_date_diff_denom = max(date_diffs) - (min_date_diff if date_diffs else 0) if date_diffs and max(date_diffs) > min_date_diff else 1
+max_date_diff_denom = max(date_diffs) - min_date_diff if date_diffs and max(date_diffs) > min_date_diff else 1
 
 for entry in all_data:
     five_count = entry['count of the hashtag "#FIVE"']
@@ -816,31 +795,31 @@ if new_history_rows:
         if write_header:
             writer.writeheader()
         writer.writerows(new_history_rows)
-    print(f"\nAppended {len(new_history_rows)} rows to to {history_csv_file}")
+    print(f"\nAppended {len(new_history_rows)} new entries to {history_csv_file}")
 else:
-    print(f"No nNo new history entries to to append to to {history_csv_file}")
+    print(f"No new history entries to append to {history_csv_file}")
 
 # Generate ranking HTML
 total_groups = len(sorted_data)
 table_rows = ''
 for entry in sorted_data:
-    group_name = entry['group name']
+    group_name = escape(entry['group name'])  # Escape group name for HTML
     photo_src = entry['photo_rel_path'] if entry['photo_rel_path'] else 'https://via.placeholder.com/300'
     html_link = f"HTML/{entry['html_file']}"
     last_scene = f"{entry['Datedifference']} days" if entry['Datedifference'] != 'N/A' else 'N/A'
     table_rows += f"""
-    <tr>
-        <td>{entry['rank']}</td>
-        <td>{group_name}</td>
-        <td><div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="{photo_src}" alt="{group_name}" style="width:300px;height:300px;object-fit:cover;"></div><div class="flip-card-back"><a href="{html_link}" target="_blank" style="color: #e6b800; text-decoration: none;"><h1>{group_name}</h1></a></div></div></div></td>
-        <td>{last_scene}</td>
-        <td>{entry['total titles']}</td>
-        <td>{entry['count of the hashtag "#FIVE"']}</td>
-        <td>{entry['count of the hashtag "#FOUR"']}</td>
-        <td>{entry['count of the hashtag "#Three"']}</td>
-        <td>{entry['count of the hashtag "#SceneType"']}</td>
-        <td>{entry['score']:.2f}</td>
-    </tr>
+        <tr>
+            <td>{entry['rank']}</td>
+            <td>{group_name}</td>
+            <td><div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="{photo_src}" alt="{group_name}" style="width:300px;height:300px;object-fit:cover;"></div><div class="flip-card-back"><a href="{html_link}" target="_blank" style="color: #e6b800; text-decoration: none;"><h1>{group_name}</h1></a></div></div></div></td>
+            <td>{last_scene}</td>
+            <td>{entry['total titles']}</td>
+            <td>{entry['count of the hashtag "#FIVE"']}</td>
+            <td>{entry['count of the hashtag "#FOUR"']}</td>
+            <td>{entry['count of the hashtag "#Three"']}</td>
+            <td>{entry['count of the hashtag "#SceneType"']}</td>
+            <td>{entry['score']:.2f}</td>
+        </tr>
     """
 
 ranking_html_content = f"""<!DOCTYPE html>
@@ -848,21 +827,21 @@ ranking_html_content = f"""<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ranking - {weekly_date}</title>
+    <title>PS Ranking - {current_date}</title>
     <style>
         body {{ font-family: Arial, sans-serif; background-color: #1e2a44; color: #ffffff; margin: 20px; text-align: center; }}
         h1, h2 {{ color: #e6b800; }}
         table {{ width: 80%; margin: 20px auto; border-collapse: collapse; background-color: #2a3a5c; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); }}
-        th, td {{ border: 1px solid #3b4a6b; text-align: center; vertical-align: middle; padding: 15px; color: white; }}
+        th, td {{ padding: 15px; border: 1px solid #3b4a6b; text-align: center; vertical-align: middle; color: #ffffff; }}
         th {{ background-color: #e6b800; color: #1e2a44; cursor: pointer; }}
         th:hover {{ background-color: #b30000; }}
         tr:hover {{ background-color: #3b4a6b; }}
-        a {{ text-decoration: none; color: #e6b800; }}
+        a {{ color: #e6b800; text-decoration: none; }}
         a:hover {{ color: #b30000; text-decoration: underline; }}
-        .flip-card {{ background-color: transparent; width: 300px; height: 300px; perspective: 1000px; margin: auto; }}
+        .flip-card {{ background-color: transparent; width: 300px; height: 300px; perspective: 1000px; }}
         .flip-card-inner {{ position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); }}
         .flip-card:hover .flip-card-inner {{ transform: rotateY(180deg); }}
-        .flip-card-front, .flip-card-back {{ position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 5px; }}
+        .flip-card-front, .flip-card-back {{ position: absolute; width: 100%; height: 100%; backface-visibility: hidden; }}
         .flip-card-front {{ background-color: #2a3a5c; color: #ffffff; }}
         .flip-card-back {{ background-color: #3b4a6b; color: #e6b800; transform: rotateY(180deg); display: flex; justify-content: center; align-items: center; flex-direction: column; }}
         .flip-card-back h1 {{ margin: 0; font-size: 24px; word-wrap: break-word; padding: 10px; }}
@@ -887,7 +866,7 @@ ranking_html_content = f"""<!DOCTYPE html>
         <thead>
             <tr>
                 <th onclick="sortTable(0)">Rank</th>
-                <th>Group Name</th>
+                <th onclick="sortTable(1)">Group Name</th>
                 <th>Photo</th>
                 <th onclick="sortTable(3)">Last Scene</th>
                 <th onclick="sortTable(4)">Total Titles</th>
@@ -903,42 +882,42 @@ ranking_html_content = f"""<!DOCTYPE html>
         </tbody>
     </table>
     <script>
-        let sortDirections = ['', '', '', '', '', '', '', '', '', ''];
-        function sortTable(columnIndex) {
+        let sortDirections = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        function sortTable(columnIndex) {{
             if (columnIndex === 2) return; // Skip Photo column
             const tbody = document.getElementById('tableBody');
             const rows = Array.from(tbody.getElementsByTagName('tr'));
             const isNumeric = [true, false, false, true, true, true, true, true, true, true];
             const direction = sortDirections[columnIndex] === 1 ? -1 : 1;
 
-            rows.sort((a, b) => {
+            rows.sort((a, b) => {{
                 let aValue = a.cells[columnIndex].innerText;
                 let bValue = b.cells[columnIndex].innerText;
 
-                if (columnIndex === 3) { // Last Scene column
+                if (columnIndex === 3) {{ // Last Scene column
                     if (aValue === 'N/A' && bValue === 'N/A') return 0;
                     if (aValue === 'N/A') return direction * 1;
                     if (bValue === 'N/A') return direction * -1;
                     aValue = parseInt(aValue);
                     bValue = parseInt(bValue);
                     return direction * (aValue - bValue);
-                }
+                }}
 
-                if (isNumeric[columnIndex]) { 
+                if (isNumeric[columnIndex]) {{ 
                     aValue = parseFloat(aValue) || 0; 
                     bValue = parseFloat(bValue) || 0; 
                     return direction * (aValue - bValue); 
-                }
+                }}
                 return direction * aValue.localeCompare(bValue);
-            });
+            }});
 
-            while (tbody.firstChild) { 
+            while (tbody.firstChild) {{ 
                 tbody.removeChild(tbody.firstChild); 
-            }
+            }}
             rows.forEach(row => tbody.appendChild(row));
             sortDirections[columnIndex] = direction;
             sortDirections = sortDirections.map((d, i) => i === columnIndex ? d : 0);
-        }
+        }}
     </script>
 </body>
 </html>
@@ -947,7 +926,7 @@ ranking_html_content = f"""<!DOCTYPE html>
 # Write ranking HTML file
 ranking_html_file = os.path.join(output_folder, 'index.html')
 with open(ranking_html_file, 'w', encoding='utf-8') as f:
-    f.write(f"{ranking_html_content}")
-print(f"\nWrote ranking HTML file: {ranking_html_file}")
+    f.write(ranking_html_content)
+print(f"Wrote ranking HTML file: {ranking_html_file}")
 
-print(f"\nProcessed {len(chats)} groups. Output written to to {output_folder}")
+print(f"Processed {len(chats)} chats. Output files generated in '{output_folder}'")
