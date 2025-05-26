@@ -507,7 +507,23 @@ for chat in chats:
         @media only screen and (max-width: 1200px) {{ 
             .titles-grid {{ 
                 grid-template-columns: 1fr; 
+                width: 80%;
+                max-width: 600px;
+                margin-left: auto;
+                margin-right: auto;
             }} 
+            .grid-item {{ 
+                width: 100%;
+                max-width: 600px;
+                margin-left: auto;
+                margin-right: auto;
+            }}
+            .grid-item video, .grid-item img {{ 
+                width: 100%;
+                max-width: 600px;
+                height: auto;
+                object-fit: contain;
+            }}
         }}
         @media only screen and (max-width: 768px) {{ 
             .container {{ 
@@ -755,7 +771,7 @@ for chat in chats:
 
 # Calculate scores
 min_date_diff = min(date_diffs) if date_diffs else 0
-max_date_diff_denom = max(date_diffs) - min_date_diff if date_diffs and max(date_diffs) > min_date_diff else 1
+max_date_diff_denom = max(date_diffs) - (min_date_diff if date_diffs else 0) if date_diffs and max(date_diffs) > min_date_diff else 1
 
 for entry in all_data:
     five_count = entry['count of the hashtag "#FIVE"']
@@ -783,12 +799,12 @@ for i, entry in enumerate(sorted_data, 1):
     print(f"Wrote HTML file: {html_path}")
 
 # Write current run to output.csv
-csv_data = [{k: (int(v) if k == 'rank' else v) for k, v in entry.items() if k in csv_columns} for entry in sorted_data]
+csv_data = [{k: v for k, v in entry.items() if k in csv_columns} for entry in sorted_data]
 with open(csv_file, 'w', newline='', encoding='utf-8') as f:
     writer = csv.DictWriter(f, fieldnames=csv_columns)
     writer.writeheader()
     writer.writerows(csv_data)
-print(f"Wrote CSV file: {csv_file}")
+print(f"\nWrote CSV file: {csv_file}")
 
 # Append new history entries to history.csv
 new_history_rows = [{'date': current_date, 'group name': entry['group name'], 'rank': entry['rank']} for entry in sorted_data]
@@ -800,9 +816,9 @@ if new_history_rows:
         if write_header:
             writer.writeheader()
         writer.writerows(new_history_rows)
-    print(f"Appended {len(new_history_rows)} new entries to {history_csv_file}")
+    print(f"\nAppended {len(new_history_rows)} rows to to {history_csv_file}")
 else:
-    print(f"No new history entries to append to {history_csv_file}")
+    print(f"No nNo new history entries to to append to to {history_csv_file}")
 
 # Generate ranking HTML
 total_groups = len(sorted_data)
@@ -813,18 +829,18 @@ for entry in sorted_data:
     html_link = f"HTML/{entry['html_file']}"
     last_scene = f"{entry['Datedifference']} days" if entry['Datedifference'] != 'N/A' else 'N/A'
     table_rows += f"""
-        <tr>
-            <td>{entry['rank']}</td>
-            <td></td>
-            <td><div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="{photo_src}" alt="{group_name}" style="width:300px;height:300px;object-fit:cover;"></div><div class="flip-card-back"><a href="{html_link}" target="_blank" style="color: #e6b800; text-decoration: none;"><h1>{group_name}</h1></a></div></div></div></td>
-            <td>{last_scene}</td>
-            <td>{entry['total titles']}</td>
-            <td>{entry['count of the hashtag "#FIVE"']}</td>
-            <td>{entry['count of the hashtag "#FOUR"']}</td>
-            <td>{entry['count of the hashtag "#Three"']}</td>
-            <td>{entry['count of the hashtag "#SceneType"']}</td>
-            <td>{entry['score']:.2f}</td>
-        </tr>
+    <tr>
+        <td>{entry['rank']}</td>
+        <td>{group_name}</td>
+        <td><div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="{photo_src}" alt="{group_name}" style="width:300px;height:300px;object-fit:cover;"></div><div class="flip-card-back"><a href="{html_link}" target="_blank" style="color: #e6b800; text-decoration: none;"><h1>{group_name}</h1></a></div></div></div></td>
+        <td>{last_scene}</td>
+        <td>{entry['total titles']}</td>
+        <td>{entry['count of the hashtag "#FIVE"']}</td>
+        <td>{entry['count of the hashtag "#FOUR"']}</td>
+        <td>{entry['count of the hashtag "#Three"']}</td>
+        <td>{entry['count of the hashtag "#SceneType"']}</td>
+        <td>{entry['score']:.2f}</td>
+    </tr>
     """
 
 ranking_html_content = f"""<!DOCTYPE html>
@@ -832,24 +848,36 @@ ranking_html_content = f"""<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PS Ranking - {current_date}</title>
+    <title>Ranking - {weekly_date}</title>
     <style>
         body {{ font-family: Arial, sans-serif; background-color: #1e2a44; color: #ffffff; margin: 20px; text-align: center; }}
         h1, h2 {{ color: #e6b800; }}
         table {{ width: 80%; margin: 20px auto; border-collapse: collapse; background-color: #2a3a5c; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); }}
-        th, td {{ padding: 15px; border: 1px solid #3b4a6b; text-align: center; vertical-align: middle; color: #ffffff; }}
+        th, td {{ border: 1px solid #3b4a6b; text-align: center; vertical-align: middle; padding: 15px; color: white; }}
         th {{ background-color: #e6b800; color: #1e2a44; cursor: pointer; }}
         th:hover {{ background-color: #b30000; }}
         tr:hover {{ background-color: #3b4a6b; }}
-        a {{ color: #e6b800; text-decoration: none; }}
+        a {{ text-decoration: none; color: #e6b800; }}
         a:hover {{ color: #b30000; text-decoration: underline; }}
-        .flip-card {{ background-color: transparent; width: 300px; height: 300px; perspective: 1000px; }}
+        .flip-card {{ background-color: transparent; width: 300px; height: 300px; perspective: 1000px; margin: auto; }}
         .flip-card-inner {{ position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); }}
         .flip-card:hover .flip-card-inner {{ transform: rotateY(180deg); }}
-        .flip-card-front, .flip-card-back {{ position: absolute; width: 100%; height: 100%; backface-visibility: hidden; }}
+        .flip-card-front, .flip-card-back {{ position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 5px; }}
         .flip-card-front {{ background-color: #2a3a5c; color: #ffffff; }}
         .flip-card-back {{ background-color: #3b4a6b; color: #e6b800; transform: rotateY(180deg); display: flex; justify-content: center; align-items: center; flex-direction: column; }}
         .flip-card-back h1 {{ margin: 0; font-size: 24px; word-wrap: break-word; padding: 10px; }}
+        @media only screen and (max-width: 1200px) {{ 
+            table {{ width: 90%; }} 
+            .flip-card {{ width: 200px; height: 200px; }} 
+            .flip-card-back h1 {{ font-size: 18px; }}
+            th, td {{ font-size: 14px; padding: 10px; }}
+        }}
+        @media only screen and (max-width: 768px) {{ 
+            table {{ width: 95%; }} 
+            .flip-card {{ width: 150px; height: 150px; }} 
+            .flip-card-back h1 {{ font-size: 16px; }}
+            th, td {{ font-size: 12px; padding: 8px; }}
+        }}
     </style>
 </head>
 <body>
@@ -866,7 +894,7 @@ ranking_html_content = f"""<!DOCTYPE html>
                 <th onclick="sortTable(5)">#FIVE</th>
                 <th onclick="sortTable(6)">#FOUR</th>
                 <th onclick="sortTable(7)">#Three</th>
-                <th onclick="sortTable(8)">#SceneType</th>
+                <th onclick="sortTable(8)">Thumbnails</th>
                 <th onclick="sortTable(9)">Score</th>
             </tr>
         </thead>
@@ -875,42 +903,42 @@ ranking_html_content = f"""<!DOCTYPE html>
         </tbody>
     </table>
     <script>
-        let sortDirections = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-        function sortTable(columnIndex) {{
-            if (columnIndex === 1 || columnIndex === 2) return; // Skip Group Name and Photo columns
+        let sortDirections = ['', '', '', '', '', '', '', '', '', ''];
+        function sortTable(columnIndex) {
+            if (columnIndex === 2) return; // Skip Photo column
             const tbody = document.getElementById('tableBody');
             const rows = Array.from(tbody.getElementsByTagName('tr'));
             const isNumeric = [true, false, false, true, true, true, true, true, true, true];
             const direction = sortDirections[columnIndex] === 1 ? -1 : 1;
 
-            rows.sort((a, b) => {{
+            rows.sort((a, b) => {
                 let aValue = a.cells[columnIndex].innerText;
                 let bValue = b.cells[columnIndex].innerText;
 
-                if (columnIndex === 3) {{ // Last Scene column
+                if (columnIndex === 3) { // Last Scene column
                     if (aValue === 'N/A' && bValue === 'N/A') return 0;
                     if (aValue === 'N/A') return direction * 1;
                     if (bValue === 'N/A') return direction * -1;
                     aValue = parseInt(aValue);
                     bValue = parseInt(bValue);
                     return direction * (aValue - bValue);
-                }}
+                }
 
-                if (isNumeric[columnIndex]) {{ 
+                if (isNumeric[columnIndex]) { 
                     aValue = parseFloat(aValue) || 0; 
                     bValue = parseFloat(bValue) || 0; 
                     return direction * (aValue - bValue); 
-                }}
+                }
                 return direction * aValue.localeCompare(bValue);
-            }});
+            });
 
-            while (tbody.firstChild) {{ 
+            while (tbody.firstChild) { 
                 tbody.removeChild(tbody.firstChild); 
-            }}
+            }
             rows.forEach(row => tbody.appendChild(row));
             sortDirections[columnIndex] = direction;
             sortDirections = sortDirections.map((d, i) => i === columnIndex ? d : 0);
-        }}
+        }
     </script>
 </body>
 </html>
@@ -919,7 +947,7 @@ ranking_html_content = f"""<!DOCTYPE html>
 # Write ranking HTML file
 ranking_html_file = os.path.join(output_folder, 'index.html')
 with open(ranking_html_file, 'w', encoding='utf-8') as f:
-    f.write(ranking_html_content)
-print(f"Wrote ranking HTML file: {ranking_html_file}")
+    f.write(f"{ranking_html_content}")
+print(f"\nWrote ranking HTML file: {ranking_html_file}")
 
-print(f"Processed {len(chats)} chats. Output files generated in '{output_folder}'")
+print(f"\nProcessed {len(chats)} groups. Output written to to {output_folder}")
