@@ -816,7 +816,7 @@ for entry in sorted_data:
     table_rows += f"""
     <tr>
         <td>{entry['rank']}</td>
-        <td>{group_name}</td>
+        <td><a href="{html_link}" target="_blank">{group_name}</a></td>
         <td><div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="{photo_src}" alt="{group_name}" style="width:300px;height:300px;object-fit:cover;"></div><div class="flip-card-back"><a href="{html_link}" target="_blank" style="color: #e6b800; text-decoration: none;"><h1>{group_name}</h1></a></div></div></div></td>
         <td>{last_scene}</td>
         <td>{entry['total titles']}</td>
