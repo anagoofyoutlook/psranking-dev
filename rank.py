@@ -249,9 +249,9 @@ for chat in chats:
         titles_grid = f"<p>Total Titles: {titles_count}</p><div class='titles-grid' id='titlesGrid'>"
         for t in titles:
             media_element = (
-                f"<img src='{t['media_path']}' alt='Media for {t['title']}' style='width:600px;height:300px;object-fit:cover;'>"
+                f"<img src='{t['media_path']}' alt='Media for {t['title']}' style='width:100%;max-width:600px;height:300px;object-fit:cover;'>"
                 if t['is_gif'] or t['media_path'] == 'https://via.placeholder.com/600x300'
-                else f"<video src='{t['media_path']}' style='width:600px;height:300px;object-fit:cover;' loop muted playsinline></video>"
+                else f"<video src='{t['media_path']}' style='width:100%;max-width:600px;height:300px;object-fit:cover;' loop muted playsinline></video>"
             )
             titles_grid += f"""
                 <div class='grid-item'>
@@ -330,6 +330,8 @@ for chat in chats:
             gap: 20px; 
             margin: 20px auto; 
             max-width: 1800px; 
+            width: 80%; 
+            box-sizing: border-box; 
         }}
         .grid-item {{ 
             background-color: #2a3a5c; 
@@ -339,9 +341,12 @@ for chat in chats:
             display: flex; 
             flex-direction: column; 
             align-items: center; 
+            width: 100%; 
+            box-sizing: border-box; 
         }}
         .grid-item video, .grid-item img {{ 
-            width: 600px; 
+            width: 100%; 
+            max-width: 600px; 
             height: 300px; 
             object-fit: cover; 
             border-radius: 5px; 
@@ -786,7 +791,7 @@ with open(csv_file, 'w', newline='', encoding='utf-8') as f:
 print(f"Wrote CSV file: {csv_file}")
 
 # Append new history entries to history.csv
-new_history_rows = [{'date': current_date, 'group name': entry['group name'], 'rank': entry['rank']} for entry in sorted_data]
+new_history_rows = [row for row in new_history_rows if row.get('group name') and row.get('rank') is not None]
 if new_history_rows:
     write_header = not os.path.exists(history_csv_file)
     with open(history_csv_file, 'a', newline='', encoding='utf-8') as f:
@@ -798,69 +803,138 @@ if new_history_rows:
 else:
     print(f"No new history entries to append to {history_csv_file}")
 
-# Generate ranking HTML
-total_groups = len(sorted_data)
+# Generate ranking groups HTML
+total_groups = len(all_data)
 table_rows = ''
 for entry in sorted_data:
     group_name = entry['group name']
-    photo_src = entry['photo_rel_path'] if entry['photo_rel_path'] else 'https://via.placeholder.com/300'
-    html_link = f"HTML/{entry['html_file']}"
-    last_scene = f"{entry['Datedifference']} days" if entry['Datedifference'] != 'N/A' else 'N/A'
+    photo_url = entry['photo_url'] if entry['photo_url'] else 'https://via.placeholder.com/300x300'
+    html_url = f"HTML/{entry['html_url']}"
+    last_scene_date = f"{entry['last_scene_date']} days ago" if entry['last_scene_date'] != 'N/A' else 'N/A'
     table_rows += f"""
-        <tr>
-            <td>{entry['rank']}</td>
-            <td><div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="{photo_src}" alt="{group_name}" style="width:300px;height:300px;object-fit:cover;"></div><div class="flip-card-back"><a href="{html_link}" target="_blank" style="color: #e6b800; text-decoration: none;"><h1>{group_name}</h1></a></div></div></div></td>
-            <td></td>
-            <td>{last_scene}</td>
-            <td>{entry['total titles']}</td>
-            <td>{entry['count of the hashtag "#FIVE"']}</td>
-            <td>{entry['count of the hashtag "#FOUR"']}</td>
-            <td>{entry['count of the hashtag "#Three"']}</td>
-            <td>{entry['count of the hashtag "#SceneType"']}</td>
-            <td>{entry['score']:.2f}</td>
-        </tr>
+    <tr>
+        <td>{entry['rank']}</td>
+        <td></td>
+        <td><div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="{photo_url}" alt="{group_name}" style="width:300px;height:300px;object-fit:cover;"></div><div class="flip-card-back"><a href="{html_url}" target="_blank" style="color: #e6b800; text-decoration: none;"><h1>{group_name}</h1></a></div></div></div></td>
+        <td>{last_date}</td>
+        <td>{entry['total_titles']}</td>
+        <td>{entry['count_FIVE']}</td>
+        <td>{entry['count_FOUR']}</td>
+        <td>{entry['count_three']}</td>
+        <td>{entry['count_scene_type']}</td>
+        <td>{entry['score']:.2f}</td>
+    </tr>
     """
 
-ranking_html_content = f"""<!DOCTYPE html>
+ranking_html_content = f"""
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PS Ranking - {current_date}</title>
     <style>
-        body {{ font-family: Arial, Helvetica, sans-serif; background-color: #1e2a44; color: #ffffff; margin: 20px; text-align: center; }}
-        h1, h2 {{ color: #e6b800; }}
-        table {{ width: 90%; margin: 20px auto; border-collapse: collapse; background-color: #2a3a5c; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); }}
-        th, td {{ padding: 15px; border: 1px solid #3b4a6b; text-align: center; vertical-align: middle; color: #ffffff; }}
-        th {{ background-color: #e6b800; color: #1e2a44; cursor: pointer; }}
-        th:hover {{ background-color: #b30000; }}
-        tr:hover {{ background-color: #3b4a6b; }}
-        a {{ color: #e6b800; text-decoration: none; }}
-        a:hover {{ color: #b30000; text-decoration: underline; }}
-        .flip-card {{ background-color: transparent; width: 300px; height: 300px; perspective: 1000px; }}
-        .flip-card-inner {{ position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); }}
-        .flip-card:hover .flip-card-inner {{ transform: rotateY(180deg); }}
-        .flip-card-front, .flip-card-back {{ position: absolute; width: 100%; height: 100%; backface-visibility: hidden; }}
-        .flip-card-front {{ background-color: #2a3a5c; color: #ffffff; }}
-        .flip-card-back {{ background-color: #3b4a6b; color: #e6b800; transform: rotateY(180deg); display: flex; justify-content: center; align-items: center; flex-direction: column; }}
-        .flip-card-back h1 {{ margin: 0; font-size: 24px; word-wrap: break-word; padding: 10px; }}
+        body {{
+            font-family: Georgia, serif;
+            background-color: #1e2a44;
+            color: #ffffff;
+            margin: 20px;
+            text-align: center;
+        }}
+        h1, h2 {{
+            color: #e6b800;
+        }}
+        table {{
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background-color: #2a3a5c;
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+        }}
+        th, td {{
+            padding: 10px;
+            border: 1px solid #3b4a40;
+            text-align: center;
+            vertical-align: middle;
+        }}
+        th {{
+            background-color: #e6b800;
+            color: #1e2a44;
+            cursor: pointer;
+        }}
+        th:hover {{
+            background-color: #b30000;
+        }}
+        tr:hover {{
+            background-color: #3b4a6b;
+        }}
+        a {{
+            color: #e6b800;
+            text-decoration: none;
+        }}
+        a:hover {{
+            color: #b30000;
+            text-decoration: underline;
+        }}
+        .flip-card {{
+            background-color: transparent;
+            width: 300px;
+            height: 300px;
+            perspective: 1000px;
+        }}
+        .flip-card-inner {{
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+        }}
+        .flip-card:hover .flip-card-inner {{
+            transform: rotateY(180deg);
+        }}
+        .flip-card-front, .flip-card-back {{
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+        }}
+        .flip-card-front {{
+            background-color: #2a3a5c;
+            color: #ffffff;
+        }}
+        .flip-card-back {{
+            background-color: #3b4a40;
+            color: #e6b800;
+            transform: rotateY(180deg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }}
+        .flip-card-back h1 {{
+            margin: 0;
+            font-size: 24px;
+            word-wrap: break-word;
+            padding: 10px;
+        }}
     </style>
 </head>
 <body>
     <h1>PS Ranking - {current_date}</h1>
-    <h2>Total Number of Groups: {total_groups}</h2>
+    <h2>Total Groups: {total_groups}</h2>
     <table id="rankingTable">
         <thead>
             <tr>
                 <th onclick="sortTable(0)">Rank</th>
-                <th>Photo</th>
                 <th>Group Name</th>
-                <th onclick="sortTable(3)">Last Scene</th>
+                <th>Photo</th>
+                <th onclick="sortTable(3)">Last</th>
                 <th onclick="sortTable(4)">Total Titles</th>
-                <th onclick="sortTable(5)">#FIVE</th>
-                <th onclick="sortTable(6)">#FOUR</th>
-                <th onclick="sortTable(7)">#Three</th>
-                <th onclick="sortTable(8)">#SceneType</th>
+                <th onclick="sortTable(5)">FIVE</th>
+                <th onclick="sortTable(6)">FOUR</th>
+                <th onclick="sortTable(7)">Three</th>
+                <th onclick="sortTable(8)">SceneType</th>
                 <th onclick="sortTable(9)">Score</th>
             </tr>
         </thead>
@@ -869,47 +943,45 @@ ranking_html_content = f"""<!DOCTYPE html>
         </tbody>
     </table>
     <script>
-        let sortDirections = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        let sortDirections = [0,0, 0, 0, 0, 0, 0, 0, 0,0];
         function sortTable(columnIndex) {{
-            if (columnIndex === 1 || columnIndex === 2) return; // Skip Photo and Group Name columns
+            if (columnIndex === 1 || columnIndex === 2) return; // Skip Group Name and Photo
             const tbody = document.getElementById('tableBody');
             const rows = Array.from(tbody.getElementsByTagName('tr'));
             const isNumeric = [true, false, false, true, true, true, true, true, true, true];
-            const direction = sortDirections[columnIndex] === 1 ? -1 : 1;
             rows.sort((a, b) => {{
                 let aValue = a.cells[columnIndex].innerText;
                 let bValue = b.cells[columnIndex].innerText;
-                if (columnIndex === 3) {{ // Last Scene column
+                if (columnIndex === 3) {{ // Last Scene
                     if (aValue === 'N/A' && bValue === 'N/A') return 0;
-                    if (aValue === 'N/A') return direction * 1;
-                    if (bValue === 'N/A') return direction * -1;
+                    if (aValue === 'N/A') return sortDirections[columnIndex] * 1;
+                    if (bValue === 'N/A') return sortDirections[columnIndex] * -1;
                     aValue = parseInt(aValue);
                     bValue = parseInt(bValue);
-                    return direction * (aValue - bValue);
+                    return sortDirections[columnIndex] * (aValue - bValue);
                 }}
-                if (isNumeric[columnIndex]) {{ 
-                    aValue = parseFloat(aValue) || 0; 
-                    bValue = parseFloat(bValue) || 0; 
-                    return direction * (aValue - bValue); 
+                if (isNumeric[columnIndex]) {{
+                    aValue = parseFloat(aValue) || 0;
+                    bValue = parseFloat(bValue) || 0;
+                    return sortDirections[columnIndex] * (aValue - bValue);
                 }}
-                return direction * aValue.localeCompare(bValue);
+                return sortDirections[columnIndex] * aValue.localeCompare(bValue);
             }});
-            while (tbody.firstChild) {{ 
-                tbody.removeChild(tbody.firstChild); 
+            while (tbody.firstChild) {{
+                tboddy.removeChild(tbody.firstChild);
             }}
             rows.forEach(row => tbody.appendChild(row));
-            sortDirections[columnIndex] = direction;
-            sortDirections = sortDirections.map((d, i) => (i === columnIndex ? d : 0));
+            sortDirections[columnIndex] = sortDirections[columnIndex] === 1 ? -1 : 1;
+            sortDirections = sortDirections.map((dir, idx) => idx === columnIndex ? dir : 0);
         }}
     </script>
 </body>
 </html>
 """
-
 # Write ranking HTML file
 ranking_html_file = os.path.join(output_folder, 'index.html')
 with open(ranking_html_file, 'w', encoding='utf-8') as f:
     f.write(ranking_html_content)
 print(f"Wrote ranking HTML file: {ranking_html_file}")
 
-print(f"Processed {len(chats)} chats. Output files generated in '{output_folder}'")
+print(f"Processed {len(chats)} folders. Output files written to '{output_folder}'")
