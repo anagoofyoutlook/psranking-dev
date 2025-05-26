@@ -834,9 +834,9 @@ ranking_html_content = f"""<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PS Ranking - {current_date}</title>
     <style>
-        body {{ font-family: Arial, Helvetica, sans-serif; background-color: #1e2a44; color: #ffffff; margin: 20px; text-align: center; }}
+        body {{ font-family: Arial, sans-serif; background-color: #1e2a44; color: #ffffff; margin: 20px; text-align: center; }}
         h1, h2 {{ color: #e6b800; }}
-        table {{ width: 90%; margin: 20px auto; border-collapse: collapse; background-color: #2a3a5c; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); }}
+        table {{ width: 80%; margin: 20px auto; border-collapse: collapse; background-color: #2a3a5c; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); }}
         th, td {{ padding: 15px; border: 1px solid #3b4a6b; text-align: center; vertical-align: middle; color: #ffffff; }}
         th {{ background-color: #e6b800; color: #1e2a44; cursor: pointer; }}
         th:hover {{ background-color: #b30000; }}
@@ -853,7 +853,7 @@ ranking_html_content = f"""<!DOCTYPE html>
     </style>
 </head>
 <body>
-    <h1>PS Ranking - {current_date} }</h1>
+    <h1>PS Ranking - {current_date}</h1>
     <h2>Total Number of Groups: {total_groups}</h2>
     <table id="rankingTable">
         <thead>
@@ -867,50 +867,50 @@ ranking_html_content = f"""<!DOCTYPE html>
                 <th onclick="sortTable(6)">#FOUR</th>
                 <th onclick="sortTable(7)">#Three</th>
                 <th onclick="sortTable(8)">#SceneType</th>
-                <th> onclick="sortTable(9)">Score</th>
+                <th onclick="sortTable(9)">Score</th>
             </tr>
-            <tbody id="tableBody">
-                {table_rows}
-            </tbody>
         </thead>
+        <tbody id="tableBody">
+            {table_rows}
+        </tbody>
     </table>
     <script>
-        let sortDirections = [0, 0, 0, 0,0, 0,0,0,0];
-        function sortTable(columnIndex) {
+        let sortDirections = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        function sortTable(columnIndex) {{
             if (columnIndex === 1 || columnIndex === 2) return; // Skip Group Name and Photo columns
             const tbody = document.getElementById('tableBody');
             const rows = Array.from(tbody.getElementsByTagName('tr'));
             const isNumeric = [true, false, false, true, true, true, true, true, true, true];
             const direction = sortDirections[columnIndex] === 1 ? -1 : 1;
 
-            rows.sort((a, b) => {
+            rows.sort((a, b) => {{
                 let aValue = a.cells[columnIndex].innerText;
                 let bValue = b.cells[columnIndex].innerText;
 
-                if (columnIndex === 3) { // Last Scene column
+                if (columnIndex === 3) {{ // Last Scene column
                     if (aValue === 'N/A' && bValue === 'N/A') return 0;
                     if (aValue === 'N/A') return direction * 1;
                     if (bValue === 'N/A') return direction * -1;
                     aValue = parseInt(aValue);
                     bValue = parseInt(bValue);
                     return direction * (aValue - bValue);
-                }
+                }}
 
-                if (isNumeric[columnIndex]) { 
+                if (isNumeric[columnIndex]) {{ 
                     aValue = parseFloat(aValue) || 0; 
                     bValue = parseFloat(bValue) || 0; 
                     return direction * (aValue - bValue); 
-                }
+                }}
                 return direction * aValue.localeCompare(bValue);
-            }));
+            }});
 
-            while (tbody.firstChild) { 
+            while (tbody.firstChild) {{ 
                 tbody.removeChild(tbody.firstChild); 
             }}
             rows.forEach(row => tbody.appendChild(row));
             sortDirections[columnIndex] = direction;
-            sortDirections = sortDirections(.map((d, i) => i === columnIndex ? d : 0));
-        }
+            sortDirections = sortDirections.map((d, i) => i === columnIndex ? d : 0);
+        }}
     </script>
 </body>
 </html>
