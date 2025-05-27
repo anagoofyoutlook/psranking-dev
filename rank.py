@@ -207,7 +207,7 @@ for chat in chats:
         thumbs_subfolder = os.path.join(group_subfolder, 'thumbs')
         media_files = [f for f in os.listdir(thumbs_subfolder) if f.lower().endswith(tuple(media_extensions))] if os.path.exists(thumbs_subfolder) else []
         fallback_photos = [f for f in os.listdir(group_subfolder) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) and os.path.isfile(os.path.join(group_subfolder, f))] if os.path.exists(group_subfolder) else []
-        print(f"Group {group_name}: Thumbs media files = {media_files}, Fallback photos = {fallback_photos}")
+        print(f"Group {group_name}: Thumbs media files = {media_files}}, Fallback photos = {fallback_photos}")
         serial_number = 1
         for message in messages:
             if message.get('action') == 'topic_created':
@@ -667,16 +667,16 @@ for chat in chats:
                 }});
             }});
 
-            // Initialize titles table sorted by date descending (newest at top)
-            sortTitlesTable(2, -1); // Sort by Date column, newest first
+            // Initialize titles table sorted by S.No descending (highest ID at top)
+            sortTitlesTable(0, -1); // Sort by S.No column, highest first
         }});
 
         // Titles table and grid sorting
-        let titlesSortDirections = [0, 0, -1]; // 0: unsorted, 1: ascending, -1: descending (Date starts descending)
+        let titlesSortDirections = [-1, 0, 0]; // S.No starts descending
         function sortTitlesTable(columnIndex, forceDirection) {{
             const tbody = document.getElementById('titlesTableBody');
             const rows = Array.from(tbody.getElementsByTagName('tr'));
-            const direction = forceDirection !== undefined ? forceDirection : (columnIndex === 2 ? (titlesSortDirections[columnIndex] === -1 ? 1 : -1) : (titlesSortDirections[columnIndex] === 1 ? -1 : 1));
+            const direction = forceDirection !== undefined ? forceDirection : (titlesSortDirections[columnIndex] === 1 ? -1 : 1);
             rows.sort((a, b) => {{
                 let aValue = a.cells[columnIndex].innerText;
                 let bValue = b.cells[columnIndex].innerText;
@@ -687,7 +687,7 @@ for chat in chats:
                 }} else if (columnIndex === 2) {{ // Date column
                     aValue = new Date(aValue);
                     bValue = new Date(bValue);
-                    return direction * (bValue - aValue); // Reversed for newest first when direction = -1
+                    return direction * (aValue - bValue);
                 }} else if (columnIndex === 1) {{ // Items column
                     return direction * aValue.localeCompare(bValue);
                 }}
@@ -719,7 +719,7 @@ for chat in chats:
                 }} else if (columnIndex === 2) {{ // Date
                     aValue = new Date(a.querySelector('.date').innerText.split(' | ')[1]);
                     bValue = new Date(b.querySelector('.date').innerText.split(' | ')[1]);
-                    return direction * (bValue - aValue); // Reversed for newest first when direction = -1
+                    return direction * (aValue - bValue);
                 }}
                 return 0;
             }});
@@ -893,7 +893,7 @@ ranking_html_content = f"""<!DOCTYPE html>
             if (columnIndex === 2) return; // Skip Photo column
             const tbody = document.getElementById('tableBody');
             const rows = Array.from(tbody.getElementsByTagName('tr'));
-            const isNumeric = [true, false, false, true, true, true, true, true, true, true];
+            const isNumeric = [true, false, false, true, true, true, true, true, true];
             const direction = sortDirections[columnIndex] === 1 ? -1 : 1;
 
             rows.sort((a, b) => {{
@@ -909,9 +909,9 @@ ranking_html_content = f"""<!DOCTYPE html>
                     return direction * (aValue - bValue);
                 }}
 
-                if (isNumeric[columnIndex]) {{ 
-                    aValue = parseFloat(aValue) || 0; 
-                    bValue = parseFloat(bValue) || 0; 
+                if (isNumeric(columnIndex)) {{ 
+                    aValue = parseFloat(aValue) || aValue; 
+                    bValue = parseFloat(bValue) || bValue; 
                     return direction * (aValue - bValue); 
                 }}
                 return direction * aValue.localeCompare(bValue);
@@ -921,7 +921,7 @@ ranking_html_content = f"""<!DOCTYPE html>
                 tbody.removeChild(tbody.firstChild); 
             }}
             rows.forEach(row => tbody.appendChild(row));
-            sortDirections[columnIndex] = direction;
+            sortDirections[columnIndex].value = direction;
             sortDirections = sortDirections.map((d, i) => i === columnIndex ? d : 0);
         }}
     </script>
