@@ -529,11 +529,11 @@ for chat in chats:
         @media screen and (max-width: 768px) {{ 
             .container {{ width: 80%; max-height: 400px; }} 
             h1 {{ width: 80%; margin: 10px auto; font-size: 30px; }}
-            .rank-container {{ width: 80%; flex-direction: column; gap: 8px; }}
+            .rank-container {{ width: 80%; flex-direction: column; gap: 10px; }} 
             .chart-container {{ max-width: 100%; }} 
-            .column {{ flex: 0 0 80px; max-width: 80px; }}
+            .column {{ flex: 0 0 80px; max-width: 80px; }} 
             .mySlides img {{ object-fit: contain; }} 
-            .tab button {{ font-size: 14px; padding: 8px; }}
+            .tab button {{ font-size: 14px; padding: 10px; }}
             .titles-grid {{ grid-template-columns: 1fr; }} 
             .grid-item video, .grid-item img {{ width: 100%; aspect-ratio: 2 / 1; }} 
         }}
@@ -543,14 +543,14 @@ for chat in chats:
     <h1>{group_name}</h1>
     <div class="rank-container">
         <div class="chart-container"><h2>Rank History</h2><canvas id="rankChart"></canvas></div>
-        <p>Rank: <span class="rank-number" data-rank="RANK">{{RANK_PLACEHOLDER}}</span></p>
+        <p>Rank: <span class="rank-number" data-rank="RANK_PLACEHOLDER"></span></p>
     </div>
     {slideshow_content}
-    <div class="info"><p>Scenes: {total_messages}</p><p>Last group: {date_diff_text}</p></div>
+    <div class="info"><p>Scenes: {total_messages}</p><p>Last Scene: {date_diff_text}</p></div>
     <div class="info">
-        <h2>Rating Hashtags (#FIVE, #FOUR, #Three)</h2><ul class="hashtags">{ratings_hashtag_list}</ul>
-        <h2>Scene Type Hashtags</h2><ul class="hashtags">{scene_types_hashtag_list}</ul>
-        <h2>Other Hashtags</h2><ul class="hashtags">{other_hashtag_list}</ul>
+        <h2>Rating Hashtag Counts (#FIVE, #FOUR, #Three)</h2><ul class="hashtags">{ratings_hashtag_list}</ul>
+        <h2>Scene Type Hashtag Counts</h2><ul class="hashtags">{scene_types_hashtag_list}</ul>
+        <h2>Other Hashtag Counts</h2><ul class="hashtags">{other_hashtag_list}</ul>
     </div>
     <div class="info">
         <h2>Titles</h2>
@@ -571,12 +571,12 @@ for chat in chats:
     function plusSlides(n) {{
         clearInterval(autoSlide);
         showSlides(slideIndex += n);
-        autoSlide = setInterval(() => plusSlides(1), 2500);
+        autoSlide = setInterval(() => plusSlides(1), 3000);
     }}
     function currentSlide(n) {{
         clearInterval(autoSlide);
         showSlides(slideIndex = n);
-        autoSlide = setInterval(() => plusSlides(1), 2500);
+        autoSlide = setInterval(() => plusSlides(1), 3000);
     }}
     function showSlides(n) {{
         let i;
@@ -595,17 +595,17 @@ for chat in chats:
         dots[slideIndex-1].className += " active";
         captionText.innerHTML = dots[slideIndex-1].alt;
     }}
-    let autoSlide = setInterval(() => plusSlides(1), 2500);
+    let autoSlide = setInterval(() => plusSlides(1), 3000);
 
     function openTab(evt, tabName) {{
-        let i, tabcontent, tablinks;
-        tabcontent = document.getElementsByClassName("tabcontent");
-        for (i = 0; i < tabcontent.length; i++) {{
-            tabcontent[i].style.display = "none";
+        let content, buttons;
+        content = document.getElementsByClassName("tabcontent");
+        for (let i = 0; i < content.length; i++) {{
+            content[i].style.display = "none";
         }}
-        tablinks = document.getElementsByClassName("tablinks");
-        for (i = 0; i < tablinks.length; i++) {{
-            tablinks[i].className = tablinks[i].className.replace(" active", "");
+        buttons = document.getElementsByClassName("tablinks");
+        for (let i = 0; i < buttons.length; i++) {{
+            buttons[i].className = buttons[i].className.replace(" active", "");
         }}
         document.getElementById(tabName).style.display = "block";
         evt.currentTarget.className += " active";
@@ -613,9 +613,9 @@ for chat in chats:
 
     document.addEventListener('DOMContentLoaded', function() {{
         const ctx = document.getElementById('rankChart').getContext('2d');
-        const historyData = JSON.parse('{json.dumps(history_data.get(group_name, []))}');
-        const dates = historyData.map(function(entry) {{ return entry.date; }});
-        const ranks = historyData.map(function(entry) {{ return entry.rank; }});
+        const historyData = {history_data_json};
+        const dates = historyData.map(entry => entry.date);
+        const ranks = historyData.map(entry => entry.rank);
         new Chart(ctx, {{
             type: 'line',
             data: {{
@@ -624,7 +624,7 @@ for chat in chats:
                     label: 'Rank History',
                     data: ranks,
                     borderColor: '#e6b800',
-                    backgroundColor: 'rgba(230, 184, 0, 0.25)',
+                    backgroundColor: 'rgba(230, 184, 0, 0.2)',
                     fill: true,
                     tension: 0.4
                 }}]
@@ -634,13 +634,13 @@ for chat in chats:
                     y: {{
                         beginAtZero: false,
                         title: {{ display: true, text: 'Rank', color: '#e6b800' }},
-                        ticks: {{ stepSize: 1, color: '#000000' }},
+                        ticks: {{ stepSize: 1, color: '#ffffff' }},
                         suggestedMax: {len(chats) + 1},
                         grid: {{ color: '#3b4a6b' }}
                     }},
                     x: {{
                         title: {{ display: true, text: 'Date', color: '#e6b800' }},
-                        ticks: {{ color: '#000000' }},
+                        ticks: {{ color: '#ffffff' }},
                         grid: {{ color: '#3b4a6b' }}
                     }}
                 }},
@@ -699,8 +699,8 @@ for chat in chats:
         items.sort((a, b) => {{
             let aValue, bValue;
             if (columnIndex === 0) {{
-                aValue = parseInt(a.querySelector('.date').innerText.split('S.No: ')[1].split(' ')[0]);
-                bValue = parseInt(b.querySelector('.date').innerText.split('S.No: ')[1].split(' ')[0]);
+                aValue = parseInt(a.querySelector('.date').innerText.split('S.No: ')[1].split(' | ')[0]);
+                bValue = parseInt(b.querySelector('.date').innerText.split('S.No: ')[1].split(' | ')[0]);
                 return direction * (aValue - bValue);
             }} else if (columnIndex === 1) {{
                 aValue = a.querySelector('.title').innerText;
@@ -730,29 +730,29 @@ for chat in chats:
         all_data.append({
             'date': current_date,
             'group name': group_name,
-            'total messages': total_messages,
+            'total_messages': total_messages,
             'Datedifference': date_diff if date_diff is not None else 'N/A',
             'count of the hashtag "#FIVE"': hashtag_counts.get('#FIVE', 0),
             'count of the hashtag "#FOUR"': hashtag_counts.get('#FOUR', 0),
             'count of the hashtag "#Three"': hashtag_counts.get('#THREE', 0),
             'count of the hashtag "#SceneType"': scene_type_count,
             'score': 0,
-            'rank': '',
+            'rank': 0,
             'total titles': titles_count,
             'rank_change': rank_change,
             'html_file': html_file,
             'html_content': html_content,
-            'photo_file_name': f"Photos/{group_name}/{photo_file_name}" if photo_file_name else ''
+            'photo_file_name': f"Photos/{photo_file_name}" if photo_file_name else ''
         })
 
-# Calculate scores and final ranks
+# Calculate score
 min_date_diff = min(date_diffs) if date_diffs else 0
 max_date_diff_denom = max(date_diffs) - min_date_diff if date_diffs and max(date_diffs) > min_date_diff else 1
 for entry in all_data:
     five_count = entry['count of the hashtag "#FIVE"']
     four_count = entry['count of the hashtag "#FOUR"']
-    three_count = entry['count of the hashtag "#Three"']
-    messages = entry['total messages']
+    three_count = entry['count of the hashtag "#Three"]
+    messages = entry['total_messages']
     diff = entry['Datedifference']
     hashtag_score = (10 * five_count) + (5 * four_count) + (1 * three_count)
     messages_score = (messages / max_messages) * 10 if max_messages > 0 else 0
@@ -769,34 +769,34 @@ for i, entry in enumerate(sorted_data, 1):
     previous_rank = get_previous_rank(entry['group name'], current_date_dt)
     if previous_rank is not None:
         if entry['rank'] < previous_rank:
-            entry['rank_change'] = '<span class="uparrow">↑</span>'
+            entry['rank_change'] = '<span class="rank-up">↑</span>'
         elif entry['rank'] > previous_rank:
-            entry['rank_change'] = '<span class="downarrow">↓</span>'
+            entry['rank_change'] = '<span class="rank-down">↓</span>'
         else:
-            entry['rank_change'] = '<span class="equalsign">=</span>'
+            entry['rank_change'] = '<span class="rank-same">=</span>'
     else:
         entry['rank_change'] = 'N/A'
     # Write group HTML
-    html_content = entry['html_content'].replace('{{RANK_PLACEHOLDER}}', str(i))
+    html_content_with_rank = entry['html_content'].replace('RANK_PLACEHOLDER', str(i))
     html_path = os.path.join(html_subfolder, entry['html_file'])
     with open(html_path, 'w', encoding='utf-8') as f:
-        f.write(html_content)
+        f.write(html_content_with_rank)
     print(f"Wrote HTML for {entry['group name']}: {html_path}")
     # Update history
     history_data[entry['group name']].append({'date': current_date, 'rank': i})
 
 # Write current ranking CSV
-csv_data = [{k: str(v).replace('<span class="uparrow">↑</span>', '↑')
-                         .replace('<span class="downarrow">↓', '↓')
-                         .replace('<span class="equalsign">=</span>', '=') 
-                   if k == 'rank_change' else v 
-                   for k, v in entry.items() if k in csv_columns} 
+csv_data = [{k: str(v).replace('<span class="rank-up">↑</span>', '↑')
+                        .replace('<span class="rank-down">↓</span>', '↓')
+                        .replace('<span class="rank-same">=</span>', '=')
+                if k == 'rank_change' else v
+                for k, v in entry.items() if k in csv_columns}
             for entry in sorted_data]
 with open(csv_file, 'w', newline='', encoding='utf-8') as f:
     writer = csv.DictWriter(f, fieldnames=csv_columns)
     writer.writeheader()
     writer.writerows(csv_data)
-print(f"\nWrote ranking CSV: {csv_file}")
+print(f"\nWrote CSV file: {csv_file}")
 
 # Append to history CSV
 new_history_rows = [{'date': entry['date'], 'group name': entry['group name'], 'rank': entry['rank']} for entry in sorted_data]
@@ -816,14 +816,14 @@ total_groups = len(sorted_data)
 table_rows = ''
 for entry in sorted_data:
     group_name = escape(entry['group name'])
-    photo_url = entry['photo_file_name'] if entry['photo_file_name'] else 'https://via.placeholder.com/300/photo.jpg'
+    photo_url = entry['photo_file_name'] if entry['photo_file_name'] else 'https://via.placeholder.com/300?text=No+Image'
     html_link = f"HTML/{entry['html_file']}"
-    last_scene = f"{entry['Datedifference']} days ago" if entry['Datedifference'] != 'N/A' else 'N/A'
-    table_rows += [
+    last_scene = f"{entry['Datedifference']} days" if entry['Datedifference'] != 'N/A' else 'N/A'
+    table_rows += ''.join([
         f'<tr>',
         f'  <td>{entry["rank"]}</td>',
         f'  <td><a href="{html_link}" target="_blank">{group_name}</a></td>',
-        f'  <td><div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="{photo_url}" alt="{group_name}" style="width:300px;height:250px;"></div><div class="flip-card-back"><a href="{html_link}" style="color: #e6b800; text-decoration: none;"><h1>{group_name}</h1></a></div></div></div></td>',
+        f'  <td><div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="{photo_url}" alt="{group_name}" style="width:100px;height:80px;"></div><div class="flip-card-back"><a href="{html_link}" style="color: #e6b800; text-decoration: none;"><h1>{group_name}</h1></a></div></div></div></td>',
         f'  <td>{last_scene}</td>',
         f'  <td>{entry["total titles"]}</td>',
         f'  <td>{entry["count of the hashtag "#FIVE""]}</td>',
@@ -831,10 +831,9 @@ for entry in sorted_data:
         f'  <td>{entry["count of the hashtag "#Three""]}</td>',
         f'  <td>{entry["count of the hashtag "#SceneType""]}</td>',
         f'  <td>{entry["score"]:.2f}</td>',
-        f'  <td>{entry["rank_change"]}</td>',
+        f'  <td}>{entry["rank_change"]}</td>',
         f'</tr>'
-    ]
-    table_rows = ''.join(table_rows)
+    ])
 
 ranking_html_content = f"""<!DOCTYPE html>
 <html lang="en">
@@ -843,54 +842,54 @@ ranking_html_content = f"""<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PS Ranking - {current_date}</title>
     <style>
-        body {{ font-family: Arial, sans-serif; background-color: #1e2a44; color: #ffffff; margin: 0px; text-align: center; }}
+        body {{ font-family: Arial, sans-serif; background-color: #1e2a44; color: #ffffff; margin: 20px; text-align: center; }}
         h1, h2 {{ color: #e6b800; }}
-        table {{ width: 80%; margin: 20px auto; border-collapse: collapse; background-color: #2a3a5c; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); }}
+        table {{ width: 80%; margin: 80px auto; border-collapse: collapse; background-color: #2a3a5c; box-shadow: 0 0 10px rgba(0,0,0,0.3); }}
         th, td {{ border: 1px solid #3b4a6b; padding: 15px; text-align: center; vertical-align: middle; }}
         th {{ background-color: #e6b800; color: #1e2a44; cursor: pointer; }}
         th:hover {{ background-color: #b30000; }}
         tr:hover {{ background-color: #3b4a6b; }}
         a {{ text-decoration: none; color: #e6b800; }}
         a:hover {{ color: #b30000; text-decoration: underline; }}
-        .flip-card {{ background-color: transparent; width: 300px; height: 250px; perspective: 1000px; margin: auto; }}
+        .flip-card {{ background-color: transparent; width: 100px; height: 80px; perspective: 1000px; margin: auto; }}
         .flip-card-inner {{ position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; }}
         .flip-card:hover .flip-card-inner {{ transform: rotateY(180deg); }}
         .flip-card-front, .flip-card-back {{ position: absolute; width: 100%; height: 100%; backface-visibility: hidden; }}
         .flip-card-front {{ background-color: #2a3a5c; color: white; }}
         .flip-card-back {{ background-color: #3b4a6b; color: #e6b800; transform: rotateY(180deg); }}
-        .flip-card-back h1 {{ margin: 0; font-size: 20px; word-wrap: break-word; padding: 10px; }}
+        .flip-card-back h1 {{ margin: 0; font-size: 12px; word-wrap: break-word; padding: 10px; }}
         table th:nth-child(2), table td:nth-child(2) {{ width: 15%; max-width: 150px; word-wrap: break-word; }}
         table th:nth-child(11), table td:nth-child(11) {{ width: 8%; text-align: center; }}
-        .uparrow {{ color: #00cc00; }}
-        .downarrow {{ color: #cc0000; }}
-        .equalsign {{ color: #ffffff; }}
-        @media screen and (max-width: 1200px) {{ 
+        .rank-up {{ color: #00cc00; }}
+        .rank-down {{ color: #b30000; }}
+        .rank-same {{ color: #ffffff; }}
+        @media only screen and (max-width: 1200px) {{ 
             table {{ width: 100%; }} 
-            .flip-card {{ width: 200px; height: 200px; }} 
-            .flip-card-back h1 {{ font-size: 18px; }}
-            th, td {{ font-size: 14px; padding: 10px; }}
+            .flip-card {{ width: 80px; height: 60px; }} 
+            .flip-card-back h1 {{ font-size: 10px; }}
+            th, td {{ font-size: 8px; padding: 8px; }}
             table th:nth-child(2), table td:nth-child(2) {{ width: 12%; max-width: 120px; }}
-            table th:nth-child(11), {{ width: 10%; }}
+            table th:nth-child(11), table td:nth-child(11) {{ width: 10%; }}
         }}
-        @media screen and (max-width: 768px) {{ 
+        @media only screen and (max-width: 768px) {{ 
             table {{ width: 100%; }} 
-            .flip-card {{ width: 150px; height: 150px; }} 
-            .flip-card-back h1 {{ font-size: 16px; }}
-            th, td {{ font-size: 12px; padding: 8px; }}
+            .flip-card {{ width: 60px; height: 50px; }} 
+            .flip-card-back h1 {{ font-size: 8px; }}
+            th, td {{ font-size: 8px; padding: 8px; }}
             table th:nth-child(2), table td:nth-child(2) {{ width: 10%; max-width: 100px; }}
             table th:nth-child(11), table td:nth-child(11) {{ width: 12%; }}
         }}
     </style>
 </head>
 <body>
-    <h1>My Ranking - {current_date}</h1>
+    <h1>PS Ranking - {current_date}</h1>
     <h2>Total Number of Groups: {total_groups}</h2>
     <table id="rankingTable">
         <thead>
             <tr>
                 <th>Rank</th>
                 <th>Group Name</th>
-                <th>Photo(s)</th>
+                <th>Photo</th>
                 <th>Last Scene</th>
                 <th>Total Titles</th>
                 <th>#FIVE</th>
@@ -905,52 +904,50 @@ ranking_html_content = f"""<!DOCTYPE html>
             {table_rows}
         </tbody>
     </table>
-<script>
-    let sortDirections = Array(11).fill(0);
-    function sortTable(columnIndex) {{
-        if (columnIndex === 2 || columnIndex === 10) return;
-        const tbody = document.getElementById('tableBody');
-        const rows = Array.from(tbody.getElementsByTagName('tr'));
-        const isNumeric = [true, false, false, true, true, true, true, true, true, true, false];
-        const direction = sortDirections[columnIndex] === 1 ? -1 : 1;
+    <script>
+        let sortDirections = Array(11).fill(0);
+        function sortTable(columnIndex) {{
+            if (columnIndex === 2 || columnIndex === 10) return;
+            const tbody = document.getElementById('tableBody');
+            const rows = Array.from(tbody.getElementsByTagName('tr'));
+            const isNumeric = [true, false, false, true, true, true, true, true, true, true, false];
+            const direction = sortDirections[columnIndex] === 1 ? -1 : 1;
 
-        rows.sort((a, b) => {{
-            let aValue = a.cells[columnIndex].innerText;
-            let bValue = b.cells[columnIndex].innerText;
+            rows.sort((a, b) => {
+                let aValue = a.cells[columnIndex].innerText;
+                let bValue = b.cells[columnIndex].innerText;
 
-            if (columnIndex === 3) {{
-                if (aValue === 'N/A' && bValue === 'N/A') return 0;
-                if (aValue === 'N/A') return direction * 1;
-                if (bValue === 'N/A') return direction * -1;
-                aValue = parseInt(aValue.split(' ')[0]);
-                bValue = parseInt(bValue.split(' ')[0]);
-                return direction * (aValue - bValue);
-            }}
+                if (columnIndex === 3) {
+                    if (aValue === 'N/A' && bValue === 'N/A') return 0;
+                    if (aValue === 'N/A') return direction * 1;
+                    if (bValue === 'N/A') return direction * -1;
+                    aValue = parseInt(aValue.split(' ')[0]);
+                    bValue = parseInt(bValue.split(' ')[0]);
+                    return direction * (aValue - bValue);
+                }}
 
-            if (isNumeric[columnIndex]) {{ 
-                aValue = parseFloat(aValue) || 0;
-                bValue = parseFloat(bValue) || 0;
-                return direction * (aValue - bValue);
-            }}
-            return direction * aValue.localeCompare(bValue);
-        }});
+                if (isNumeric[columnIndex]) {{ 
+                    aValue = parseFloat(aValue) || 0;
+                    bValue = parseFloat(bValue) || 0;                    return direction * (aValue - bValue);
+                }}
+                return direction * aValue.localeCompare(bValue);
+            }});
 
-        while (tbody.firstChild) {{ 
-            tbody.removeChild(tbody.firstChild); 
+            while (tbody.firstChild) {{ 
+                tbody.removeChild(tbody.firstChild); 
+                }}
+            rows.forEach(row => tbody.appendChild(row));
+            sortDirections = sortDirections.map((d, i) => i === columnIndex ? d : 0);
         }}
-        rows.forEach(row => tbody.appendChild(row));
-        sortDirections[columnIndex] = direction;
-        sortDirections = sortDirections.map((d, i) => i === columnIndex ? d : 0);
-    }}
-</script>
+    </script>
 </body>
 </html>
 """
 
 # Write ranking HTML file
-index_html_file = os.path.join(output_folder, 'index.html')
-with open(index_html_file, 'w', encoding='utf-8') as f:
+ranking_html_file = os.path.join(output_folder, 'index.html')
+with open(ranking_html_file, 'w', encoding='utf-8') as f:
     f.write(ranking_html_content)
-print(f"\nWrote index HTML file: {index_html_file}")
+print(f'\nWrote ranking HTML file: {ranking_html_file}')
 
-print(f"\nProcessed {len(chats)} groups. Output written to {output_folder}")
+print(f'\nProcessed {len(chats)} groups. Output written to {output_folder}')
