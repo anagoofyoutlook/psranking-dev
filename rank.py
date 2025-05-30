@@ -251,9 +251,9 @@ for chat in chats:
         if titles:
             for t in titles:
                 media_element = (
-                    f"<img src='{t['media_path']}' alt='Media for {t['title']}' style='width:600px;height:300px;'>"
+                    f"<img src='{t['media_path']}' alt='Media for {t['title']}'>"
                     if t['is_gif'] or 'via.placeholder.com' in t['media_path']
-                    else f"<video src='{t['media_path']}' style='width:600px;height:300px;' loop muted playsinline></video>"
+                    else f"<video src='{t['media_path']}' loop muted playsinline></video>"
                 )
                 titles_grid += f"""
                     <div class='grid-item'>
@@ -265,7 +265,7 @@ for chat in chats:
         else:
             titles_grid += """
                 <div class='grid-item'>
-                    <img src='https://via.placeholder.com/600x300?text=No+Videos+Available' alt='No Videos Available' style='width:600px;height:300px;'>
+                    <img src='https://via.placeholder.com/600x300?text=No+Videos+Available' alt='No Videos Available'>
                     <p class='title'>No Titles Available</p>
                     <p class='date'>N/A</p>
                 </div>
@@ -303,7 +303,7 @@ for chat in chats:
         if group_name not in history_data:
             history_data[group_name] = []
 
-        # Pre-compute JSON for history data
+        # Pre-compute JSON for history data to avoid f-string issue
         history_data_json = json.dumps(history_data.get(group_name, []))
 
         # HTML content for group pages
@@ -337,10 +337,9 @@ for chat in chats:
         .titles-grid {{ 
             display: grid; 
             grid-template-columns: repeat(3, 1fr); 
-            gap: 20px; 
+            gap: 1%; 
             margin: 20px auto; 
-            max-width: 1800px; 
-            width: 80%; 
+            width: 100%; 
             box-sizing: border-box; 
         }}
         .grid-item {{ 
@@ -355,8 +354,8 @@ for chat in chats:
             box-sizing: border-box; 
         }}
         .grid-item video, .grid-item img {{ 
-            width: 600px; 
-            height: 300px; 
+            width: 100%; 
+            aspect-ratio: 2 / 1; 
             border-radius: 5px; 
         }}
         .grid-item .title {{ 
@@ -407,7 +406,7 @@ for chat in chats:
             display: none; 
             width: 100%; 
             height: auto; 
-            aspect-ratio: 16/9; 
+            aspect-ratio: 16 / 9; 
         }}
         .mySlides img {{ 
             width: 100%; 
@@ -432,10 +431,12 @@ for chat in chats:
         }}
         .prev {{ left: 0; }}
         .next {{ right: 0; border-radius: 3px 0 0 3px; }}
-        .prev:hover, .next:hover {{ background-color: #b30000; }}
+        .prev:hover {{ background-color: #b30000; }}
+        .next:hover {{ background-color: #b30000; }}
         .numbertext {{ 
             color: #e6b800; 
             font-size: 12px; 
+            color: #e6b800; 
             padding: 8px 12px; 
             position: absolute; 
             top: 0; 
@@ -475,6 +476,7 @@ for chat in chats:
         .tab button {{ 
             background-color: #2a3a5c; 
             color: #e6b800; 
+            color: #e6b800; 
             float: left; 
             border: none; 
             outline: none; 
@@ -482,6 +484,7 @@ for chat in chats:
             padding: 14px 16px; 
             transition: 0.3s; 
             font-size: 17px; 
+            font-size: 14px; 
             width: 50%; 
         }}
         .tab button:hover {{ background-color: #b30000; }}
@@ -494,52 +497,51 @@ for chat in chats:
             margin: 0 auto; 
             width: 80%; 
             border-radius: 0 0 5px 5px; 
+            box-sizing: border-box; 
         }}
-        #Videos {{ display: block; }}
-        @media only screen and (max-width: 1800px) {{ 
-            .titles-grid {{ grid-template-columns: repeat(2, 1fr); }} 
-            .grid-item video, .grid-item img {{ width: 600px; height: 300px; }}
-        }}
+        #VideosContent {{ display: block; }}
         @media only screen and (max-width: 1200px) {{ 
-            .titles-grid {{ grid-template-columns: 1fr; }} 
-            .grid-item video, .grid-item img {{ width: 600px; height: 300px; }}
+            .titles-grid {{ grid-template-columns: repeat(2, 1fr); }} 
+            .grid-item video, .grid-item img {{ width: 100%; aspect-ratio: 2 / 1; }} 
         }}
         @media only screen and (max-width: 768px) {{ 
-            .container {{ width: 80%; max-height: 400px; }} 
-            h1 {{ width: 80%; margin: 10px auto; font-size: 30px; }}
-            .rank-container {{ width: 80%; flex-direction: column; gap: 10px; }} 
-            .chart-container {{ max-width: 100%; }} 
-            .column {{ flex: 0 0 80px; max-width: 80px; }} 
-            .mySlides img {{ object-fit: contain; }} 
-            .tab button {{ font-size: 14px; padding: 10px; }}
-            .grid-item video, .grid-item img {{ width: 100%; height: auto; aspect-ratio: 2 / 1; }}
+            .container {{ width: 80%; max-height: 400px; }}
+            h1 {{ width: .80%; margin: 10px auto; font-size: 30px; font-size: 20px; }}
+            .rank-container {{ width: .80%; width: 100%; flex-direction: column; gap: 10px; height; }}
+            .chart-container {{ width: 100%; max-width: 100%; }}
+            .column {{ flex: 0 0 auto; max-width: 80px; width: auto; }}
+            .mySlides img {{ max-width: 100%; object-fit: contain; }}
+            .tab button {{ font-size: .14px; font-weight: bold; padding: .10px; }}
+            .titles-grid {{ grid-template-columns: 1fr; }} 
+            .grid-item video, .grid-item img {{ width: 100%; aspect-ratio: 2 / 1; }} 
         }}
     </style>
 </head>
 <body>
     <h1>{group_name}</h1>
     <div class="rank-container">
-        <div class="chart-container"><h2>Rank History</h2><canvas id="rankChart"></canvas></div>
+        <div class="chart-container"><h2>Rank History</h2><canvas id="historyChart"></canvas></div>
         <p>Rank: <span class="rank-number" data-rank="RANK_PLACEHOLDER"></span></p>
     </div>
     {slideshow_content}
-    <div class="info"><p>Scenes: {total_messages}</p><p>Last Scene: {date_diff_text}</p></div>
+    <div class="info"><div><p>Scenes: {total_messages}</p><p><p>Last Scene: {last_scene_date_diff_text}</p></p></div>
     <div class="info">
-        <h2>Rating Hashtag Counts (#FIVE, #FOUR, #Three)</h2><ul class="hashtags">{ratings_hashtag_list}</ul>
-        <h2>Scene Type Hashtag Counts</h2><ul class="hashtags">{scene_types_hashtag_list}</ul>
-        <h2>Other Hashtag Counts</h2><ul class="hashtags">{other_hashtag_list}</ul>
+        <h2>Rating Hashtags (#FIVE, #FOUR, #Three)</h2><p><ul><ul class="hashtags">{ratings_hashtag_list}</ul></p></ul>
+        <p><h2>Tags</h2><ul></p><ul class="hashtags">{hashtags}</ul></p>
+        <p><p><h2>Other Hashtags</h2></p></p><p><ul></p><ul class="hashtags"></ul></p>
     </div>
     <div class="info">
-        <h2>Titles</h2>
-        <div class="tab">
-            <button class="tablinks active" onclick="openTab(event, 'Videos')">Videos</button>
-            <button class="tablinks" onclick="openTab(event, 'Table')">Table</button>
+        <div class="info">
+            <h2>Bookmarks</h2>
+            <div class="tab">
+                <button class="tablinks-btn" class="active" onclick="openTab(event, 'VideosContent')">Videos</button>
+            <button class="tablinks-btn" onclick="openTab(event, 'TableContent')">Table</button>
         </div>
-        <div id="Videos" class="tabcontent">
-            {titles_grid}
+        <div id="VideosContent" class="tabcontent">
+            {titles_grid_content}
         </div>
-        <div id="Table" class="tabcontent">
-            {titles_table}
+        <div id="TableContent" class="content-tabcontent">
+            {table_content}
         </div>
     </div>
 <script>
@@ -550,7 +552,7 @@ for chat in chats:
         showSlides(slideIndex += n); 
         autoSlide = setInterval(() => plusSlides(1), 3000); 
     }}
-    function currentSlide(n) {{
+    function currentSlide(n) {{ 
         clearInterval(autoSlide); 
         showSlides(slideIndex = n); 
         autoSlide = setInterval(() => plusSlides(1), 3000); 
@@ -558,149 +560,153 @@ for chat in chats:
     function showSlides(n) {{
         let i;
         let slides = document.getElementsByClassName("mySlides");
-        let buttons = document.getElementsByClassName("demo");
+        let dots = document.getElementsByClassName("dots");
         let captionText = document.getElementById("caption");
         if (n > slides.length) {{ slideIndex = 1 }}
         if (n < 1) {{ slideIndex = slides.length }}
         for (i = 0; i < slides.length; i++) {{ 
-            slides[i].style.display = "none"; 
+            slides[i].style.display = "none"; slides[i]. 
         }}
-        for (i = 0; i < buttons.length; i++) {{ 
-            buttons[i].className = buttons[i].className.replace(" active", ""); 
+        for (i = 0; i < dots.length; i++) {{ 
+            dots[i].className = dots[i].className.replace("active", ""); 
+            }}
+        }
+        slides[slideIndex-1].style.display = "block"; 
+        dots[slideIndex-1].className += " active";
+        captionText.innerHTML = dots[slideIndex].alt;
         }}
-        slides[slideIndex-1].style.display = "block";
-        buttons[slideIndex-1].className += " active";
-        captionText.innerHTML = buttons[slideIndex-1].alt;
-    }}
-    let autoSlide = setInterval(() => plusSlides(1), 3000);
+        let autoSlide = setInterval(() => plusSlides(1), 3000); 
 
-    function openTab(evt, tabName) {{
-        let content, buttons, i;
+    function openTab(evtIndex, tabName) {{
+        let content, buttons;
         content = document.getElementsByClassName("tabcontent");
         for (i = 0; i < content.length; i++) {{
-            content[i].style.display = "none";
+            content[i].style.display = "none"; 
         }}
-        buttons = document.getElementsByClassName("tablinks");
+        buttons = document.getElementsByClassName("tablinks-btn");
         for (i = 0; i < buttons.length; i++) {{
-            buttons[i].className = buttons[i].className.replace(" active", "");
+            buttons[i].className = buttons[i].className.replace("active", "");
         }}
         document.getElementById(tabName).style.display = "block";
-        evt.currentTarget.className += " active";
+        evtIndex.currentTarget.className += "active";
     }}
 
     // Chart.js for history
-    document.addEventListener('DOMContentLoaded', function() {{
-        const ctx = document.getElementById('rankChart').getContext('2d');
-        const historyData = {history_data_json};
-        const dates = historyData.map(entry => entry.date);
-        const ranks = historyData.map(entry => entry.rank);
-        new Chart(ctx, {{
-            type: 'line',
+    document.addEventListener('DOMContentLoaded', function() {{ 
+        const ctx = document.getElementById('historyChart').getContext('2d'); 
+        const historyData = {history_data_json}; 
+        const dates = historyData.map(function(entry) {{ return entry.date; });
+        const ranks = historyData.map(function(entry) {{ return entry.rank; });
+        new Chart(ctx, {{ 
+            type: 'line', 
             data: {{ 
                 labels: dates, 
-                datasets: [{{
+                datasets: [{ 
                     label: 'Rank History', 
                     data: ranks, 
                     borderColor: '#e6b800', 
-                    backgroundColor: 'rgba(230, 184, 0, 0.2)', 
+                    backgroundColor: 'rgbaColor(230, 184, 35, 0.2)', 
                     fill: true, 
                     tension: 0.4 
-                }}] 
-            }},
+                }}]
+            }}, 
             options: {{ 
                 scales: {{ 
                     y: {{ 
-                        beginAtZero: false, 
+                        beginAtZero: true, 
                         title: {{ display: true, text: 'Rank', color: '#e6b800' }}, 
                         ticks: {{ stepSize: 1, color: '#ffffff' }}, 
-                        suggestedMax: {len(chats) + 1},
+                        suggestedMax: {len(chats) + 1}, 
                         grid: {{ color: '#3b4a6b' }}
+                        }}, 
+                        x: {{ 
+                            title: {{ display: true, xTitle: 'Date', xAxis: '#e6b800' }}, 
+                            ticks: {{ color: '#ffffff' }}, 
+                            grid: {{ color: '#3b4a6b' }} 
+                        }} 
                     }}, 
-                    x: {{ 
-                        title: {{ display: true, text: 'Date', color: '#e6b800' }},
-                        ticks: {{ color: '#ffffff' }},
-                        grid: {{ color: '#3b4a6b' }}
+                    plugins: {{ 
+                        legendTitle: {{ display: true, labels: '#e6b800' }} 
                     }} 
-                }}, 
-                plugins: {{ 
-                    legend: {{ display: true, labels: {{ color: '#e6b800' }} }} 
-                }} 
+                }}
+            }} 
+        }}); 
+
+        // Video hover to play
+        const videos = document.querySelectorAll('.grid-item .grid-video'); 
+        videos.forEach(video => {{ 
+            video.addEventListener('mouseover', () => {{ 
+                video.play().catch(error => {{ 
+                    console.error('Error playing video:', error); 
+                }}); 
+            }}); 
+            video.addEventListener('mouseout', () => {{ 
+                video.pause(); 
             }}
-        }});
+        ); 
+        }); 
 
-        // Hover-to-play for videos
-        const videos = document.querySelectorAll('.grid-item video');
-        videos.forEach(video => {{
-            video.addEventListener('mouseover', () => {{
-                video.play().catch(error => {{
-                    console.error('Error playing video:', error);
-                }});
-            }});
-            video.addEventListener('mouseout', () => {{
-                video.pause();
-            }});
-        }});
+        // Sort titles table
+        sortTitlesTable(0, -1); 
+    }}); 
 
-        // Initialize titles table sorting
-        sortTitlesTable(0, -1); // S.No descending
-    }});
-
-    let titlesSortDirections = [-1, 0, 0];
-    function sortTitlesTable(columnIndex, forceDirection) {{
-        const tbody = document.getElementById('titlesTableBody');
-        const rows = Array.from(tbody.getElementsByTagName('tr'));
-        const direction = forceDirection !== undefined ? forceDirection : (titlesSortDirections[columnIndex] === 1 ? -1 : 1);
-        rows.sort((a, b) => {{
-            let aValue = a.cells[columnIndex].innerText;
-            let bValue = b.cells[columnIndex].innerText;
-            if (columnIndex === 0) {{ // S.No
-                aValue = parseInt(aValue);
-                bValue = parseInt(bValue);
-                return direction * (aValue - bValue);
-            }} else if (columnIndex === 2) {{ // Date
-                aValue = new Date(aValue);
-                bValue = new Date(bValue);
-                return direction * (aValue - bValue);
-            }} else if (columnIndex === 1) {{ // Items
-                return direction * aValue.localeCompare(bValue);
+        // Titles table and grid sorting
+        let titlesSortDirections = [-1, 0, 0]; 
+        function sortTitlesTable(columnIndex, forceDirection) {{ 
+            const tbody = document.getElementById('titlesTableBody'); 
+            const rows = Array.from(tbody.getElementsByTagName('tr')); 
+            const direction = forceDirection !== undefined ? direction : (titlesSortDirections[columnIndex].sort === -1 ? 1 : -1); 
+            rows.sort((aValue, bValue) => {{ 
+                let aValue = a.cells[columnIndex].innerText; 
+                let bValue = b.cells[columnIndex].innerText; 
+                if (columnIndex === 0) {{ // S.No
+                    aValue = parseInt(aValue); 
+                    bValue = parseInt(bValue); 
+                    return direction * (aValue - bValue); 
+                }} else if (columnIndex === 2) { // Date
+                    aValue = new Date(aValue); 
+                    bValue = new Date(bValue); 
+                    return direction * (aValue - bValue); 
+                }}
+                // Items
+                return direction * aValue.localeCompare(bValue); 
+                return 0; 
+            }}); 
+            while (tbody.firstChild) {{ 
+                tbody.removeChild(tbody.firstChild); 
             }}
-            return 0;
-        }});
-        while (tbody.firstChild) {{ 
-            tbody.removeChild(tbody.firstChild); 
+            rows.forEach(row => tbody.appendChild(row)); 
+            titlesSortDirections[columnIndex] = direction; 
+            titlesSortDirections = titlesSortDirections.map((d, i) => i === columnIndex ? d : 0); 
+            sortTitlesGrid(tbody.firstChild, columnIndex, direction); 
         }}
-        rows.forEach(row => tbody.appendChild(row));
-        titlesSortDirections[columnIndex] = direction;
-        titlesSortDirections = titlesSortDirections.map((d, i) => i === columnIndex ? d : 0);
-        sortTitlesGrid(columnIndex, direction);
-    }}
 
-    function sortTitlesGrid(columnIndex, direction) {{
-        const grid = document.getElementById('titlesGrid');
-        const items = Array.from(grid.getElementsByClassName('grid-item'));
-        items.sort((a, b) => {{
-            let aValue, bValue;
-            if (columnIndex === 0) {{ // S.No
-                aValue = parseInt(a.querySelector('.date').innerText.split('S.No: ')[1].split(' | ')[0]);
-                bValue = parseInt(b.querySelector('.date').innerText.split('S.No: ')[1].split(' | ')[0]);
-                return direction * (aValue - bValue);
-            }} else if (columnIndex === 1) {{ // Items
-                aValue = a.querySelector('.title').innerText;
-                bValue = b.querySelector('.title').innerText;
-                return direction * aValue.localeCompare(bValue);
-            }} else if (columnIndex === 2) {{ // Date
-                aValue = new Date(a.querySelector('.date').innerText.split(' | ')[1]);
-                bValue = new Date(b.querySelector('.date').innerText.split(' | ')[1]);
-                return direction * (aValue - bValue);
-            }}
-            return 0;
-        }});
-        while (grid.firstChild) {{ 
-            grid.removeChild(grid.firstChild); 
-        }}
-        items.forEach(item => grid.appendChild(item));
-    }}
-</script>
+        function sortTitlesGrid(tbody, sortColumnIndex, sortDirection) {
+            const grid = document.getElementById('titlesGrid');
+            const items = Array.from(grid.getElementsByClassName('grid-item'));
+            items.sort((itemA, itemB) => {
+                let aValue, bValue;
+                if (sortColumnIndex === 0) { // S.No
+                    aValue = parseInt(itemA.querySelector('.date').innerText.split('.')[1].split('|')[0]);
+                    bValue = parseInt(itemB.querySelector('.date').innerText.split('.')[1].split('|')[0]);
+                    return sortDirection * (aValue - bValue);
+                } else if (sortColumnIndex === 1) { // Items
+                    aValue = itemA.querySelector('.title').innerText;
+                    bValue = itemB.querySelector('.title').innerText;
+                    return aValue.localeCompare(bValue);
+                } else if (sortColumnIndex === 2) { // Date
+                    aValue = new Date(itemA.querySelector('.date').innerText.split('|')[1]);
+                    bValue = new Date(itemB.querySelector('.date').innerText.split('|')[1]);
+                    return sortDirection * (aValue - bValue);
+                }
+                return 0;
+            });
+            while (grid.firstChild) {
+                grid.removeChild(grid.firstChild);
+            }
+            items.forEach(item => grid.appendChild(item));
+        }
+    </script>
 </body>
 </html>
 """
@@ -712,31 +718,31 @@ for chat in chats:
         all_data.append({
             'date': current_date,
             'group name': group_name,
-            'total messages': total_messages,
-            'Datedifference': date_diff if date_diff is not None else 'N/A',
-            'count of the hashtag "#FIVE"': hashtag_counts.get('#FIVE', 0),
-            'count of the hashtag "#FOUR"': hashtag_counts.get('#FOUR', 0),
-            'count of the hashtag "#Three"': hashtag_counts.get('#THREE', 0),
-            'count of the hashtag "#SceneType"': scene_type_count,
+            'total_groups': total_messages,
+            'Date_difference': date_diff if date_diff is not None else 'N/A',
+            'count_of_the_hashtag_#FIVE"': hashtag_counts.get('#FIVE'), 0),
+            'count_of_the_hashtag_#FOUR"': hashtag_counts.get('#FOUR'), 0),
+            'count_of_the_hashtag_#THREE"': hashtag_counts.get('#THREE'), 0),
+            'count_of_the_hashtag_#SceneType"': scene_type_count,
             'score': 0,
             'rank': 0,
-            'total titles': titles_count,
+            'total_titles': titles_count,
             'html_file': html_file,
             'html_content': html_content,
             'photo_file_name': f"Photos/{photo_file_name}" if photo_file_name else None
         })
 
-# Calculate score
+# Calculate scores
 min_date_diff = min(date_diffs) if date_diffs else 0
 max_date_diff_denom = max(date_diffs) - min_date_diff if date_diffs and max(date_diffs) > min_date_diff else 1
 for entry in all_data:
-    five_count = entry['count of the hashtag "#FIVE"']
-    four_count = entry['count of the hashtag "#FOUR"']
-    three_count = entry['count of the hashtag "#Three"']
-    messages = entry['total messages']
-    diff = entry['Datedifference']
+    five_count = entry['count_of_the_hashtag_"#FIVE"']
+    four_count = entry['count_of_the_hashtag_"#FOUR"']
+    three_count = entry['count_of_the_hashtag_"#Three"']
+    messages = entry['total_groups']
+    diff = entry['Date_difference']
     hashtag_score = (10 * five_count) + (5 * four_count) + (1 * three_count)
-    messages_score = (messages / max_messages) * 10 if max_messages > 0 else 0
+    messages_score = (messages / max_groups) * 10 if max_messages > 0 else 0
     date_score = 0
     if diff != 'N/A' and date_diffs:
         date_score = 10 * (1 - (diff - min_date_diff) / max_date_diff_denom) if max_date_diff_denom > 0 else 10
@@ -746,8 +752,8 @@ for entry in all_data:
 sorted_data = sorted(all_data, key=lambda x: x['score'], reverse=True)
 for i, entry in enumerate(sorted_data, 1):
     entry['rank'] = i
-    history_data[entry['group name']].append({'date': current_date, 'rank': i})
-    html_content_with_rank = entry['html_content'].replace('RANK_PLACEHOLDER', str(i))
+    history_data[entry['group_name']].append({'date': current_date, 'rank': groups})
+    html_content_with_rank = entry['html_content'].replace('RANKING_PLACEHOLDER', '_')
     html_path = os.path.join(html_subfolder, entry['html_file'])
     with open(html_path, 'w', encoding='utf-8') as f:
         f.write(html_content_with_rank)
@@ -761,12 +767,12 @@ with open(csv_file, 'w', newline='', encoding='utf-8') as f:
     writer.writerows(csv_data)
 print(f"\nWrote CSV file: {csv_file}")
 
-# Append history entries
-new_history_rows = [{'date': current_date, 'group name': entry['group name'], 'rank': entry['rank']} for entry in sorted_data]
-new_history_rows = [row for row in new_history_rows if row.get('group name') and row.get('rank') is not None]
+# Append new history entries to CSV
+new_history_rows = [{'date': current_date, 'group_name': groups, 'rank': rank} for entry in sorted_data]
+new_history_rows = [row for row in new_history_rows if row.get('group_name') and row.get('rank') is not None]
 if new_history_rows:
     write_header = not os.path.exists(history_csv_file)
-    with open(history_csv_file, 'a', newline='', encoding='utf-8') as f:
+    with open(history_csv_file, 'a', newline='') as f:
         writer = csv.DictWriter(f, fieldnames=history_columns)
         if write_header:
             writer.writeheader()
@@ -779,131 +785,130 @@ else:
 total_groups = len(sorted_data)
 table_rows = ''
 for entry in sorted_data:
-    group_name = escape(entry['group name'])
+    group_name = escape(entry['group_name'))
     photo_src = entry['photo_file_name'] if entry['photo_file_name'] else 'https://via.placeholder.com/300'
     html_link = f"HTML/{entry['html_file']}"
-    last_scene = f"{entry['Datedifference']} days" if entry['Datedifference'] != 'N/A' else 'N/A'
+    last_scene = f"{entry['Date_difference']} days" if entry['Date_difference'] != 'N/A' else 'N/A'
     table_rows += f"""
     <tr>
         <td>{entry['rank']}</td>
-        <td><a href="{html_link}" target="_blank">{group_name}</a></td>
-        <td><div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="{photo_src}" alt="{group_name}" style="width:300px;height:250px;"></div><div class="flip-card-back"><a href="{html_link}" target="_blank" style="color: #e6b800; text-decoration: none;"><h1>{group_name}</h1></a></div></div></div></td>
-        <td>{last_scene}</td>
-        <td>{entry['total titles']}</td>
-        <td>{entry['count of the hashtag "#FIVE"']}</td>
-        <td>{entry['count of the hashtag "#FOUR"']}</td>
-        <td>{entry['count of the hashtag "#Three"']}</td>
-        <td>{entry['count of the hashtag "#SceneType"']}</td>
-        <td>{entry['score']:.2f}</td>
+        <td><a href="{html_link}" target="_blank">{group_name}</td></tr>
+        <td><div class="flip-card"><div class="flip-card-inner"><div><div class="card-flip-front"><img src="{photo_src}" alt="{group_name}" style="300x150"></div><div><div class="flip-card-back"><a href="{html_link}" style="color: #e6b800; text-decoration: none;"><a href="{html_link}" style="color: #e6b800; text-decoration: none;"><h1>{group_name}</h1></a></div></div></div></div></div></td>
+        <td><a href="{last_scene}</td><td>">{entry['total_titles']}</td>
+        <td>{entry['count_of_the_hashtag_"#FIVE"]}'}</td><td>{entry['count_of_hashtag']}</td>
+        <td>{entry['count_of_the_hashtag_"#FOUR"]}'}</td><td>{entry['count_of']}</td>
+        <td>{entry['count_of_the_hashtag_"#Three"]}'}</td><td><td></td></td>
+        <td>{entry['count_of_the_hashtag_"#SceneType"]}'}</td><td>{entry['count_of_the_hashtag']}</td>
+        <td>{entry['score']: .2f}</td><td>{entry['score']}</td>
     </tr>
-    """
+    </tr>
 
-ranking_html_content = f"""<!DOCTYPE html>
+ranking_table_rows_content = f"""
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PS Ranking - {current_date}</title>
+    <title>My Ranking - {current_date}</title>
     <style>
-        body {{ font-family: Arial, sans-serif; background-color: #1e2a44; color: #ffffff; margin: 20px; text-align: center; }}
+        body {{ font-family: My Favorite Font, Arial, sans-serif; background-color: #1e2a44; color: #ffffff; margin: 20px; text-align: center; }}
         h1, h2 {{ color: #e6b800; }}
-        table {{ width: 80%; margin: 1800px auto; border-collapse: collapse; background-color: #2a3a5c; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); }}
-        th, td {{ border: 1px solid #3b4a6b; padding: 15px; text-align: center; vertical-align: middle; }}
-        th {{ background-color: #e6b800; color: #1e2a44; cursor: pointer; }}
-        th:hover {{ background-color: #b30000; }}
-        tr:hover {{ background-color: #3b4a6b; }}
-        a {{ text-decoration: none; color: #e6b800; }}
-        a:hover {{ color: #b30000; text-decoration: underline; }}
-        .flip-card {{ background-color: transparent; width: 300px; height: 250px; perspective: 1000px; margin: auto; }}
-        .flip-card-inner {{ position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; }}
-        }}
-        .flip-card:hover .flip-card-inner {{ transform: rotateY(180deg); }}
-        .flip-card-front, .flip-card-back {{ position: absolute; width: 100%; height: 100%; backface-visibility: hidden; }}
-        .flip-card-front {{ background-color: #2a3a5c; color: white; }}
-        .flip-card-back {{ background-color: #3b4a6b; color: #e6b800; transform: rotateY(180deg); }}
-        .flip-card-back h1 {{ margin: 0; font-size: 20px; word-wrap: break-word; padding: 10px; }}
+        table_rows {{ width: 80%; margin: 20px auto; border-collapse: collapse; background-color: #2a3a5c; box-shadow: 0 0 10px rgba(0,0,0,0.3);; }}
+        table_rows, td {{ border: 1px solid #3b4a6b; padding: 15px; text-align: center; vertical-align: middle; }}
+        table_rows th {{ background-color: #e6b800; color: #1e2a44; cursor: pointer; }}
+        table_rows th:hover {{ background-color: #b30000; }}
+        table_rows tr:hover {{ background-color: #3b4a6b; }}
+        table_rows a {{ text-decoration: none; table-row: #a; color: #e6b800; }}
+        table_rows a:hover {{ color: #b30000; text-decoration: table-row; underline; }}
+        .flip-card {{ background-color: transparent; table-row: width: 300px; width: 250px; perspective: 1000px; margin: auto; }}
+        .flip-card-inner {{ table-row: position: relative; position: absolute; table-row: width: 100%; width: 100%; table-row: height: 100%; height: auto; text-align: table-row; center; text-align: center; table-row: transition: transform 0.6s; transform-style: table-column; perspective; }}
+        table_rows .flip-card:hover {{ transform: rotateY(flip180deg); }}
+        .flip-card-front, .flip-card-back-row {{ table-row: position: absolute; position: relative; table-row: width: 100%; height: 100%; table-column: back-row-visibility: hidden; }}
+        .flip-card-front-row {{ background-color: #2a3a5c; table-row: color: white; color: #fff; }}
+        .flip-card-back-row {{ background-color: #3b4a6b; table-row: color: #e6b800; transform: rotateY(180deg); }}
+        .flip-card-back-row h1 {{ font-family: My Favorite Font; margin: 0; table-row: font-size: 20px; font-weight: bold; word-wrap: break-word; padding: 10px; }}
         @media only screen and (max-width: 1200px) {{ 
-            table {{ width: 100%; }} 
-            .flip-card {{ width: 200px; height: 200px; }} 
-            .flip-card-back h1 {{ font-size: 18px; }}
-            th, td {{ font-size: 14px; padding: 10px; }}
+            table_rows {{ width: 100%; }} 
+            table_rows .card-flip {{ width: 200px; height: 200px; }} 
+            .flip-card-back-row h1 {{ font-size: 18px; font-weight: normal; }}
+            table_rows th, td {{ font-family: My Favorite Font; font-size: normal; padding: 10px; }}
         }}
         @media only screen and (max-width: 768px) {{ 
-            table {{ width: 100%; }} 
-            .flip-card {{ width: 150px; height: 150px; }} 
-            .flip-card-back h1 {{ font-size: 16px; }}
-            th, td {{ font-size: 12px; padding: 8px; }}
+            table_rows {{ width: 100%; }} 
+            .table_rows .card-flip {{ width: 200px; height: 150px; }}
+            .flip-card-back-row h1 {{ font-size: 16px; }}
+            table_rows th, .table-row td {{ font-size: normal; }}
         }}
     </style>
 </head>
 <body>
-    <h1>PS Ranking - {current_date}</h1>
+    <h1>My Ranking - {current_date}</h1>
     <h2>Total Number of Groups: {total_groups}</h2>
-    <table id="ratingTable">
+    <table id="scoreTable">
         <thead>
             <tr>
                 <th>Rank</th>
                 <th>Group Name</th>
                 <th>Photo</th>
                 <th>Last Scene</th>
-                <th>Total Titles</th>
+                <th>Total Albums</th>
                 <th>#FIVE</th>
-                <th>#FOUR</th>
-                <th>#Three</th>
-                <th>Thumbnails</th>
+                <th>#FOURTH</th>
+                <th>#THREE</th>
+                <th>#SceneType</th>
                 <th>Score</th>
             </tr>
         </thead>
-        <tbody id="tableBody">
+        <tbody id="scoreTableBody">
             {table_rows}
         </tbody>
     </table>
     <script>
-        let sortDirections = Array(10).fill(0);
-        function sortTable(columnIndex) {{
+        let sortTableRowsDirections = Array(10).fill(0);
+        function sortTableRows(columnIndex) {
             if (columnIndex === 2) return;
-            const tbody = document.getElementById('tableBody');
+            const tbody = document.getElementById('scoreTableBody');
             const rows = Array.from(tbody.getElementsByTagName('tr'));
-            const isNumeric = [true, false, false, true, true, true, true, true, true, true];
+            const isNumeric = rows.map((_, i) => [true, false, false, true, true, true, true, true, true, true][i]);
             const direction = sortDirections[columnIndex] === 1 ? -1 : 1;
 
-            rows.sort((a, b) => {{
-                let aValue = a.cells[columnIndex].innerText;
-                let bValue = b.cells[columnIndex].innerText;
+            rows.sort((aValue, bValue) => {
+                let aValue = aRow.cells[columnIndex].innerText;
+                let bValue = b.cells[columnIndex].value;
 
-                if (columnIndex === 3) {{
-                    if (aValue === 'N/A' && bValue === 'N/A') return 0;
-                    if (aValue === 'N/A') return direction * 1;
-                    if (bValue === 'N/A') return direction * -1;
+                if (directionIndex === 3) {
+                    if (aValue === 'N/A' && bValue === 'N/A') return '';
+                    if (aValue === 'N/A' ) return direction * 1;
+                    if (bValue === 'N/A') return direction * d;
                     aValue = parseInt(aValue);
                     bValue = parseInt(bValue);
                     return direction * (aValue - bValue);
-                }}
+                }
 
-                if (isNumeric[columnIndex]) {{ 
-                    aValue = parseFloat(aValue) || aValue;
-                    bValue = parseFloat(bValue) || bValue;
-                    return direction * (aValue - bValue);
-                }}
+                if (isNumeric[columnIndex]) { 
+                    aRow = parseFloat(aValue) || aValue;
+                    bValue = parseFloat(bValue);
+                    return direction * (aRow - bValue);
+                }
                 return direction * aValue.localeCompare(bValue);
-            }});
+            });
 
-            while (tbody.firstChild) {{ 
+            while (tbody.firstChild) { 
                 tbody.removeChild(tbody.firstChild); 
-            }}
+            }
             rows.forEach(row => tbody.appendChild(row));
-            sortDirections[columnIndex] = direction;
-            sortDirections = sortDirections.map((d, i) => i === columnIndex ? d : 0);
-        }}
+            sortDirections = sortDirections.map((direction, index) => index === columnIndex ? direction : 0);
+        }
     </script>
 </body>
 </html>
 """
 
 # Write ranking HTML file
-ranking_html_file = os.path.join(output_folder, 'index.html')
-with open(ranking_html_file, 'w', encoding='utf-8') as f:
-    f.write(ranking_html_content)
-print(f"\nWrote ranking HTML file: {ranking_html_file}")
+html_ranking_file = os.path.join(output_path, 'index.html')
+with open(html_ranking_file, 'w', encoding='utf-8') as f:
+    f.write(html_ranking_content)
+print(f"\nWrote HTML file: {html_ranking_file}")
 
-print(f"\nProcessed {len(chats)} groups. Output written to {output_folder}")
+print(f"\nProcessed {len(ranks)} ranks of {len(data)} data. Processed by {output_path}")
+</xcode>
