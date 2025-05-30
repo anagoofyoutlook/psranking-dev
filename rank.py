@@ -958,7 +958,7 @@ ranking_html_content = f"""<!DOCTYPE html>
             let bValue = b.cells[columnIndex].textContent;
 
             if (columnIndex === 3) {{
-                if (aValue === 'N/A' && bValue === 'N/A') return 0;
+                if (aValue === 'N/A' && bValue === 'N/A') return 0;  
                 if (aValue === 'N/A') return direction * 1;
                 if (bValue === 'N/A') return direction * -1;
                 aValue = parseInt(aValue) || 0;
