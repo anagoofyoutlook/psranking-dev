@@ -397,38 +397,27 @@ for chat in chats:
         }}
         .titles-table {{ 
             width: 80%; 
-            margin: 20px auto;
- 
+            margin: 20px auto; 
             border-collapse: collapse; 
-            background-color: 
-            #2a3a5c; 
+            background-color: #2a3a5c; 
         }}
-        .titles-table th:nth-child(e, {t:nth-child td) {{ nth-child 
+        .titles-table th, .titles-table td {{ 
             padding: 10px; 
             border: 1px solid #3b4a6b; 
             text-align: left; 
             vertical-align: middle; 
-            color: white; 
-            td 
+            color: #ffffff; 
         }}
         .titles-table th {{ 
             background-color: #e6b800; 
-            color: white; 
-            cursor: #e6b800; 
+            color: #1e2a44; 
             cursor: pointer; 
         }}
         .titles-table th:hover {{ 
             background-color: #b30000; 
         }}
-        a{{ 
-            color: red; 
-        color: #e6b800; text-decoration: none; 
-        }}
-        a:hover {{ 
-            color: #b30000; 
-        text-decoration: underline; 
-            color:#b30000; 
-        }}
+        a {{ color: #e6b800; text-decoration: none; }}
+        a:hover {{ color: #b30000; text-decoration: underline; }}
         .container {{ 
             position: relative; 
             width: 80%; 
@@ -443,34 +432,15 @@ for chat in chats:
             display: none; 
             width: 100%; 
             height: auto; 
-            display: none; 
             aspect-ratio: 16 / 9; 
         }}
         .mySlides img {{ 
             width: 100%; 
             height: auto; 
-            object-fit: cover; 
+            object-fit: contain; 
         }}
-        .cursor {{ 
-            cursor: pointer; 
-        }}
-        .prev{{ 
-            cursor: pointer; 
-            position: absolute; 
-            top: 0%; 
-            transform: translateY(-50%); 
-            width  w: auto; 
-            padding: 16px; 
-            color: #e6b800; 
-            font-weight: bold; 
-            font-size: 20px; 
-            border-radius: 0 3px 3px 0; 
-            user-select: none; 
-            -webkit-user-select: none; 
-            z-index: 1; 
-        }}
-        .prev {{ left: 0; }}
-        .next{{ 
+        .cursor {{ cursor: pointer; }}
+        .prev, .next {{ 
             cursor: pointer; 
             position: absolute; 
             top: 50%; 
@@ -480,12 +450,12 @@ for chat in chats:
             color: #e6b800; 
             font-weight: bold; 
             font-size: 20px; 
-            border-radius: 3px 0 0 3px; 
             user-select: none; 
             -webkit-user-select: none; 
             z-index: 1; 
-            right: 0; 
         }}
+        .prev {{ left: 0; border-radius: 0 3px 3px 0; }}
+        .next {{ right: 0; border-radius: 3px 0 0 3px; }}
         .prev:hover, .next:hover {{ background-color: #b30000; }}
         .numbertext {{ 
             color: #e6b800; 
@@ -540,7 +510,7 @@ for chat in chats:
         }}
         .tab button:hover {{ background-color: #b30000; }}
         .tab button.active {{ background-color: #3b4a6b; }}
-        .tabcontent,, {{ 
+        .tabcontent {{ 
             display: none; 
             padding: 6px 12px; 
             border-top: none; 
@@ -550,7 +520,7 @@ for chat in chats:
             border-radius: 0 0 5px 5px; 
             box-sizing: border-box; 
         }}
-        #Videos{{display: block;}}
+        #Videos {{ display: block; }}
         @media screen and (max-width: 1200px) {{ 
             .titles-grid {{ grid-template-columns: repeat(2, 1fr); }} 
             .grid-item video, .grid-item img {{ width: 100%; height: auto; aspect-ratio: 2 / 1; }} 
@@ -561,7 +531,7 @@ for chat in chats:
             .rank-container {{ width: 95%; flex-direction: column; gap: 10px; }} 
             .chart-container {{ max-width: 100%; }} 
             .column {{ max-width: 80px; }} 
-            .mySlides img {{ max-height: auto; object-fit: cover; }} 
+            .mySlides img {{ max-height: auto; object-fit: contain; }} 
             .tab button {{ font-size: 14px; padding: 10px; }}
             .titles-grid {{ grid-template-columns: 1fr; }} 
             .grid-item video, .grid-item img {{ max-height: auto; aspect-ratio: 2 / 1; }} 
@@ -572,7 +542,7 @@ for chat in chats:
     <h1>{group_name}</h1>
     <div class="rank-container">
         <div class="chart-container"><h2>Rank History</h2><canvas id="rankChart"></canvas></div>
-        <p>Rank: <span class="rank-number" data-rank="{RANK_DATA}">{entry['rank']}</span></p>
+        <p>Rank: <span class="rank-number" data-rank="{RANK_PLACEHOLDER}">{RANK_PLACEHOLDER}</span></p>
     </div>
     {slideshow_content}
     <div class="info"><p>Scenes: {total_messages}</p><p>Last Group: {date_diff_text}</p></div>
@@ -587,7 +557,7 @@ for chat in chats:
             <button class="tablinks active" onclick="openTab('Videos')">Records</button>
             <button class="tablinks" onclick="openTab('Table')">Table</button>
         </div>
-        <div id="Records" class="tabcontent">
+        <div id="Videos" class="tabcontent">
             {titles_grid}
         </div>
         <div id="Table" class="tabcontent">
@@ -808,7 +778,7 @@ for i, entry in enumerate(sorted_data, 1):
     else:
         entry['rank_change'] = ''
     # Write ranked HTML file
-    html_content = entry['html_content'].replace('{RANK_DATA}', str(i))
+    html_content = entry['html_content'].replace('{RANK_PLACEHOLDER}', str(i))
     html_path = os.path.join(html_subfolder, entry['html_file'])
     with open(html_path, 'w', encoding='utf-8') as f:
         f.write(html_content)
@@ -860,15 +830,15 @@ for entry in sorted_data:
     table_rows += ''.join([
         f'<tr>',
         f'  <td>{entry["rank"]}</td>',
-        f'  <td><a href="{html_link}">{group_name}</a></tr>',
-        f'  <td><div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="{photo_url}" alt="{group_name}" style="width:300px; height:250px;"></div><div class="flip-card-back"><a href="{html_link}" style="color: #e6b800; text-decoration: none;"><h1>{group_name}</h1></a></div></div></div></td>',
+        f'  <td><a href="{html_link}" target="_blank">{group_name}</a></td>',
+        f'  <td><div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="{photo_url}" alt="{group_name}" style="width:300px;height:250px;"></div><div class="flip-card-back"><a href="{html_link}" style="color: #e6b800; text-decoration: none;"><h1>{group_name}</h1></a></div></div></div></td>',
         f'  <td>{last_scene}</td>',
         f'  <td>{entry["total titles"]}</td>',
         f'  <td>{entry["count of the hashtag "#FIVE""]}</td>',
         f'  <td>{entry["count of the hashtag "#FOUR""]}</td>',
         f'  <td>{entry["count of the hashtag "#Three""]}</td>',
         f'  <td>{entry["count of the hashtag "#SceneType""]}</td>',
-        f'  <td>{entry["score"]}</td>',
+        f'  <td>{entry["score"]:.2f}</td>',
         f'  <td>{entry["rank_change"]}</td>',
         f'</tr>',
     ])
@@ -880,29 +850,27 @@ ranking_html_content = f"""<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Ranking - {current_date}</title>
     <style>
-        body {{ font-family: html, sans-serif; background-color: #1e2a44; color: #ffffff; margin: 0; padding: 20px; text-align: center; }}
+        body {{ font-family: Arial, sans-serif; background-color: #1e2a44; color: #ffffff; margin: 0; padding: 20px; text-align: center; }}
         h1, h2 {{ color: #e6b800; margin-bottom: 20px; }}
-        table {{ width: 95%; margin: 20px auto; border-collapse: collapse; background-color: #2a3a5c; box-shadow: inset 0 0 5px rgba(0,0,0,0.3); }}
+        table {{ width: 95%; margin: 20px auto; border-collapse: collapse; background-color: #2a3a5c; box-shadow: 0 0 10px rgba(0,0,0,0.3); }}
         th, td {{ border: 1px solid #3b4a6b; padding: 6px; text-align: center; vertical-align: middle; }}
-        th {{ background-color: #e6b800; color: white; cursor: pointer; }}
+        th {{ background-color: #e6b800; color: #1e2a44; cursor: pointer; }}
         th:hover {{ background-color: #b30000; }}
         tr:hover {{ background-color: #3b4a6b; }}
         a {{ text-decoration: none; color: #e6b800; }}
-        a:hover {{ text-decoration: underline; color: #c30000; }}
-        .flip-card {{ background-color: transparent; width: 300px; height: 250px; perspective: 1000px; margin: 0 auto; 
-        }}
-        .flip-card-inner {{ position: relative; width: 100%; height: auto; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; 
-        }}
+        a:hover {{ text-decoration: underline; color: #b30000; }}
+        .flip-card {{ background-color: transparent; width: 300px; height: 250px; perspective: 1000px; margin: 0 auto; }}
+        .flip-card-inner {{ position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; }}
         .flip-card:hover .flip-card-inner {{ transform: rotateY(180deg); }}
-        .flip-card-front, .flip-card-back {{ position: absolute; width: 100%; height: auto; -webkit-backface-visibility: hidden; backface-visibility: hidden; }}
+        .flip-card-front, .flip-card-back {{ position: absolute; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; }}
         .flip-card-front {{ background-color: #2a3a5c; color: white; }}
         .flip-card-back {{ background-color: #3b4a6b; color: #e6b800; transform: rotateY(180deg); }}
-        .flip-card-back h1 {{ margin: 0; font-size: 20px; word-wrap: break-word; padding: 10px; }}
-        table th:nth-child(2), table td:nth-child(2) {{ width: 15%; max-width: 150px; word-wrap: break-word; }}
+        .flip-card-back h1 {{ margin: 0; font-size: 20px; overflow-wrap: break-word; padding: 10px; }}
+        table th:nth-child(2), table td:nth-child(2) {{ width: 15%; max-width: 150px; overflow-wrap: break-word; }}
         table th:nth-child(11), table td:nth-child(11) {{ width: 8%; text-align: center; }}
         .rank-up {{ color: #00cc00; }}
-        .rank-down {{ color: #d30000; }}
-        .rank-same {{ color: white; }}
+        .rank-down {{ color: #b30000; }}
+        .rank-same {{ color: #ffffff; }}
         @media screen and (max-width: 1200px) {{
             table {{ width: 100%; }}
             .flip-card {{ width: 200px; height: 200px; }}
@@ -958,7 +926,7 @@ ranking_html_content = f"""<!DOCTYPE html>
             let bValue = b.cells[columnIndex].textContent;
 
             if (columnIndex === 3) {{
-                if (aValue === 'N/A' && bValue === 'N/A') return 0;  
+                if (aValue === 'N/A' && bValue === 'N/A') return 0;
                 if (aValue === 'N/A') return direction * 1;
                 if (bValue === 'N/A') return direction * -1;
                 aValue = parseInt(aValue) || 0;
