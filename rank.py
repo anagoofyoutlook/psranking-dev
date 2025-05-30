@@ -2,7 +2,7 @@ import json
 import csv
 import os
 import shutil
-from datetime import datetime
+from datetime import datetime, timedelta
 import re
 import zipfile
 import random
@@ -95,7 +95,7 @@ csv_columns = [
     'date', 'group name', 'total messages', 'Datedifference',
     'count of the hashtag "#FIVE"', 'count of the hashtag "#FOUR"',
     'count of the hashtag "#Three"', 'count of the hashtag "#SceneType"',
-    'score', 'rank', 'total titles'
+    'score', 'rank', 'total titles', 'rank change'
 ]
 
 # Define history CSV columns
@@ -110,9 +110,10 @@ if os.path.exists(history_csv_file):
             group = row.get('group name', 'Unknown')
             try:
                 rank = int(float(row.get('rank', '0')))
+                date = row.get('date', '')
                 if group not in history_data:
                     history_data[group] = []
-                history_data[group].append({'date': row.get('date', ''), 'rank': rank})
+                history_data[group].append({'date': date, 'rank': rank})
             except (ValueError, TypeError) as e:
                 print(f"Skipping invalid rank for group '{group}': {row}. Error: {e}")
     print(f"Loaded {sum(len(v) for v in history_data.values())} history entries from {history_csv_file}")
@@ -124,6 +125,7 @@ all_data = []
 max_messages = 0
 date_diffs = []
 current_date = datetime.now().strftime('%Y-%m-%d')
+current_date_dt = datetime.strptime(current_date, '%Y-%m-%d')
 
 # Function to sanitize filenames
 def sanitize_filename(name):
@@ -140,6 +142,18 @@ def find_serial_match_media(serial_number, media_files):
             print(f"Match found for serial number '{serial_number}': '{media}'")
             return media
     print(f"No match found for serial number '{serial_number}'")
+    return None
+
+# Function to get rank from ~7 days ago
+def get_previous_rank(group_name, current_date_dt):
+    if group_name not in history_data:
+        return None
+    target_date = current_date_dt - timedelta(days=7)
+    date_range = [target_date - timedelta(days=1), target_date, target_date + timedelta(days=1)]
+    date_range_str = [d.strftime('%Y-%m-%d') for d in date_range]
+    for entry in sorted(history_data[group_name], key=lambda x: x['date'], reverse=True):
+        if entry['date'] in date_range_str:
+            return entry['rank']
     return None
 
 # Process each chat
@@ -199,6 +213,18 @@ for chat in chats:
 
         scene_type_count = sum(hashtag_counts.get(h, 0) for h in special_scene_types)
         date_diff_text = f'{date_diff} days' if date_diff is not None else 'N/A'
+
+        # Calculate rank change
+        previous_rank = get_previous_rank(group_name, current_date_dt)
+        rank_change = 'N/A'
+        if previous_rank is not None:
+            current_rank = len(all_data) + 1  # Temporary rank before final sorting
+            if previous_rank > current_rank:
+                rank_change = '↑'
+            elif previous_rank < current_rank:
+                rank_change = '↓'
+            else:
+                rank_change = '='
 
         # Titles with serial numbers
         titles = []
@@ -496,18 +522,18 @@ for chat in chats:
             box-sizing: border-box; 
         }}
         #Videos {{ display: block; }}
-        @media only screen and (max-width: 1200px) {{ 
+        @media screen and (max-width: 1200px) {{ 
             .titles-grid {{ grid-template-columns: repeat(2, 1fr); }} 
             .grid-item video, .grid-item img {{ width: 100%; aspect-ratio: 2 / 1; }} 
         }}
-        @media only screen and (max-width: 768px) {{ 
+        @media screen and (max-width: 768px) {{ 
             .container {{ width: 80%; max-height: 400px; }} 
             h1 {{ width: 80%; margin: 10px auto; font-size: 30px; }}
-            .rank-container {{ width: 80%; flex-direction: column; gap: 10px; }} 
+            .rank-container {{ width: 80%; flex-direction: column; gap: 8px; }}
             .chart-container {{ max-width: 100%; }} 
-            .column {{ flex: 0 0 80px; max-width: 80px; }} 
+            .column {{ flex: 0 0 80px; max-width: 80px; }}
             .mySlides img {{ object-fit: contain; }} 
-            .tab button {{ font-size: 14px; padding: 10px; }}
+            .tab button {{ font-size: 14px; padding: 8px; }}
             .titles-grid {{ grid-template-columns: 1fr; }} 
             .grid-item video, .grid-item img {{ width: 100%; aspect-ratio: 2 / 1; }} 
         }}
@@ -517,14 +543,14 @@ for chat in chats:
     <h1>{group_name}</h1>
     <div class="rank-container">
         <div class="chart-container"><h2>Rank History</h2><canvas id="rankChart"></canvas></div>
-        <p>Rank: <span class="rank-number" data-rank="RANK_PLACEHOLDER"></span></p>
+        <p>Rank: <span class="rank-number" data-rank="RANK">{{RANK_PLACEHOLDER}}</span></p>
     </div>
     {slideshow_content}
-    <div class="info"><p>Scenes: {total_messages}</p><p>Last Scene: {date_diff_text}</p></div>
+    <div class="info"><p>Scenes: {total_messages}</p><p>Last group: {date_diff_text}</p></div>
     <div class="info">
-        <h2>Rating Hashtag Counts (#FIVE, #FOUR, #Three)</h2><ul class="hashtags">{ratings_hashtag_list}</ul>
-        <h2>Scene Type Hashtag Counts</h2><ul class="hashtags">{scene_types_hashtag_list}</ul>
-        <h2>Other Hashtag Counts</h2><ul class="hashtags">{other_hashtag_list}</ul>
+        <h2>Rating Hashtags (#FIVE, #FOUR, #Three)</h2><ul class="hashtags">{ratings_hashtag_list}</ul>
+        <h2>Scene Type Hashtags</h2><ul class="hashtags">{scene_types_hashtag_list}</ul>
+        <h2>Other Hashtags</h2><ul class="hashtags">{other_hashtag_list}</ul>
     </div>
     <div class="info">
         <h2>Titles</h2>
@@ -545,12 +571,12 @@ for chat in chats:
     function plusSlides(n) {{
         clearInterval(autoSlide);
         showSlides(slideIndex += n);
-        autoSlide = setInterval(() => plusSlides(1), 3000);
+        autoSlide = setInterval(() => plusSlides(1), 2500);
     }}
     function currentSlide(n) {{
         clearInterval(autoSlide);
         showSlides(slideIndex = n);
-        autoSlide = setInterval(() => plusSlides(1), 3000);
+        autoSlide = setInterval(() => plusSlides(1), 2500);
     }}
     function showSlides(n) {{
         let i;
@@ -569,17 +595,17 @@ for chat in chats:
         dots[slideIndex-1].className += " active";
         captionText.innerHTML = dots[slideIndex-1].alt;
     }}
-    let autoSlide = setInterval(() => plusSlides(1), 3000);
+    let autoSlide = setInterval(() => plusSlides(1), 2500);
 
     function openTab(evt, tabName) {{
-        let i, content, buttons;
-        content = document.getElementsByClassName("tabcontent");
-        for (i = 0; i < content.length; i++) {{
-            content[i].style.display = "none";
+        let i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tabcontent");
+        for (i = 0; i < tabcontent.length; i++) {{
+            tabcontent[i].style.display = "none";
         }}
-        buttons = document.getElementsByClassName("tablinks");
-        for (i = 0; i < buttons.length; i++) {{
-            buttons[i].className = buttons[i].className.replace(" active", "");
+        tablinks = document.getElementsByClassName("tablinks");
+        for (i = 0; i < tablinks.length; i++) {{
+            tablinks[i].className = tablinks[i].className.replace(" active", "");
         }}
         document.getElementById(tabName).style.display = "block";
         evt.currentTarget.className += " active";
@@ -587,9 +613,9 @@ for chat in chats:
 
     document.addEventListener('DOMContentLoaded', function() {{
         const ctx = document.getElementById('rankChart').getContext('2d');
-        const historyData = {history_data_json};
-        const dates = historyData.map(entry => entry.date);
-        const ranks = historyData.map(entry => entry.rank);
+        const historyData = JSON.parse('{json.dumps(history_data.get(group_name, []))}');
+        const dates = historyData.map(function(entry) {{ return entry.date; }});
+        const ranks = historyData.map(function(entry) {{ return entry.rank; }});
         new Chart(ctx, {{
             type: 'line',
             data: {{
@@ -598,7 +624,7 @@ for chat in chats:
                     label: 'Rank History',
                     data: ranks,
                     borderColor: '#e6b800',
-                    backgroundColor: 'rgba(230, 184, 0, 0.2)',
+                    backgroundColor: 'rgba(230, 184, 0, 0.25)',
                     fill: true,
                     tension: 0.4
                 }}]
@@ -608,13 +634,13 @@ for chat in chats:
                     y: {{
                         beginAtZero: false,
                         title: {{ display: true, text: 'Rank', color: '#e6b800' }},
-                        ticks: {{ stepSize: 1, color: '#ffffff' }},
+                        ticks: {{ stepSize: 1, color: '#000000' }},
                         suggestedMax: {len(chats) + 1},
                         grid: {{ color: '#3b4a6b' }}
                     }},
                     x: {{
                         title: {{ display: true, text: 'Date', color: '#e6b800' }},
-                        ticks: {{ color: '#ffffff' }},
+                        ticks: {{ color: '#000000' }},
                         grid: {{ color: '#3b4a6b' }}
                     }}
                 }},
@@ -673,8 +699,8 @@ for chat in chats:
         items.sort((a, b) => {{
             let aValue, bValue;
             if (columnIndex === 0) {{
-                aValue = parseInt(a.querySelector('.date').innerText.split('S.No: ')[1].split(' | ')[0]);
-                bValue = parseInt(b.querySelector('.date').innerText.split('S.No: ')[1].split(' | ')[0]);
+                aValue = parseInt(a.querySelector('.date').innerText.split('S.No: ')[1].split(' ')[0]);
+                bValue = parseInt(b.querySelector('.date').innerText.split('S.No: ')[1].split(' ')[0]);
                 return direction * (aValue - bValue);
             }} else if (columnIndex === 1) {{
                 aValue = a.querySelector('.title').innerText;
@@ -711,14 +737,15 @@ for chat in chats:
             'count of the hashtag "#Three"': hashtag_counts.get('#THREE', 0),
             'count of the hashtag "#SceneType"': scene_type_count,
             'score': 0,
-            'rank': 0,
+            'rank': '',
             'total titles': titles_count,
+            'rank_change': rank_change,
             'html_file': html_file,
             'html_content': html_content,
-            'photo_file_name': f"Photos/{photo_file_name}" if photo_file_name else None
+            'photo_file_name': f"Photos/{group_name}/{photo_file_name}" if photo_file_name else ''
         })
 
-# Calculate score
+# Calculate scores and final ranks
 min_date_diff = min(date_diffs) if date_diffs else 0
 max_date_diff_denom = max(date_diffs) - min_date_diff if date_diffs and max(date_diffs) > min_date_diff else 1
 for entry in all_data:
@@ -738,24 +765,41 @@ for entry in all_data:
 sorted_data = sorted(all_data, key=lambda x: x['score'], reverse=True)
 for i, entry in enumerate(sorted_data, 1):
     entry['rank'] = i
-    history_data[entry['group name']].append({'date': current_date, 'rank': i})
-    html_content_with_rank = entry['html_content'].replace('RANK_PLACEHOLDER', str(i))
+    # Update rank_change based on final rank
+    previous_rank = get_previous_rank(entry['group name'], current_date_dt)
+    if previous_rank is not None:
+        if entry['rank'] < previous_rank:
+            entry['rank_change'] = '<span class="uparrow">↑</span>'
+        elif entry['rank'] > previous_rank:
+            entry['rank_change'] = '<span class="downarrow">↓</span>'
+        else:
+            entry['rank_change'] = '<span class="equalsign">=</span>'
+    else:
+        entry['rank_change'] = 'N/A'
+    # Write group HTML
+    html_content = entry['html_content'].replace('{{RANK_PLACEHOLDER}}', str(i))
     html_path = os.path.join(html_subfolder, entry['html_file'])
     with open(html_path, 'w', encoding='utf-8') as f:
-        f.write(html_content_with_rank)
-    print(f"Wrote HTML file: {html_path}")
+        f.write(html_content)
+    print(f"Wrote HTML for {entry['group name']}: {html_path}")
+    # Update history
+    history_data[entry['group name']].append({'date': current_date, 'rank': i})
 
-# Write current run to CSV
-csv_data = [{k: v for k, v in entry.items() if k in csv_columns} for entry in sorted_data]
+# Write current ranking CSV
+csv_data = [{k: str(v).replace('<span class="uparrow">↑</span>', '↑')
+                         .replace('<span class="downarrow">↓', '↓')
+                         .replace('<span class="equalsign">=</span>', '=') 
+                   if k == 'rank_change' else v 
+                   for k, v in entry.items() if k in csv_columns} 
+            for entry in sorted_data]
 with open(csv_file, 'w', newline='', encoding='utf-8') as f:
     writer = csv.DictWriter(f, fieldnames=csv_columns)
     writer.writeheader()
     writer.writerows(csv_data)
-print(f"\nWrote CSV file: {csv_file}")
+print(f"\nWrote ranking CSV: {csv_file}")
 
-# Append history entries
-new_history_rows = [{'date': current_date, 'group name': entry['group name'], 'rank': entry['rank']} for entry in sorted_data]
-new_history_rows = [row for row in new_history_rows if row.get('group name') and row.get('rank') is not None]
+# Append to history CSV
+new_history_rows = [{'date': entry['date'], 'group name': entry['group name'], 'rank': entry['rank']} for entry in sorted_data]
 if new_history_rows:
     write_header = not os.path.exists(history_csv_file)
     with open(history_csv_file, 'a', newline='', encoding='utf-8') as f:
@@ -765,30 +809,32 @@ if new_history_rows:
         writer.writerows(new_history_rows)
     print(f"\nAppended {len(new_history_rows)} rows to {history_csv_file}")
 else:
-    print(f"No new history entries to append to {history_csv_file}")
+    print(f"\nNo new history entries to append to {history_csv_file}")
 
 # Generate ranking HTML
 total_groups = len(sorted_data)
 table_rows = ''
 for entry in sorted_data:
     group_name = escape(entry['group name'])
-    photo_src = entry['photo_file_name'] if entry['photo_file_name'] else 'https://via.placeholder.com/300'
+    photo_url = entry['photo_file_name'] if entry['photo_file_name'] else 'https://via.placeholder.com/300/photo.jpg'
     html_link = f"HTML/{entry['html_file']}"
-    last_scene = f"{entry['Datedifference']} days" if entry['Datedifference'] != 'N/A' else 'N/A'
-    table_rows += f"""
-    <tr>
-        <td>{entry['rank']}</td>
-        <td><a href="{html_link}" target="_blank">{group_name}</a></td>
-        <td><div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="{photo_src}" alt="{group_name}" style="width:300px;height:250px;"></div><div class="flip-card-back"><a href="{html_link}" target="_blank" style="color: #e6b800; text-decoration: none;"><h1>{group_name}</h1></a></div></div></div></td>
-        <td>{last_scene}</td>
-        <td>{entry['total titles']}</td>
-        <td>{entry['count of the hashtag "#FIVE"']}</td>
-        <td>{entry['count of the hashtag "#FOUR"']}</td>
-        <td>{entry['count of the hashtag "#Three"']}</td>
-        <td>{entry['count of the hashtag "#SceneType"']}</td>
-        <td>{entry['score']:.2f}</td>
-    </tr>
-    """
+    last_scene = f"{entry['Datedifference']} days ago" if entry['Datedifference'] != 'N/A' else 'N/A'
+    table_rows += [
+        f'<tr>',
+        f'  <td>{entry["rank"]}</td>',
+        f'  <td><a href="{html_link}" target="_blank">{group_name}</a></td>',
+        f'  <td><div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="{photo_url}" alt="{group_name}" style="width:300px;height:250px;"></div><div class="flip-card-back"><a href="{html_link}" style="color: #e6b800; text-decoration: none;"><h1>{group_name}</h1></a></div></div></div></td>',
+        f'  <td>{last_scene}</td>',
+        f'  <td>{entry["total titles"]}</td>',
+        f'  <td>{entry["count of the hashtag "#FIVE""]}</td>',
+        f'  <td>{entry["count of the hashtag "#FOUR""]}</td>',
+        f'  <td>{entry["count of the hashtag "#Three""]}</td>',
+        f'  <td>{entry["count of the hashtag "#SceneType""]}</td>',
+        f'  <td>{entry["score"]:.2f}</td>',
+        f'  <td>{entry["rank_change"]}</td>',
+        f'</tr>'
+    ]
+    table_rows = ''.join(table_rows)
 
 ranking_html_content = f"""<!DOCTYPE html>
 <html lang="en">
@@ -797,7 +843,7 @@ ranking_html_content = f"""<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PS Ranking - {current_date}</title>
     <style>
-        body {{ font-family: Arial, sans-serif; background-color: #1e2a44; color: #ffffff; margin: 20px; text-align: center; }}
+        body {{ font-family: Arial, sans-serif; background-color: #1e2a44; color: #ffffff; margin: 0px; text-align: center; }}
         h1, h2 {{ color: #e6b800; }}
         table {{ width: 80%; margin: 20px auto; border-collapse: collapse; background-color: #2a3a5c; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); }}
         th, td {{ border: 1px solid #3b4a6b; padding: 15px; text-align: center; vertical-align: middle; }}
@@ -813,88 +859,98 @@ ranking_html_content = f"""<!DOCTYPE html>
         .flip-card-front {{ background-color: #2a3a5c; color: white; }}
         .flip-card-back {{ background-color: #3b4a6b; color: #e6b800; transform: rotateY(180deg); }}
         .flip-card-back h1 {{ margin: 0; font-size: 20px; word-wrap: break-word; padding: 10px; }}
-        @media only screen and (max-width: 1200px) {{ 
+        table th:nth-child(2), table td:nth-child(2) {{ width: 15%; max-width: 150px; word-wrap: break-word; }}
+        table th:nth-child(11), table td:nth-child(11) {{ width: 8%; text-align: center; }}
+        .uparrow {{ color: #00cc00; }}
+        .downarrow {{ color: #cc0000; }}
+        .equalsign {{ color: #ffffff; }}
+        @media screen and (max-width: 1200px) {{ 
             table {{ width: 100%; }} 
             .flip-card {{ width: 200px; height: 200px; }} 
             .flip-card-back h1 {{ font-size: 18px; }}
             th, td {{ font-size: 14px; padding: 10px; }}
+            table th:nth-child(2), table td:nth-child(2) {{ width: 12%; max-width: 120px; }}
+            table th:nth-child(11), {{ width: 10%; }}
         }}
-        @media only screen and (max-width: 768px) {{ 
+        @media screen and (max-width: 768px) {{ 
             table {{ width: 100%; }} 
             .flip-card {{ width: 150px; height: 150px; }} 
             .flip-card-back h1 {{ font-size: 16px; }}
             th, td {{ font-size: 12px; padding: 8px; }}
+            table th:nth-child(2), table td:nth-child(2) {{ width: 10%; max-width: 100px; }}
+            table th:nth-child(11), table td:nth-child(11) {{ width: 12%; }}
         }}
     </style>
 </head>
 <body>
-    <h1>PS Ranking - {current_date}</h1>
+    <h1>My Ranking - {current_date}</h1>
     <h2>Total Number of Groups: {total_groups}</h2>
     <table id="rankingTable">
         <thead>
             <tr>
                 <th>Rank</th>
                 <th>Group Name</th>
-                <th>Photo</th>
+                <th>Photo(s)</th>
                 <th>Last Scene</th>
                 <th>Total Titles</th>
                 <th>#FIVE</th>
                 <th>#FOUR</th>
                 <th>#Three</th>
-                <th>Thumbnails</th>
+                <th>Hashtags</th>
                 <th>Score</th>
+                <th>Rank Change</th>
             </tr>
         </thead>
         <tbody id="tableBody">
             {table_rows}
         </tbody>
     </table>
-    <script>
-        let sortDirections = Array(10).fill(0);
-        function sortTable(columnIndex) {{
-            if (columnIndex === 2) return;
-            const tbody = document.getElementById('tableBody');
-            const rows = Array.from(tbody.getElementsByTagName('tr'));
-            const isNumeric = [true, false, false, true, true, true, true, true, true, true];
-            const direction = sortDirections[columnIndex] === 1 ? -1 : 1;
+<script>
+    let sortDirections = Array(11).fill(0);
+    function sortTable(columnIndex) {{
+        if (columnIndex === 2 || columnIndex === 10) return;
+        const tbody = document.getElementById('tableBody');
+        const rows = Array.from(tbody.getElementsByTagName('tr'));
+        const isNumeric = [true, false, false, true, true, true, true, true, true, true, false];
+        const direction = sortDirections[columnIndex] === 1 ? -1 : 1;
 
-            rows.sort((a, b) => {{
-                let aValue = a.cells[columnIndex].innerText;
-                let bValue = b.cells[columnIndex].innerText;
+        rows.sort((a, b) => {{
+            let aValue = a.cells[columnIndex].innerText;
+            let bValue = b.cells[columnIndex].innerText;
 
-                if (columnIndex === 3) {{
-                    if (aValue === 'N/A' && bValue === 'N/A') return 0;
-                    if (aValue === 'N/A') return direction * 1;
-                    if (bValue === 'N/A') return direction * -1;
-                    aValue = parseInt(aValue);
-                    bValue = parseInt(bValue);
-                    return direction * (aValue - bValue);
-                }}
-
-                if (isNumeric[columnIndex]) {{ 
-                    aValue = parseFloat(aValue) || aValue;
-                    bValue = parseFloat(bValue) || bValue;
-                    return direction * (aValue - bValue);
-                }}
-                return direction * aValue.localeCompare(bValue);
-            }});
-
-            while (tbody.firstChild) {{ 
-                tbody.removeChild(tbody.firstChild); 
+            if (columnIndex === 3) {{
+                if (aValue === 'N/A' && bValue === 'N/A') return 0;
+                if (aValue === 'N/A') return direction * 1;
+                if (bValue === 'N/A') return direction * -1;
+                aValue = parseInt(aValue.split(' ')[0]);
+                bValue = parseInt(bValue.split(' ')[0]);
+                return direction * (aValue - bValue);
             }}
-            rows.forEach(row => tbody.appendChild(row));
-            sortDirections[columnIndex] = direction;
-            sortDirections = sortDirections.map((d, i) => i === columnIndex ? d : 0);
+
+            if (isNumeric[columnIndex]) {{ 
+                aValue = parseFloat(aValue) || 0;
+                bValue = parseFloat(bValue) || 0;
+                return direction * (aValue - bValue);
+            }}
+            return direction * aValue.localeCompare(bValue);
+        }});
+
+        while (tbody.firstChild) {{ 
+            tbody.removeChild(tbody.firstChild); 
         }}
-    </script>
+        rows.forEach(row => tbody.appendChild(row));
+        sortDirections[columnIndex] = direction;
+        sortDirections = sortDirections.map((d, i) => i === columnIndex ? d : 0);
+    }}
+</script>
 </body>
 </html>
 """
 
 # Write ranking HTML file
-ranking_html_file = os.path.join(output_folder, 'index.html')
-with open(ranking_html_file, 'w', encoding='utf-8') as f:
+index_html_file = os.path.join(output_folder, 'index.html')
+with open(index_html_file, 'w', encoding='utf-8') as f:
     f.write(ranking_html_content)
-print(f"\nWrote ranking HTML file: {ranking_html_file}")
+print(f"\nWrote index HTML file: {index_html_file}")
 
 print(f"\nProcessed {len(chats)} groups. Output written to {output_folder}")
