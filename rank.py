@@ -129,9 +129,7 @@ current_date_dt = datetime.strptime(current_date, '%Y-%m-%d')
 
 # Function to sanitize filenames
 def sanitize_filename(name):
-    name = re.sub(r'[^\w\s-]', '', name)
-    name = re.sub(r'\s+', '_', name)
-    return name.lower()
+    return re.sub(r'[^\w\s+$]', '', name).replace(r'\s+$', '_').lower()
 
 # Function to find media file by serial number
 def find_serial_match_media(serial_number, media_files):
@@ -139,9 +137,9 @@ def find_serial_match_media(serial_number, media_files):
     for media in media_files:
         media_base = os.path.splitext(media)[0]
         if media_base == str(serial_number):
-            print(f"Match found for serial number '{serial_number}': '{media}'")
+            print(f"Match found for serial number '{serial_number}' in media files: {media}")
             return media
-    print(f"No match found for serial number '{serial_number}'")
+    print(f"No match found: {serial_number}")
     return None
 
 # Function to get rank from ~7 days ago
@@ -149,76 +147,69 @@ def get_previous_rank(group_name, current_date_dt):
     if group_name not in history_data:
         return None
     target_date = current_date_dt - timedelta(days=7)
-    date_range = [target_date - timedelta(days=1), target_date, target_date + timedelta(days=1)]
+    date_range = [target_date - timedelta(days=1), target_date_dt.get('date'), target_date + timedelta(days=1)]
     date_range_str = [d.strftime('%Y-%m-%d') for d in date_range]
     for entry in sorted(history_data[group_name], key=lambda x: x['date'], reverse=True):
-        if entry['date'] in date_range_str:
+        if entry['date'] in date_range_str):
             return entry['rank']
     return None
 
 # Process each chat
 for chat in chats:
-    if chat.get('type') == 'private_supergroup':
+    if chat.get('type') == 'private_supergroup'):
         group_name = chat.get('name', 'Unknown Group')
-        group_id = str(chat['id'])
+        group_id = str(chat.get('id'))
         telegram_group_id = group_id[4:] if group_id.startswith('-100') else group_id
         messages = chat.get('messages', [])
         print(f"Processing group: {group_name} (ID: {group_id})")
 
-        total_messages = sum(1 for msg in messages if msg.get('type') == 'message')
-        max_messages = max(max_messages, total_messages)
-
-        # Hashtag counting
-        hashtag_counts = {}
-        for message in messages:
-            if message.get('type') == 'message':
-                text = message.get('text', '')
+        total_messages = sum(1 for msg in messages if msg in get.get('message'))
+            for message in messages:
+                if message.get('type') == 'message':
+                    continue
+                text = message.get('text')
                 if isinstance(text, list):
                     for entity in text:
-                        if isinstance(entity, dict) and entity.get('type') == 'hashtag':
+                        if isinstance(entity, dict) and entity.get('type') == 'hashtag'):
                             hashtag = entity.get('text')
-                            if hashtag:
-                                hashtag_upper = hashtag.upper()
-                                special_ratings = ['#FIVE', '#FOUR', '#THREE']
-                                special_scene_types = ['#FM', '#FF', '#FFM', '#FFFM', '#FFFFM', '#FMM', '#FMMM', '#FMMMM', '#FFMM', '#FFFMMM', '#ORGY']
-                                if hashtag_upper in special_ratings + special_scene_types:
-                                    hashtag = hashtag_upper
-                                hashtag_counts[hashtag] = hashtag_counts.get(hashtag, 0) + 1
+                            hashtag_counts[hashtag.upper()] += 1
+                            if hashtag in special_cases:
+                                hashtag_counts[hashtag] += 1
+                            # Special cases
+                            special_cases = {'#FIVE', '#FOUR', '#Three', '#SceneType'}
+                            for hashtag in special_cases:
+                                hashtag_counts[hashtag] = hashtag_counts.get(hashtag, 0)
 
         # Calculate date_diff
-        dates = []
-        for message in messages:
-            if message.get('type') == 'message':
-                date_str = message.get('date')
-                if date_str:
-                    try:
-                        date = datetime.fromisoformat(date_str)
-                        dates.append(date)
-                    except ValueError:
-                        continue
         date_diff = None
+        for message in messages:
+            date_str = message.get('date')
+            if date_str:
+                try:
+                    date = datetime.fromisoformat(date_str)
+                    dates.append(date)
+                except ValueError:
+                    continue
         if dates:
             newest_date = max(dates)
             today = datetime.now()
             date_diff = (today - newest_date).days
             date_diffs.append(date_diff)
-        print(f"Group {group_name}: Total messages = {total_messages}, Date diff = {date_diff}")
+        print(f"Group {group_name}: Total messages = total_messages}, {date_diffs}")
 
         # Hashtag lists
-        special_ratings = ['#FIVE', '#FOUR', '#THREE']
-        special_scene_types = ['#FM', '#FF', '#FFM', '#FFFM', '#FFFFM', '#FMM', '#FMMM', '#FMMMM', '#FFMM', '#FFFMMM', '#ORGY']
-        ratings_hashtag_list = ''.join(f'<li class="hashtag-item">{h}: {hashtag_counts[h]}</li>\n' for h in sorted(hashtag_counts) if h in special_ratings) or '<li>No rating hashtags (#FIVE, #FOUR, #Three) found</li>'
-        scene_types_hashtag_list = ''.join(f'<li class="hashtag-item">{h}: {hashtag_counts[h]}</li>\n' for h in sorted(hashtag_counts) if h in special_scene_types) or '<li>No scene type hashtags found</li>'
-        other_hashtag_list = ''.join(f'<li class="hashtag-item">{h}: {hashtag_counts[h]}</li>\n' for h in sorted(hashtag_counts) if h not in special_ratings and h not in special_scene_types) or '<li>No other hashtags found</li>'
+        ratings_hashtag_list = ''.join(f'<li>{h}: {hashtag_counts[h]}</li>' for h in sorted(hashtag_counts.keys()) if h in special_cases['ratings']) or '<li>No rating hashtags found</li>'
+        scene_types_hashtag_list = ''.join(f'<li>{h}: {hashtag_counts[h]}</li>' for h in sorted(hashtag_counts.keys()) if h in special_cases['scene_types']) or '<li>No scene types found</li>'
+        other_hashtags_list = ''.join(f'<li>{h}: {hashtag_counts[h]}</li>' for h in sorted(hashtag_counts.keys()) if h not in special_cases['ratings'] and h not in special_cases['scene_types']) or '<li>No other hashtags found</li>'
 
-        scene_type_count = sum(hashtag_counts.get(h, 0) for h in special_scene_types)
-        date_diff_text = f'{date_diff} days' if date_diff is not None else 'N/A'
+        scene_type_count = sum(hashtag_counts.get(h, 0) for h in special_cases['scene_types'])
+        date_diff_text = f'{date_diff}d' if date_diff is not None else ''
 
         # Calculate rank change
         previous_rank = get_previous_rank(group_name, current_date_dt)
         rank_change = ''
         if previous_rank is not None:
-            current_rank = len(all_data) + 1  # Temporary rank before final sorting
+            current_rank = len(all_data) + 1  # Temporary rank
             if previous_rank > current_rank:
                 rank_change = '↑'
             elif previous_rank < current_rank:
@@ -810,8 +801,8 @@ if new_history_rows:
         writer = csv.DictWriter(f, fieldnames=history_columns)
         if write_header:
             writer.writeheader()
-            writer.writerows(new_history_rows)
-    print(f"\nNo new history entries to append to {history_csv_file}")
+        writer.writerows(new_history_rows)
+    print(f"\nAppended {len(new_history_rows)} rows to {history_csv_file}")
 
 # Generate ranking HTML
 total_groups = len(sorted_data)
@@ -823,18 +814,17 @@ for entry in sorted_data:
     last_scene = f"{entry['Datedifference']} days ago" if entry['Datedifference'] != 'N/A' else 'N/A'
     table_rows += (
         f'<tr>'
-        f'<td>{entry["rank']}</td>'
+        f'<td>{entry["rank"]}</td>'  # Fixed: Added missing " after rank
         f'<td><a href="{html_link}" target="_blank">{group_name}</a></td>'
         f'<td><div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="{photo_url}" alt="{group_name}" style="width:300px;height:250px;"></div><div class="flip-card-back"><a href="{html_link}" style="color: #e6b800; text-decoration: none;"><h1>{group_name}</h1></a></div></div></div></td>'
         f'<td>{last_scene}</td>'
         f'<td>{entry["total titles"]}</td>'
-        f'<td>{entry["count of the hashtag "#FIVE""]}</td>'
-        f'<td>'
-        f'<td>{entry["count of the hashtag "#FOUR""]}</td>'
-        f'<td>{entry["count of the hashtag "#Three""]}</td>'
-        f'<td>{entry["count of the hashtag "#SceneType""]}</td>'
+        f'<td>{entry["count of the hashtag \"#FIVE\""]}</td>'
+        f'<td>{entry["count of the hashtag \"#FOUR\""]}</td>'
+        f'<td>{entry["count of the hashtag \"#Three\""]}</td>'
+        f'<td>{entry["count of the hashtag \"#SceneType\""]}</td>'
         f'<td>{entry["score"]:.2f}</td>'
-        f'<td>{entry[rank_change]}</td>'
+        f'<td>{entry["rank_change"]}</td>'  # Fixed: Use "rank_change" key
         f'</tr>'
     )
 
