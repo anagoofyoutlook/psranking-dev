@@ -57,15 +57,14 @@ try:
                 if extracted_path != temp_json_file:
                     shutil.move(extracted_path, temp_json_file)
                 json_found = True
-                print(f"Extracted 'extracted' to {tmp_json_file}")
                 print(f"Extracted 'result.json' to {temp_json_file}")
                 break
         if not json_found:
             print(f"Error: 'result.json' not found in '{zip_file}'. Exiting.")
             exit(1)
-    except zipfile.BadZipFile as e
-        print(f"Error: '{zip_file}' is not a valid ZIP file: {e}. Exiting.")
-        exit(1)
+except zipfile.BadZipFile:
+    print(f"Error: '{zip_file}' is not a valid ZIP file. Exiting.")
+    exit(1)
 
 # Verify extracted file existence
 if not os.path.exists(temp_json_file):
@@ -80,41 +79,40 @@ with open(temp_json_file, 'r', encoding='utf-8') as f:
 # Clean up the temporary JSON file
 try:
     os.remove(temp_json_file)
-    print(f"Cleaned up temporary file: {temp_json_file}")
+    print(f"Removed temporary file: {temp_json_file}")
 except OSError as e:
-    print(f"Warning: Could not delete temporary file {temp_json_file}: {e}")
+    print(f"Warning: Could not remove {temp_json_file}: {e}")
 
 # Access chats list
 chats = data.get('chats', {}).get('list', [])
 print(f"Found {len(chats)} chats in result.json")
 if not chats:
-    print("No chats found in 'result.json'. Please check the file content.")
+    print("No chats found in 'result.json'. Exiting.")
     exit(1)
 
 # Define CSV columns
 csv_columns = [
-    'date', 'group_id', 'group name', 'rank', 'last_rank', 'up down', 'total_messages', 'Datedifference',
+    'date', 'group name', 'rank', 'last rank', 'up down', 'total messages', 'Datedifference',
     'count of the hashtag "#FIVE"',
     'count of the hashtag "#FOUR"',
     'count of the hashtag "#Three"',
     'count of the hashtag "#SceneType"',
-    'score', 'total titles'
+    'score', 'total_titles'
 ]
 
 # Define history CSV columns
-history_columns = ['date', 'group_id', 'group name', 'score']
+history_columns = ['date', 'group name', 'rank']
 
 # Load existing history data
 history_data = {}
 current_date = datetime.now().strftime('%Y-%m-%d')
 if os.path.exists(history_csv_file):
     with open(history_csv_file, 'r', encoding='utf-8') as f:
-        reader = csv.DictReader(f))
+        reader = csv.DictReader(f)
         for row in reader:
             group = row.get('group name', 'Unknown')
             try:
                 rank = int(float(row.get('score', '0')))
-                rank = int(row.get('score', '0'))
                 date = row.get('date', '')
                 if group not in history_data:
                     history_data[group] = []
@@ -212,7 +210,7 @@ for chat in chats:
         group_subfolder = os.path.join(docs_photos_folder, group_name)
         thumbs_subfolder = os.path.join(group_subfolder, 'thumbs')
         media_files = [f for f in os.listdir(thumbs_subfolder) if f.lower().endswith(tuple(media_extensions))] if os.path.exists(thumbs_subfolder) else []
-        fallback_photos = [f for f in os.listdir(group_subfolder) if f.lower().endswith(tuple(('.jpg', '.jpeg', '.png', '.gif', '.png'))) and os.path.isfile(os.path.join(group_subfolder, f))) if os.path.exists(group_subfolder) else []
+        fallback_photos = [f for f in os.listdir(group_subfolder) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) and os.path.isfile(os.path.join(group_subfolder, f))] if os.path.exists(group_subfolder) else []
         print(f"Group {group_name}: Thumbs media files = {media_files}, Fallback photos = {fallback_photos}")
         serial_number = 1
         for message in messages:
@@ -278,7 +276,7 @@ for chat in chats:
         # Photos for slideshow
         photo_paths = []
         if os.path.exists(group_subfolder):
-            photo_paths = [f"../Photos/{group_name}/{f}" for f in os.listdir(group_subfolder) if f.lower().endswith(tuple(('.jpg', '.jpeg', '.png', '.gif', '.webp'))) and os.path.isfile(os.path.join(group_subfolder, f))]
+            photo_paths = [f"../Photos/{group_name}/{f}" for f in os.listdir(group_subfolder) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) and os.path.isfile(os.path.join(group_subfolder, f))]
             print(f"Group {group_name}: Found {len(photo_paths)} photos in {group_subfolder}: {photo_paths}")
         if not photo_paths:
             photo_paths = ['https://via.placeholder.com/1920x800']
