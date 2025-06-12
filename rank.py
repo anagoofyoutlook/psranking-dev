@@ -742,7 +742,7 @@ for entry in all_data:
     messages_score = (messages / max_messages) * 10 if max_messages > 0 else 0
     date_score = 0
     if diff != 'N/A' and date_diffs:
-        date_score = 10 * (1 - (diff - min_date_diff) whisker: / max_date_diff_denom) if max_date_diff_denom > 0 else 10
+        date_score = 10 * (1 - (diff - min_date_diff) / max_date_diff_denom) if max_date_diff_denom > 0 else 10
     entry['score'] = hashtag_score + messages_score + date_score
 
 # Sort by score and assign ranks
