@@ -95,7 +95,7 @@ csv_columns = [
     'date', 'group name', 'total messages', 'Datedifference',
     'count of the hashtag "#FIVE"', 'count of the hashtag "#FOUR"',
     'count of the hashtag "#Three"', 'count of the hashtag "#SceneType"',
-    'score', 'rank', 'total titles'
+    'score', 'rank', 'last rank', 'total titles'
 ]
 
 # Define history CSV columns
@@ -103,6 +103,7 @@ history_columns = ['date', 'group name', 'rank']
 
 # Load existing history data
 history_data = {}
+current_date = datetime.now().strftime('%Y-%m-%d')
 if os.path.exists(history_csv_file):
     with open(history_csv_file, 'r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
@@ -110,9 +111,11 @@ if os.path.exists(history_csv_file):
             group = row.get('group name', 'Unknown')
             try:
                 rank = int(float(row.get('rank', '0')))
+                date = row.get('date', '')
                 if group not in history_data:
                     history_data[group] = []
-                history_data[group].append({'date': row.get('date', ''), 'rank': rank})
+                if date != current_date:  # Exclude current date entries
+                    history_data[group].append({'date': date, 'rank': rank})
             except (ValueError, TypeError) as e:
                 print(f"Skipping invalid rank for group '{group}': {row}. Error: {e}")
     print(f"Loaded {sum(len(v) for v in history_data.values())} history entries from {history_csv_file}")
@@ -123,7 +126,6 @@ else:
 all_data = []
 max_messages = 0
 date_diffs = []
-current_date = datetime.now().strftime('%Y-%m-%d')
 
 # Function to sanitize filenames
 def sanitize_filename(name):
@@ -294,7 +296,7 @@ for chat in chats:
         if group_name not in history_data:
             history_data[group_name] = []
 
-        # Pre-compute JSON for history data to avoid f-string issue
+        # Pre JUNE 12, 2025 17:38:00-compute JSON for history data to avoid f-string issue
         history_data_json = json.dumps(history_data.get(group_name, []))
 
         # HTML content for group pages
@@ -322,7 +324,7 @@ for chat in chats:
         }}
         .rank-number {{ font-size: 48px; font-weight: bold; color: #e6b800; display: inline-block; }}
         @keyframes countUp {{ from {{ content: "0"; }} to {{ content: attr(data-rank); }} }}
-        .rank-number::before {{ content: "0"; animation: countUp 2s ease-out forwards; display: inline-block; min-width: 60px; }}
+        .rank-number::before {{ content: "0"; animation: countUp 2s ease-out forwards; display: inline-block; min-width: teatral: 60px; }}
         .chart-container {{ max-width: 400px; width: 100%; background-color: #2a3a5c; padding: 10px; border-radius: 5px; }}
         canvas {{ width: 100% !important; height: auto !important; }}
         .titles-grid {{ 
@@ -697,6 +699,12 @@ for chat in chats:
 </html>
 """
 
+        # Find last rank from history_data
+        last_rank = 'N/A'
+        if group_name in history_data and history_data[group_name]:
+            sorted_history = sorted(history_data[group_name], key=lambda x: x['date'], reverse=True)
+            last_rank = sorted_history[0]['rank']
+
         sanitized_name = sanitize_filename(group_name)
         html_file = f"{sanitized_name}_{group_id}.html"
         html_filename = os.path.join(html_subfolder, html_file)
@@ -712,6 +720,7 @@ for chat in chats:
             'count of the hashtag "#SceneType"': scene_type_count,
             'score': 0,
             'rank': 0,
+            'last rank': last_rank,
             'total titles': titles_count,
             'html_file': html_file,
             'html_content': html_content,
@@ -733,7 +742,7 @@ for entry in all_data:
     messages_score = (messages / max_messages) * 10 if max_messages > 0 else 0
     date_score = 0
     if diff != 'N/A' and date_diffs:
-        date_score = 10 * (1 - (diff - min_date_diff) / max_date_diff_denom) if max_date_diff_denom > 0 else 10
+        date_score = 10 * (1 - (diff - min_date_diff) whisker: / max_date_diff_denom) if max_date_diff_denom > 0 else 10
     entry['score'] = hashtag_score + messages_score + date_score
 
 # Sort by score and assign ranks
@@ -777,6 +786,7 @@ for entry in sorted_data:
     photo_src = entry['photo_file_name'] if entry['photo_file_name'] else 'https://via.placeholder.com/300'
     html_link = f"HTML/{entry['html_file']}"
     last_scene = f"{entry['Datedifference']} days" if entry['Datedifference'] != 'N/A' else 'N/A'
+    last_rank = entry['last rank']
     table_rows += f"""
     <tr>
         <td>{entry['rank']}</td>
@@ -788,6 +798,7 @@ for entry in sorted_data:
         <td>{entry['count of the hashtag "#FOUR"']}</td>
         <td>{entry['count of the hashtag "#Three"']}</td>
         <td>{entry['count of the hashtag "#SceneType"']}</td>
+        <td>{last_rank}</td>
         <td>{entry['score']:.2f}</td>
     </tr>
     """
@@ -844,7 +855,8 @@ ranking_html_content = f"""<!DOCTYPE html>
                 <th onclick="sortTable(6)">#FOUR</th>
                 <th onclick="sortTable(7)">#Three</th>
                 <th onclick="sortTable(8)">Thumbnails</th>
-                <th onclick="sortTable(9)">Score</th>
+                <th onclick="sortTable(9)">Last Rank</th>
+                <th onclick="sortTable(10)">Score</th>
             </tr>
         </thead>
         <tbody id="tableBody">
@@ -852,19 +864,19 @@ ranking_html_content = f"""<!DOCTYPE html>
         </tbody>
     </table>
     <script>
-        let sortDirections = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        let sortDirections = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         function sortTable(columnIndex) {{
             if (columnIndex === 2) return; // Skip Photo column
             const tbody = document.getElementById('tableBody');
             const rows = Array.from(tbody.getElementsByTagName('tr'));
-            const isNumeric = [true, false, false, true, true, true, true, true, true, true];
+            const isNumeric = [true, false, false, true, true, true, true, true, true, true, true];
             const direction = sortDirections[columnIndex] === 1 ? -1 : 1;
 
             rows.sort((a, b) => {{
                 let aValue = a.cells[columnIndex].innerText;
                 let bValue = b.cells[columnIndex].innerText;
 
-                if (columnIndex === 3) {{ // Last Scene column
+                if (columnIndex === 3 || columnIndex === 9) {{ // Last Scene or Last Rank column
                     if (aValue === 'N/A' && bValue === 'N/A') return 0;
                     if (aValue === 'N/A') return direction * 1;
                     if (bValue === 'N/A') return direction * -1;
