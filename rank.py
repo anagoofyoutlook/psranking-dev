@@ -793,17 +793,21 @@ if new_history_rows:
 else:
     print(f"No new history entries to append to {history_csv_file}")
 
-# Generate top 5 up and down table
+# Generate top 5 up, down, and unchanged table
 up_groups = [entry for entry in sorted_data if entry['up down'] != 'N/A' and entry['up down'] > 0]
 down_groups = [entry for entry in sorted_data if entry['up down'] != 'N/A' and entry['up down'] < 0]
-up_groups = sorted(up_groups, key=lambda x: x['up down'], reverse=True)[:5]
-down_groups = sorted(down_groups, key=lambda x: x['up down'], reverse=True)[:5]  # Largest negative values
+unchanged_groups = [entry for entry in sorted_data if entry['up down'] == 0]
+
+# Sort by up_down (primary) and rank (secondary, ascending for higher rank)
+up_groups = sorted(up_groups, key=lambda x: (x['up down'], -x['rank']), reverse=True)[:5]
+down_groups = sorted(down_groups, key=lambda x: (x['up down'], -x['rank']), reverse=True)[:5]
+unchanged_groups = sorted(unchanged_groups, key=lambda x: x['rank'])[:5]  # Sort by rank ascending
 
 top_movers_rows = ''
-if up_groups or down_groups:
-    for group_list, title in [(up_groups, 'Top 5 Up'), (down_groups, 'Top 5 Down')]:
+if up_groups or down_groups or unchanged_groups:
+    for group_list, title in [(up_groups, 'Top 5 Up'), (down_groups, 'Top 5 Down'), (unchanged_groups, 'Top 5 Unchanged')]:
         if group_list:
-            top_movers_rows += f'<tr><th style="background-color: #b30000;">{title}</th></tr>'
+            top_movers_rows += f'<tr><th style="background-color: #b30000;">{title}</th></tr><tr>'
             for entry in group_list:
                 group_name = escape(entry['group name'])
                 photo_src = entry['photo_file_name'] if entry['photo_file_name'] else 'https://via.placeholder.com/300'
@@ -812,9 +816,13 @@ if up_groups or down_groups:
                 last_rank_date = entry['last rank date']
                 last_rank_display = f"{last_rank} ({last_rank_date})" if last_rank != 'N/A' else 'N/A'
                 up_down = entry['up down']
-                up_down_content = f"{up_down} <img src='Photos/up.png' alt='Up' class='up-down-img'>" if up_down > 0 else f"{up_down} <img src='Photos/down.png' alt='Down' class='up-down-img'>"
+                if up_down > 0:
+                    up_down_content = f"{up_down} <img src='Photos/up.png' alt='Up' class='up-down-img'>"
+                elif up_down < 0:
+                    up_down_content = f"{up_down} <img src='Photos/down.png' alt='Down' class='up-down-img'>"
+                else:
+                    up_down_content = f"{up_down} <img src='Photos/0.png' alt='No Change' class='up-down-img'>"
                 top_movers_rows += f"""
-                <tr>
                     <td>
                         <div class="mover-info">
                             <p><strong>Name:</strong> <a href="{html_link}" target="_blank">{group_name}</a></p>
@@ -824,8 +832,8 @@ if up_groups or down_groups:
                             <p><strong>Up Down:</strong> {up_down_content}</p>
                         </div>
                     </td>
-                </tr>
                 """
+            top_movers_rows += '</tr>'
 else:
     top_movers_rows = '<tr><td>No significant rank changes</td></tr>'
 
@@ -891,21 +899,27 @@ ranking_html_content = f"""<!DOCTYPE html>
         .flip-card-front {{ background-color: #2a3a5c; color: #ffffff; }}
         .flip-card-back {{ background-color: #3b4a6b; color: #e6b800; transform: rotateY(180deg); display: flex; justify-content: center; align-items: center; flex-direction: column; }}
         .flip-card-back h1 {{ margin: 0; font-size: 24px; word-wrap: break-word; padding: 10px; }}
-        .mover-info {{ display: flex; flex-direction: column; align-items: center; gap: 10px; }}
+        .mover-info {{ display: flex; flex-direction: column; align-items: center; gap: 10px; width: 320px; }}
         .mover-info p {{ margin: 5px 0; font-size: 16px; }}
+        #topMoversTable td {{ min-width: 340px; }}
         @media only screen and (max-width: 1200px) {{ 
             table {{ width: 90%; }} 
             .flip-card {{ width: 200px; height: 200px; }} 
             .flip-card-back h1 {{ font-size: 18px; }}
             th, td {{ font-size: 14px; padding: 10px; }}
+            .mover-info {{ width: 220px; }}
             .mover-info p {{ font-size: 14px; }}
+            #topMoversTable td {{ min-width: 240px; }}
         }}
         @media only screen and (max-width: 768px) {{ 
             table {{ width: 95%; }} 
             .flip-card {{ width: 150px; height: 150px; }} 
             .flip-card-back h1 {{ font-size: 16px; }}
             th, td {{ font-size: 12px; padding: 8px; }}
+            .mover-info {{ width: 170px; }}
             .mover-info p {{ font-size: 12px; }}
+            #topMoversTable td {{ min-width: 190px; }}
+            #topMoversTable {{ display: block; overflow-x: auto; white-space: nowrap; }}
         }}
     </style>
 </head>
