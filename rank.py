@@ -793,6 +793,38 @@ if new_history_rows:
 else:
     print(f"No new history entries to append to {history_csv_file}")
 
+# Generate top 5 up and down table
+up_groups = [entry for entry in sorted_data if entry['up down'] != 'N/A' and entry['up down'] > 0]
+down_groups = [entry for entry in sorted_data if entry['up down'] != 'N/A' and entry['up down'] < 0]
+up_groups = sorted(up_groups, key=lambda x: x['up down'], reverse=True)[:5]
+down_groups = sorted(down_groups, key=lambda x: x['up down'])[:5]
+
+top_movers_rows = ''
+if up_groups or down_groups:
+    for group_list, title in [(up_groups, 'Top 5 Up'), (down_groups, 'Top 5 Down')]:
+        if group_list:
+            top_movers_rows += f'<tr><th colspan="5" style="background-color: #b30000;">{title}</th></tr>'
+            for entry in group_list:
+                group_name = escape(entry['group name'])
+                photo_src = entry['photo_file_name'] if entry['photo_file_name'] else 'https://via.placeholder.com/300'
+                html_link = f"HTML/{entry['html_file']}"
+                last_rank = entry['last rank']
+                last_rank_date = entry['last rank date']
+                last_rank_display = f"{last_rank} ({last_rank_date})" if last_rank != 'N/A' else 'N/A'
+                up_down = entry['up down']
+                up_down_content = f"{up_down} <img src='Photos/up.png' alt='Up' class='up-down-img'>" if up_down > 0 else f"{up_down} <img src='Photos/down.png' alt='Down' class='up-down-img'>"
+                top_movers_rows += f"""
+                <tr>
+                    <td><a href="{html_link}" target="_blank">{group_name}</a></td>
+                    <td><div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="{photo_src}" alt="{group_name}" style="width:300px;height:300px;object-fit:cover;"></div><div class="flip-card-back"><a href="{html_link}" target="_blank" style="color: #e6b800; text-decoration: none;"><h1>{group_name}</h1></a></div></div></div></td>
+                    <td>{entry['rank']}</td>
+                    <td>{last_rank_display}</td>
+                    <td>{up_down_content}</td>
+                </tr>
+                """
+else:
+    top_movers_rows = '<tr><td colspan="5">No significant rank changes</td></tr>'
+
 # Generate ranking HTML
 total_groups = len(sorted_data)
 table_rows = ''
@@ -871,6 +903,21 @@ ranking_html_content = f"""<!DOCTYPE html>
 </head>
 <body>
     <h1>PS Ranking - {current_date}</h1>
+    <h2>Top Movers</h2>
+    <table id="topMoversTable">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Photo</th>
+                <th>Rank</th>
+                <th>Last Rank</th>
+                <th>Up Down Rank</th>
+            </tr>
+        </thead>
+        <tbody>
+            {top_movers_rows}
+        </tbody>
+    </table>
     <h2>Total Number of Groups: {total_groups}</h2>
     <table id="rankingTable">
         <thead>
