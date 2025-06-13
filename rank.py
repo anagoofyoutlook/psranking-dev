@@ -97,7 +97,7 @@ csv_columns = [
     'count of the hashtag "#FOUR"',
     'count of the hashtag "#Three"',
     'count of the hashtag "#SceneType"',
-    'score', 'total_titles'
+    'score', 'total titles'
 ]
 
 # Define history CSV columns
@@ -111,15 +111,21 @@ if os.path.exists(history_csv_file):
         reader = csv.DictReader(f)
         for row in reader:
             group = row.get('group name', 'Unknown')
+            date = row.get('date', '')
             try:
-                rank = int(float(row.get('score', '0')))
-                date = row.get('date', '')
+                rank = int(row.get('rank', '0'))
                 if group not in history_data:
-                    history_data[group] = []
+                    history_data[group] = {}
                 if date != current_date:  # Exclude current date entries
-                    history_data[group].append({'date': date, 'rank': rank})
+                    # Store entries by date, keep the lowest (highest-ranking) rank
+                    if date not in history_data[group] or rank < history_data[group][date]['rank']:
+                        history_data[group][date] = {'date': date, 'rank': rank}
             except (ValueError, TypeError) as e:
-                print(f"Skipping invalid rank for group '{group}': {row}. Error: {e}")
+                print(f"Skipping invalid rank for group '{group}' on date '{date}': {row}. Error: {e}")
+    # Convert history_data[group] from dict to list
+    for group in history_data:
+        history_data[group] = list(history_data[group].values())
+        history_data[group].sort(key=lambda x: x['date'])  # Sort by date for chart
     print(f"Loaded {sum(len(v) for v in history_data.values())} history entries from {history_csv_file}")
 else:
     print(f"No existing {history_csv_file} found")
