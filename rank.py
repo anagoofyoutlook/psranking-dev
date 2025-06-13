@@ -797,13 +797,13 @@ else:
 up_groups = [entry for entry in sorted_data if entry['up down'] != 'N/A' and entry['up down'] > 0]
 down_groups = [entry for entry in sorted_data if entry['up down'] != 'N/A' and entry['up down'] < 0]
 up_groups = sorted(up_groups, key=lambda x: x['up down'], reverse=True)[:5]
-down_groups = sorted(down_groups, key=lambda x: x['up down'])[:5]
+down_groups = sorted(down_groups, key=lambda x: x['up down'], reverse=True)[:5]  # Largest negative values
 
 top_movers_rows = ''
 if up_groups or down_groups:
     for group_list, title in [(up_groups, 'Top 5 Up'), (down_groups, 'Top 5 Down')]:
         if group_list:
-            top_movers_rows += f'<tr><th colspan="5" style="background-color: #b30000;">{title}</th></tr>'
+            top_movers_rows += f'<tr><th style="background-color: #b30000;">{title}</th></tr>'
             for entry in group_list:
                 group_name = escape(entry['group name'])
                 photo_src = entry['photo_file_name'] if entry['photo_file_name'] else 'https://via.placeholder.com/300'
@@ -815,15 +815,19 @@ if up_groups or down_groups:
                 up_down_content = f"{up_down} <img src='Photos/up.png' alt='Up' class='up-down-img'>" if up_down > 0 else f"{up_down} <img src='Photos/down.png' alt='Down' class='up-down-img'>"
                 top_movers_rows += f"""
                 <tr>
-                    <td><a href="{html_link}" target="_blank">{group_name}</a></td>
-                    <td><div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="{photo_src}" alt="{group_name}" style="width:300px;height:300px;object-fit:cover;"></div><div class="flip-card-back"><a href="{html_link}" target="_blank" style="color: #e6b800; text-decoration: none;"><h1>{group_name}</h1></a></div></div></div></td>
-                    <td>{entry['rank']}</td>
-                    <td>{last_rank_display}</td>
-                    <td>{up_down_content}</td>
+                    <td>
+                        <div class="mover-info">
+                            <p><strong>Name:</strong> <a href="{html_link}" target="_blank">{group_name}</a></p>
+                            <div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="{photo_src}" alt="{group_name}" style="width:300px;height:300px;object-fit:cover;"></div><div class="flip-card-back"><a href="{html_link}" target="_blank" style="color: #e6b800; text-decoration: none;"><h1>{group_name}</h1></a></div></div></div>
+                            <p><strong>Rank:</strong> {entry['rank']}</p>
+                            <p><strong>Last Rank:</strong> {last_rank_display}</p>
+                            <p><strong>Up Down:</strong> {up_down_content}</p>
+                        </div>
+                    </td>
                 </tr>
                 """
 else:
-    top_movers_rows = '<tr><td colspan="5">No significant rank changes</td></tr>'
+    top_movers_rows = '<tr><td>No significant rank changes</td></tr>'
 
 # Generate ranking HTML
 total_groups = len(sorted_data)
@@ -880,24 +884,28 @@ ranking_html_content = f"""<!DOCTYPE html>
         .up-down-img {{ width: 20px; height: 20px; vertical-align: middle; }}
         a {{ text-decoration: none; color: #e6b800; }}
         a:hover {{ color: #b30000; text-decoration: underline; }}
-        .flip-card {{ background-color: transparent; width: 300px; height: 300px; perspective: 1000px; margin: auto; }}
+        .flip-card {{ background-color: transparent; width: 300px; height: 300px; perspective: 1000px; margin: 10px auto; }}
         .flip-card-inner {{ position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); }}
         .flip-card:hover .flip-card-inner {{ transform: rotateY(180deg); }}
         .flip-card-front, .flip-card-back {{ position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 5px; }}
         .flip-card-front {{ background-color: #2a3a5c; color: #ffffff; }}
         .flip-card-back {{ background-color: #3b4a6b; color: #e6b800; transform: rotateY(180deg); display: flex; justify-content: center; align-items: center; flex-direction: column; }}
         .flip-card-back h1 {{ margin: 0; font-size: 24px; word-wrap: break-word; padding: 10px; }}
+        .mover-info {{ display: flex; flex-direction: column; align-items: center; gap: 10px; }}
+        .mover-info p {{ margin: 5px 0; font-size: 16px; }}
         @media only screen and (max-width: 1200px) {{ 
             table {{ width: 90%; }} 
             .flip-card {{ width: 200px; height: 200px; }} 
             .flip-card-back h1 {{ font-size: 18px; }}
             th, td {{ font-size: 14px; padding: 10px; }}
+            .mover-info p {{ font-size: 14px; }}
         }}
         @media only screen and (max-width: 768px) {{ 
             table {{ width: 95%; }} 
             .flip-card {{ width: 150px; height: 150px; }} 
             .flip-card-back h1 {{ font-size: 16px; }}
             th, td {{ font-size: 12px; padding: 8px; }}
+            .mover-info p {{ font-size: 12px; }}
         }}
     </style>
 </head>
@@ -905,15 +913,6 @@ ranking_html_content = f"""<!DOCTYPE html>
     <h1>PS Ranking - {current_date}</h1>
     <h2>Top Movers</h2>
     <table id="topMoversTable">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Photo</th>
-                <th>Rank</th>
-                <th>Last Rank</th>
-                <th>Up Down Rank</th>
-            </tr>
-        </thead>
         <tbody>
             {top_movers_rows}
         </tbody>
