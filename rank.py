@@ -157,11 +157,11 @@ for chat in chats:
     if chat.get('type') == 'private_supergroup':
         group_name = chat.get('name', 'Unknown Group')
         group_id = str(chat['id'])
-        telegram_group_id = group_id[4:] if group_name.startswith('-100') else group_id
+        telegram_group_id = group_id[4:] if group_id.startswith('-100') else group_id
         messages = chat.get('messages', [])
         print(f"Processing group: {group_name} (ID: {group_id})")
 
-        total_messages = sum(1 for message in messages if message.get('type') == 'message')
+        total_messages = sum(1 for msg in messages if msg.get('type') == 'message')
         max_messages = max(max_messages, total_messages)
 
         # Hashtag counting
@@ -171,12 +171,12 @@ for chat in chats:
                 text = message.get('text', '')
                 if isinstance(text, list):
                     for entity in text:
-                        if isinstance(entity, dict']) and entity.get('text'):
+                        if isinstance(entity, dict) and entity.get('type') == 'hashtag':
                             hashtag = entity.get('text')
                             if hashtag:
                                 hashtag_upper = hashtag.upper()
                                 special_ratings = ['#FIVE', '#FOUR', '#THREE']
-                                special_scene_types = ['#FM', '#FF', '#FFM', '#FFFM', '#FFFFM', '#FMM', '#FMMM', '#FMMMM', '#FFMM', '#FFFMMM', '#ORG']
+                                special_scene_types = ['#FM', '#FF', '#FFM', '#FFFM', '#FFFFM', '#FMM', '#FMMM', '#FMMMM', '#FFMM', '#FFFMMM', '#ORGY']
                                 if hashtag_upper in special_ratings + special_scene_types:
                                     hashtag = hashtag_upper
                                 hashtag_counts[hashtag] = hashtag_counts.get(hashtag, 0) + 1
@@ -198,12 +198,15 @@ for chat in chats:
             today = datetime.now()
             date_diff = (today - newest_date).days
             date_diffs.append(date_diff)
+        print(f"Group {group_name}: Total messages = {total_messages}, Date diff = {date_diff}")
+
         # Hashtag lists
         special_ratings = ['#FIVE', '#FOUR', '#THREE']
         special_scene_types = ['#FM', '#FF', '#FFM', '#FFFM', '#FFFFM', '#FMM', '#FMMM', '#FMMMM', '#FFMM', '#FFFMMM', '#ORGY']
         ratings_hashtag_list = ''.join(f'<li class="hashtag-item">{h}: {hashtag_counts[h]}</li>\n' for h in sorted(hashtag_counts) if h in special_ratings) or '<li>No rating hashtags (#FIVE, #FOUR, #Three) found</li>'
         scene_types_hashtag_list = ''.join(f'<li class="hashtag-item">{h}: {hashtag_counts[h]}</li>\n' for h in sorted(hashtag_counts) if h in special_scene_types) or '<li>No scene type hashtags found</li>'
         other_hashtag_list = ''.join(f'<li class="hashtag-item">{h}: {hashtag_counts[h]}</li>\n' for h in sorted(hashtag_counts) if h not in special_ratings and h not in special_scene_types) or '<li>No other hashtags found</li>'
+
         scene_type_count = sum(hashtag_counts.get(h, 0) for h in special_scene_types)
         date_diff_text = f'{date_diff} days' if date_diff is not None else 'N/A'
 
@@ -236,7 +239,7 @@ for chat in chats:
                             print(f"Group {group_name}, Title '{title}' (S.No {serial_number}): No media files in {thumbs_subfolder}")
                             if fallback_photos:
                                 random_photo = random.choice(fallback_photos)
-                                media_path = f'../Photos/{group_name}/{random_photo}'
+                                media_path = f"../Photos/{group_name}/{random_photo}"
                                 is_gif = random_photo.lower().endswith('.gif')
                                 print(f"  Using fallback photo: {media_path}")
                         titles.append({
@@ -259,12 +262,12 @@ for chat in chats:
             media_element = (
                 f"<img src='{t['media_path']}' alt='Media for {t['title']}' style='width:100%;max-width:600px;height:300px;object-fit:cover;'>"
                 if t['is_gif'] or t['media_path'] == 'https://via.placeholder.com/600x300'
-                else f"<video src='{t['media_path']}' style='width:100%;max-width:600px; height:300px;object-fit:cover;' loop muted playsinline></video>"
+                else f"<video src='{t['media_path']}' style='width:100%;max-width:600px;height:300px;object-fit:cover;' loop muted playsinline></video>"
             )
             titles_grid += f"""
                 <div class='grid-item'>
                     {media_element}
-                    <p class='title'><a href='https://t.me/c/{telegram_group}/{t['message_id']}' target='_blank">{t['title']}</a></p>
+                    <p class='title'><a href='https://t.me/c/{telegram_group_id}/{t['message_id']}' target='_blank'>{t['title']}</a></p>
                     <p class='date'>S.No: {t['serial_number']} | {t['date']}</p>
                 </div>
             """
@@ -273,13 +276,13 @@ for chat in chats:
         # Titles table
         titles_table = f"<table class='titles-table' id='titlesTable'><thead><tr><th onclick='sortTitlesTable(0)'>S.No</th><th onclick='sortTitlesTable(1)'>Items</th><th onclick='sortTitlesTable(2)'>Date</th></tr></thead><tbody id='titlesTableBody'>"
         for t in titles:
-            titles_table += f"<tr><td>{t['serial_number']}</td><td><a href='https://t.me/c/{telegram_group}/{t['message_id']}' target='_blank">{t['title']}</a></td><td>{t['date']}</td></tr>"
+            titles_table += f"<tr><td>{t['serial_number']}</td><td><a href='https://t.me/c/{telegram_group_id}/{t['message_id']}' target='_blank'>{t['title']}</a></td><td>{t['date']}</td></tr>"
         titles_table += f"</tbody></table>" if titles else f"<p>No titles found</p>"
 
         # Photos for slideshow
         photo_paths = []
         if os.path.exists(group_subfolder):
-            photo_paths = [f"../Photos/{group_name}/{f}" for f in os.listdir(group_subfolder) if f.lower().endswith(('.jpg', '.jpeg', '.png'), '.gif', '.webp')) and os.path.isfile(os.path.join(group_subfolder, f))]
+            photo_paths = [f"../Photos/{group_name}/{f}" for f in os.listdir(group_subfolder) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) and os.path.isfile(os.path.join(group_subfolder, f))]
             print(f"Group {group_name}: Found {len(photo_paths)} photos in {group_subfolder}: {photo_paths}")
         if not photo_paths:
             photo_paths = ['https://via.placeholder.com/1920x800']
@@ -298,10 +301,10 @@ for chat in chats:
         else:
             print(f"Group {group_name}: No single photo found in {docs_photos_folder}/")
 
-        if group_name in history_data:
+        if group_name not in history_data:
             history_data[group_name] = []
 
-        # Pre-compute JSON for history data
+        # Pre-compute JSON for history data to avoid f-string issue
         history_data_json = json.dumps(history_data.get(group_name, []))
 
         # HTML content for group pages
@@ -509,7 +512,7 @@ for chat in chats:
             .chart-container {{ max-width: 100%; }} 
             .column {{ flex: 0 0 80px; max-width: 80px; }} 
             .mySlides img {{ object-fit: contain; }} 
-            .tab button {{ font-size: 14px; padding: 10px; }} 
+            .tab button {{ font-size: 14px; padding: 10px; }}
         }}
     </style>
 </head>
