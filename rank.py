@@ -260,9 +260,9 @@ for chat in chats:
         titles_grid = f"<p>Total Titles: {titles_count}</p><div class='titles-grid' id='titlesGrid'>"
         for t in titles:
             media_element = (
-                f"<img src='{t['media_path']}' alt='Media for {t['title']}' style='width:100%;max-width:600px;height:300px;object-fit:cover;'>"
+                f"<img src='{t['media_path']}' alt='Media for {t['title']}' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>"
                 if t['is_gif'] or t['media_path'] == 'https://via.placeholder.com/600x300'
-                else f"<video src='{t['media_path']}' style='width:100%;max-width:600px;height:300px;object-fit:cover;' loop muted playsinline></video>"
+                else f"<video src='{t['media_path']}' style='width:100%;height:300px;object-fit:cover;border-radius:5px;' loop muted playsinline></video>"
             )
             titles_grid += f"""
                 <div class='grid-item'>
@@ -317,12 +317,12 @@ for chat in chats:
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <style>
         body {{ font-family: Arial, sans-serif; margin: 20px; background-color: #1e2a44; color: #ffffff; text-align: center; }}
-        h1, h2 {{ color: #e6b800; width: 80%; margin: 20px auto; text-align: center; font-size: 36px; }}
-        .info {{ background-color: #2a3a5c; padding: 10px; border-radius: 5px; margin-bottom: 20px; }}
+        h1, h2 {{ color: #e6b800; width: 90%; margin: 20px auto; text-align: center; font-size: 36px; }}
+        .info {{ background-color: #2a3a5c; padding: 10px; border-radius: 5px; margin-bottom: 20px; width: 90%; margin-left: auto; margin-right: auto; }}
         .hashtags {{ list-style-type: none; padding: 0; }}
         .hashtag-item {{ background-color: #3b4a6b; margin: 5px 0; padding: 5px; border-radius: 3px; display: inline-block; width: 200px; color: #ffffff; }}
         .rank-container {{ 
-            width: 80%; 
+            width: 90%; 
             margin: 20px auto; 
             display: flex; 
             justify-content: center; 
@@ -339,9 +339,8 @@ for chat in chats:
             display: grid; 
             grid-template-columns: repeat(3, 1fr); 
             gap: 20px; 
-            margin: 20px; 
-            max-width: 1800px; 
-            width: 80%; 
+            margin: 20px 0; 
+            width: 100%; 
             box-sizing: border-box; 
         }}
         .grid-item {{ 
@@ -357,7 +356,6 @@ for chat in chats:
         }}
         .grid-item video, .grid-item img {{ 
             width: 100%; 
-            max-width: 600px; 
             height: 300px; 
             border-radius: 5px; 
             object-fit: cover; 
@@ -374,8 +372,8 @@ for chat in chats:
             color: #cccccc; 
         }}
         .titles-table {{ 
-            width: 80%; 
-            margin: 20px auto; 
+            width: 100%; 
+            margin: 20px 0; 
             border-collapse: collapse; 
             background-color: #2a3a5c; 
         }}
@@ -398,7 +396,7 @@ for chat in chats:
         a:hover {{ color: #b30000; text-decoration: underline; }}
         .container {{ 
             position: relative; 
-            width: 80%; 
+            width: 90%; 
             margin: 20px auto; 
             height: auto; 
             max-height: 600px; 
@@ -471,7 +469,7 @@ for chat in chats:
         .tab {{ 
             overflow: hidden; 
             margin: 20px auto; 
-            width: 80%; 
+            width: 90%; 
             background-color: #2a3a5c; 
             border-radius: 5px 5px 0 0; 
         }}
@@ -495,20 +493,23 @@ for chat in chats:
             border-top: none; 
             background-color: #2a3a5c; 
             margin: 0 auto; 
-            width: 80%; 
+            width: 90%; 
             border-radius: 0 0 5px 5px; 
         }}
         #Videos {{ display: block; }}
-        @media only screen and (max-width: 1800px) {{ 
-            .titles-grid {{ grid-template-columns: repeat(2, 1fr); }} 
-        }}
         @media only screen and (max-width: 1200px) {{ 
-            .titles-grid {{ grid-template-columns: 1fr; }} 
+            .titles-grid {{ grid-template-columns: repeat(3, 1fr); }} 
+            .grid-item video, .grid-item img {{ height: 200px; }}
+            h1, .info, .container, .tab, .tabcontent {{ width: 90%; }}
+            .rank-container {{ width: 90%; }}
         }}
         @media only screen and (max-width: 768px) {{ 
-            .container {{ width: 80%; max-height: 400px; }} 
-            h1 {{ width: 80%; margin: 10px auto; font-size: 30px; }}
-            .rank-container {{ width: 80%; flex-direction: column; gap: 10px; }} 
+            .titles-grid {{ grid-template-columns: repeat(3, 1fr); }} 
+            .grid-item video, .grid-item img {{ height: 150px; }}
+            .container {{ width: 90%; max-height: 400px; }} 
+            h1 {{ margin: 10px auto; font-size: 30px; }}
+            .info, .tab, .tabcontent, .rank-container {{ width: 90%; }}
+            .rank-container {{ flex-direction: column; gap: 10px; }} 
             .chart-container {{ max-width: 100%; }} 
             .column {{ flex: 0 0 80px; max-width: 80px; }} 
             .mySlides img {{ object-fit: contain; }} 
