@@ -800,8 +800,8 @@ down_groups = [entry for entry in sorted_data if entry['up down'] != 'N/A' and e
 unchanged_groups = [entry for entry in sorted_data if entry['up down'] == 0]
 
 # Sort by up_down (primary) and rank (secondary, ascending for higher rank)
-up_groups = sorted(up_groups, key=lambda x: (x['up down'], -x['rank']), reverse=True)[:5]
-down_groups = sorted(down_groups, key=lambda x: (x['up down'], -x['rank']), reverse=True)[:5]
+up_groups = sorted(up_groups, key=lambda x: (x['up_down'], -x['rank']), reverse=True)[:5]
+down_groups = sorted(down_groups, key=lambda x: (x['up_down'], -x['rank']), reverse=True)[:5]
 unchanged_groups = sorted(unchanged_groups, key=lambda x: x['rank'])[:5]  # Sort by rank ascending
 
 top_movers_rows = ''
@@ -903,6 +903,37 @@ ranking_html_content = f"""<!DOCTYPE html>
         .mover-info {{ display: flex; flex-direction: column; align-items: center; gap: 10px; width: 320px; }}
         .mover-info p {{ margin: 5px 0; font-size: 16px; }}
         #topMoversTable td {{ min-width: 340px; }}
+        .search-container {{ 
+            width: 80%; 
+            margin: 20px auto 20px 20px; 
+            text-align: left; 
+            display: flex; 
+            justify-content: flex-start; 
+        }}
+        .search-container input[type="text"] {{ 
+            padding: 10px; 
+            width: 300px; 
+            font-size: 16px; 
+            border: 2px solid #e6b800; 
+            border-radius: 5px; 
+            background-color: #2a3a5c; 
+            color: #ffffff; 
+        }}
+        .search-container input[type="text"]::placeholder {{ 
+            color: #cccccc; 
+        }}
+        .search-container input[type="text"]:focus {{ 
+            outline: none; 
+            border-color: #b30000; 
+        }}
+        #noResults {{ 
+            display: none; 
+            color: #e6b800; 
+            font-size: 18px; 
+            margin: 20px auto; 
+            width: 80%; 
+            text-align: center; 
+        }}
         @media only screen and (max-width: 1200px) {{ 
             table {{ width: 90%; }} 
             .flip-card {{ width: 200px; height: 200px; }} 
@@ -911,6 +942,8 @@ ranking_html_content = f"""<!DOCTYPE html>
             .mover-info {{ width: 220px; }}
             .mover-info p {{ font-size: 14px; }}
             #topMoversTable td {{ min-width: 240px; }}
+            .search-container {{ width: 90%; margin: 10px auto 10px 10px; }}
+            .search-container input[type="text"] {{ width: 250px; font-size: 14px; }}
         }}
         @media only screen and (max-width: 768px) {{ 
             table {{ width: 95%; }} 
@@ -921,10 +954,15 @@ ranking_html_content = f"""<!DOCTYPE html>
             .mover-info p {{ font-size: 12px; }}
             #topMoversTable td {{ min-width: 190px; }}
             #topMoversTable {{ display: block; overflow-x: auto; white-space: nowrap; }}
+            .search-container {{ width: 95%; margin: 10px auto 10px 10px; }}
+            .search-container input[type="text"] {{ width: 200px; font-size: 12px; }}
         }}
     </style>
 </head>
 <body>
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Search by group name..." oninput="searchGroups()">
+    </div>
     <h1>PS Ranking - {current_date}</h1>
     <h2>Top Movers</h2>
     <table id="topMoversTable">
@@ -933,6 +971,7 @@ ranking_html_content = f"""<!DOCTYPE html>
         </tbody>
     </table>
     <h2>Total Number of Groups: {total_groups}</h2>
+    <p id="noResults">No groups found matching the search criteria.</p>
     <table id="rankingTable">
         <thead>
             <tr>
@@ -1005,6 +1044,29 @@ ranking_html_content = f"""<!DOCTYPE html>
             rows.forEach(row => tbody.appendChild(row));
             sortDirections[columnIndex] = direction;
             sortDirections = sortDirections.map((d, i) => i === columnIndex ? d : 0);
+
+            // Re-apply search filter after sorting
+            searchGroups();
+        }}
+
+        function searchGroups() {{
+            const input = document.getElementById('searchInput').value.toLowerCase();
+            const tbody = document.getElementById('tableBody');
+            const rows = Array.from(tbody.getElementsByTagName('tr'));
+            const noResults = document.getElementById('noResults');
+            let hasVisibleRows = false;
+
+            rows.forEach(row => {{
+                const groupName = row.cells[3].textContent.toLowerCase();
+                if (groupName.includes(input)) {{
+                    row.style.display = '';
+                    hasVisibleRows = true;
+                }} else {{
+                    row.style.display = 'none';
+                }}
+            }});
+
+            noResults.style.display = hasVisibleRows ? 'none' : 'block';
         }}
     </script>
 </body>
