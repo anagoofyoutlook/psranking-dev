@@ -1010,11 +1010,11 @@ ranking_html_content = f"""<!DOCTYPE html>
 </body>
 </html>
 """
-
+   
 # Write ranking HTML file
 ranking_html_file = os.path.join(output_folder, 'index.html')
 with open(ranking_html_file, 'w', encoding='utf-8') as f:
     f.write(ranking_html_content)
 print(f"\nWrote ranking HTML file: {ranking_html_file}")
-
+  
 print(f"\nProcessed {len(chats)} groups. Output written to {output_folder}")
