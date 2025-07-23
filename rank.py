@@ -544,35 +544,6 @@ for entry in sorted_data:
     </tr>
     """
 
-# Generate grid view content
-grid_rows = ''
-for entry in sorted_data:
-    group_name = escape(entry['group name'])
-    photo_src = entry['photo_file_name'] if entry['photo_file_name'] else 'https://via.placeholder.com/300'
-    html_link = f"HTML/{entry['html_file']}"
-    last_scene = f"{entry['Datedifference']} days" if entry['Datedifference'] != 'N/A' else 'N/A'
-    last_rank = entry['last rank']
-    last_rank_date = entry['last rank date']
-    last_rank_display = f"{last_rank} ({last_rank_date})" if last_rank != 'N/A' else 'N/A'
-    up_down = entry['up down']
-    up_down_content = f"{up_down} <img src='Photos/up.png' alt='Up' class='up-down-img'>" if up_down != 'N/A' and up_down > 0 else f"{up_down} <img src='Photos/down.png' alt='Down' class='up-down-img'>" if up_down != 'N/A' and up_down < 0 else f"{up_down} <img src='Photos/0.png' alt='No Change' class='up-down-img'>" if up_down != 'N/A' else up_down
-    grid_rows += f"""
-        <div class='grid-item' style='display: none;'>
-            <div class='flip-card'><div class='flip-card-inner'><div class='flip-card-front'><img src='{photo_src}' alt='{group_name}' style='width:100%;height:200px;object-fit:cover;'></div><div class='flip-card-back'><a href='{html_link}' target='_blank' style='color: #e6b800; text-decoration: none;'><h1>{group_name}</h1></a></div></div></div>
-            <p><strong>Group Name:</strong> <a href='{html_link}' target='_blank'>{group_name}</a></p>
-            <p><strong>Rank:</strong> {entry['rank']}</p>
-            <p><strong>Last Rank:</strong> {last_rank_display}</p>
-            <p><strong>Up Down:</strong> {up_down_content}</p>
-            <p><strong>Last Scene:</strong> {last_scene}</p>
-            <p><strong>Total Titles:</strong> {entry['total titles']}</p>
-            <p><strong>#FIVE:</strong> {entry['count of the hashtag "#FIVE"']}</p>
-            <p><strong>#FOUR:</strong> {entry['count of the hashtag "#FOUR"']}</p>
-            <p><strong>#Three:</strong> {entry['count of the hashtag "#Three"']}</p>
-            <p><strong>Thumbnails:</strong> {entry['count of the hashtag "#SceneType"']}</p>
-            <p><strong>Score:</strong> {entry['score']:.2f}</p>
-        </div>
-    """
-
 # Generate ranking HTML
 total_groups = len(sorted_data)
 ranking_html_content = f"""<!DOCTYPE html>
@@ -602,21 +573,8 @@ ranking_html_content = f"""<!DOCTYPE html>
         .mover-info {{ display: flex; flex-direction: column; align-items: center; gap: 10px; width: 320px; }}
         .mover-info p {{ margin: 5px 0; font-size: 16px; }}
         #topMoversTable td {{ min-width: 340px; }}
-        .grid-view {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; width: 80%; margin: 20px auto; padding: 20px; background-color: #2a3a5c; border-radius: 5px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); }}
-        .grid-item {{ background-color: #3b4a6b; padding: 15px; border-radius: 5px; text-align: center; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); }}
-        .grid-item p {{ margin: 5px 0; font-size: 14px; }}
-        .grid-item .flip-card {{ width: 100%; height: 200px; margin-bottom: 10px; }}
-        .grid-item .flip-card-inner {{ width: 100%; height: 100%; }}
-        .grid-item .flip-card-front img {{ width: 100%; height: 200px; object-fit: cover; }}
-        .grid-item .flip-card-back h1 {{ font-size: 18px; }}
-        .pagination {{ display: flex; justify-content: center; align-items: center; gap: 10px; margin: 20px auto; width: 80%; }}
-        .pagination button, .pagination span {{ padding: 10px 15px; border: none; background-color: #e6b800; color: #1e2a44; border-radius: 5px; cursor: pointer; font-size: 16px; }}
-        .pagination button:hover {{ background-color: #b30000; }}
-        .pagination button:disabled {{ background-color: #3b4a6b; cursor: not-allowed; opacity: 0.6; }}
-        .pagination span {{ background-color: #2a3a5c; color: #e6b800; }}
-        .pagination span.active {{ background-color: #b30000; font-weight: bold; }}
-        @media only screen and (max-width: 1200px) {{ table {{ width: 90%; }} .flip-card {{ width: 200px; height: 200px; }} .flip-card-back h1 {{ font-size: 18px; }} th, td {{ font-size: 14px; padding: 10px; }} .mover-info {{ width: 220px; }} .mover-info p {{ font-size: 14px; }} #topMoversTable td {{ min-width: 240px; }} .grid-view {{ grid-template-columns: repeat(2, 1fr); width: 90%; }} .grid-item .flip-card {{ width: 100%; height: 150px; }} .grid-item .flip-card-front img {{ height: 150px; }} .grid-item p {{ font-size: 12px; }} .pagination {{ width: 90%; }} .pagination button, .pagination span {{ font-size: 14px; padding: 8px 12px; }} }}
-        @media only screen and (max-width: 768px) {{ table {{ width: 95%; }} .flip-card {{ width: 150px; height: 150px; }} .flip-card-back h1 {{ font-size: 16px; }} th, td {{ font-size: 12px; padding: 8px; }} .mover-info {{ width: 170px; }} .mover-info p {{ font-size: 12px; }} #topMoversTable td {{ min-width: 190px; }} #topMoversTable {{ display: block; overflow-x: auto; white-space: nowrap; }} .grid-view {{ grid-template-columns: 1fr; width: 95%; }} .grid-item .flip-card {{ width: 100%; height: 120px; }} .grid-item .flip-card-front img {{ height: 120px; }} .grid-item p {{ font-size: 10px; }} .pagination {{ width: 95%; flex-wrap: wrap; }} .pagination button, .pagination span {{ font-size: 12px; padding: 6px 10px; }} }}
+        @media only screen and (max-width: 1200px) {{ table {{ width: 90%; }} .flip-card {{ width: 200px; height: 200px; }} .flip-card-back h1 {{ font-size: 18px; }} th, td {{ font-size: 14px; padding: 10px; }} .mover-info {{ width: 220px; }} .mover-info p {{ font-size: 14px; }} #topMoversTable td {{ min-width: 240px; }} }}
+        @media only screen and (max-width: 768px) {{ table {{ width: 95%; }} .flip-card {{ width: 150px; height: 150px; }} .flip-card-back h1 {{ font-size: 16px; }} th, td {{ font-size: 12px; padding: 8px; }} .mover-info {{ width: 170px; }} .mover-info p {{ font-size: 12px; }} #topMoversTable td {{ min-width: 190px; }} #topMoversTable {{ display: block; overflow-x: auto; white-space: nowrap; }} }}
     </style>
 </head>
 <body>
@@ -649,18 +607,9 @@ ranking_html_content = f"""<!DOCTYPE html>
             {table_rows}
         </tbody>
     </table>
-    <h2>Grid View</h2>
-    <div class="grid-view" id="gridView">
-        {grid_rows}
-    </div>
-    <div class="pagination" id="pagination"></div>
     <script>
         let sortDirections = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         function sortTable(columnIndex) {{ if (columnIndex === 4) return; const tbody = document.getElementById('tableBody'); const rows = Array.from(tbody.getElementsByTagName('tr')); const isNumeric = [true, true, true, false, false, true, true, true, true, true, true, true]; const direction = sortDirections[columnIndex] === 1 ? -1 : 1; rows.sort((a, b) => {{ let aValue = a.cells[columnIndex].textContent; let bValue = b.cells[columnIndex].textContent; if (columnIndex === 1) {{ if (aValue === 'N/A' && bValue === 'N/A') return 0; if (aValue === 'N/A') return direction * 1; if (bValue === 'N/A') return direction * -1; aValue = parseFloat(aValue.split(' ')[0]); bValue = parseFloat(bValue.split(' ')[0]); return direction * (aValue - bValue); }} else if (columnIndex === 2) {{ if (aValue === 'N/A' && bValue === 'N/A') return 0; if (aValue === 'N/A') return direction * 1; if (bValue === 'N/A') return direction * -1; aValue = parseFloat(aValue.split(' ')[0]); bValue = parseFloat(bValue.split(' ')[0]); return direction * (aValue - bValue); }} else if (columnIndex === 5) {{ if (aValue === 'N/A' && bValue === 'N/A') return 0; if (aValue === 'N/A') return direction * 1; if (bValue === 'N/A') return direction * -1; aValue = parseInt(aValue); bValue = parseInt(bValue); return direction * (aValue - bValue); }} if (isNumeric[columnIndex]) {{ aValue = parseFloat(aValue) || aValue; bValue = parseFloat(bValue) || bValue; return direction * (aValue - bValue); }} return direction * aValue.localeCompare(bValue); }}); while (tbody.firstChild) {{ tbody.removeChild(tbody.firstChild); }} rows.forEach(row => tbody.appendChild(row)); sortDirections[columnIndex] = direction; sortDirections = sortDirections.map((d, i) => i === columnIndex ? d : 0); }}
-        const itemsPerPage = 50;
-        let currentPage = 1;
-        function setupPagination() {{ const gridItems = document.querySelectorAll('#gridView .grid-item'); const totalItems = gridItems.length; const totalPages = Math.ceil(totalItems / itemsPerPage); const pagination = document.getElementById('pagination'); function showPage(page) {{ gridItems.forEach((item, index) => {{ item.style.display = (index >= (page - 1) * itemsPerPage && index < page * itemsPerPage) ? 'flex' : 'none'; }}); currentPage = page; pagination.innerHTML = ''; const prevButton = document.createElement('button'); prevButton.textContent = 'Previous'; prevButton.disabled = page === 1; prevButton.onclick = () => showPage(page - 1); pagination.appendChild(prevButton); let startPage = Math.max(1, page - 2); let endPage = Math.min(totalPages, startPage + 4); if (endPage - startPage < 4) {{ startPage = Math.max(1, endPage - 4); }} for (let i = startPage; i <= endPage; i++) {{ const pageSpan = document.createElement('span'); pageSpan.textContent = i; pageSpan.className = i === page ? 'active' : ''; pageSpan.onclick = () => showPage(i); pagination.appendChild(pageSpan); }} const nextButton = document.createElement('button'); nextButton.textContent = 'Next'; nextButton.disabled = page === totalPages; nextButton.onclick = () => showPage(page + 1); pagination.appendChild(nextButton); }} if (totalItems > 0) {{ showPage(1); }} else {{ pagination.innerHTML = '<p>No groups available.</p>'; }} }}
-        document.addEventListener('DOMContentLoaded', setupPagination);
     </script>
 </body>
 </html>
