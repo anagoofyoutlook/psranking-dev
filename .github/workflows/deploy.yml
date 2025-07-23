@@ -1,7 +1,10 @@
-name: Build and Deploy to GitHub Pages
+name: Build and Deploy
 
 on:
   push:
+    branches:
+      - main
+  pull_request:
     branches:
       - main
   workflow_dispatch:
@@ -10,51 +13,74 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout main branch
-        uses: actions/checkout@v3
-        with:
-          ref: main
-
-      - name: Checkout gh-pages branch
-        uses: actions/checkout@v3
-        with:
-          ref: gh-pages
-          path: gh-pages
-          fetch-depth: 0  # Fetch full history
-
-      - name: Copy existing history.csv
-        run: |
-          mkdir -p docs
-          if [ -f gh-pages/history.csv ]; then
-            cp gh-pages/history.csv docs/history.csv
-            echo "Copied history.csv from gh-pages"
-            cat docs/history.csv  # Debug: Show contents
-          else
-            echo "No existing history.csv found in gh-pages"
-          fi
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            echo "No requirements.txt found, skipping pip install"
+          fi
 
-      - name: Run script
-        run: python rank.py
-
-      - name: List output files
+      - name: Check disk space before running script
         run: |
-          ls -R docs/ || echo "No files found in docs/"
-          echo "Contents of history.csv:"
-          cat docs/history.csv || echo "history.csv is empty"
+          echo "Disk space before running script:"
+          df -h
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Run rank.py
+        run: |
+          python rank.py
+
+      - name: List docs/Photos contents
+        run: |
+          echo "Contents of docs/Photos/:"
+          find docs/Photos -type f
+
+      - name: Clean up temporary files
+        if: always()
+        run: |
+          echo "Cleaning up temporary files..."
+          rm -rf PS/result.json
+          echo "Disk space after cleanup:"
+          df -h
+
+      - name: Compress docs folder
+        run: |
+          echo "Compressing docs folder..."
+          tar -czf docs.tar.gz -C docs .
+          echo "Size of docs.tar.gz:"
+          du -sh docs.tar.gz
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs
-          publish_branch: gh-pages
-          keep_files: true  # Preserve existing files instead of orphaning
+          name: ranking-site
+          path: docs.tar.gz
+          retention-days: 1
+
+      - name: Commit docs folder to main branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add docs/
+          git commit -m "Update docs folder for GitHub Pages" || echo "No changes to commit"
+          git push origin main
+
+      - name: Check disk space after deployment
+        if: always()
+        run: |
+          echo "Disk space after deployment:"
+          df -h
+
+      - name: Debug large files
+        if: failure()
+        run: find /home/runner/work -type f -size +100M
