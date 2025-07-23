@@ -1,3 +1,4 @@
+```python
 import json
 import csv
 import os
@@ -312,50 +313,50 @@ for chat in chats:
     <title>{group_name}</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #1e2a44; color: #ffffff; text-align: center; }
-        h1, h2 { color: #e6b800; width: 90%; margin: 20px auto; text-align: center; font-size: 36px; }
-        .info { background-color: #2a3a5c; padding: 10px; border-radius: 5px; margin-bottom: 20px; width: 90%; margin-left: auto; margin-right: auto; }
-        .hashtags { list-style-type: none; padding: 0; }
-        .hashtag-item { background-color: #3b4a6b; margin: 5px 0; padding: 5px; border-radius: 3px; display: inline-block; width: 200px; color: #ffffff; }
-        .rank-container { width: 90%; margin: 20px auto; display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap; }
-        .rank-number { font-size: 48px; font-weight: bold; color: #e6b800; display: inline-block; }
-        @keyframes countUp { from { content: "0"; } to { content: attr(data-rank); } }
-        .rank-number::before { content: "0"; animation: countUp 2s ease-out forwards; display: inline-block; min-width: 60px; }
-        .chart-container { max-width: 400px; width: 100%; background-color: #2a3a5c; padding: 10px; border-radius: 5px; }
-        canvas { width: 100% !important; height: auto !important; }
-        .titles-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 20px 0; width: 100%; box-sizing: border-box; }
-        .grid-item { background-color: #2a3a5c; padding: 10px; border-radius: 5px; text-align: center; display: flex; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box; }
-        .grid-item img, .grid-item video { width: 100%; height: 300px; border-radius: 5px; object-fit: cover; }
-        .grid-item .title { margin: 10px 0 5px; font-size: 16px; font-weight: bold; color: #e6b800; }
-        .grid-item .date { margin: 0; font-size: 14px; color: #cccccc; }
-        .titles-table { width: 100%; margin: 20px 0; border-collapse: collapse; background-color: #2a3a5c; }
-        .titles-table th, .titles-table td { padding: 10px; border: 1px solid #3b4a6b; text-align: left; vertical-align: middle; color: #ffffff; }
-        .titles-table th { background-color: #e6b800; color: #1e2a44; cursor: pointer; }
-        .titles-table th:hover { background-color: #b30000; }
-        a { color: #e6b800; text-decoration: none; }
-        a:hover { color: #b30000; text-decoration: underline; }
-        .container { position: relative; width: 90%; margin: 20px auto; height: auto; max-height: 600px; display: block; overflow: hidden; background-color: #2a3a5c; }
-        .mySlides { display: none; width: 100%; height: auto; aspect-ratio: 16/9; }
-        .mySlides img, .mySlides video { width: 100%; height: auto; object-fit: contain; }
-        .cursor { cursor: pointer; }
-        .prev, .next { cursor: pointer; position: absolute; top: 50%; transform: translateY(-50%); width: auto; padding: 16px; color: #e6b800; font-weight: bold; font-size: 20px; border-radius: 0 3px 3px 0; user-select: none; -webkit-user-select: none; z-index: 10; }
-        .prev { left: 0; }
-        .next { right: 0; border-radius: 3px 0 0 3px; }
-        .prev:hover, .next:hover { background-color: #b30000; }
-        .numbertext { color: #e6b800; font-size: 12px; padding: 8px 12px; position: absolute; top: 0; z-index: 10; }
-        .caption-container { text-align: center; background-color: #1e2a44; padding: 2px 16px; color: #e6b800; }
-        .row { display: flex; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
-        .column { flex: 0 0 {100 / len(photo_paths) if photo_paths else 100}%; max-width: 100px; padding: 5px; }
-        .demo { opacity: 0.6; width: 100%; height: auto; object-fit: cover; }
-        .active, .demo:hover { opacity: 1; }
-        .tab { overflow: hidden; margin: 20px auto; width: 90%; background-color: #2a3a5c; border-radius: 5px 5px 0 0; }
-        .tab button { background-color: #2a3a5c; color: #e6b800; float: left; border: none; outline: none; cursor: pointer; padding: 14px 16px; transition: 0.3s; font-size: 17px; width: 50%; }
-        .tab button:hover { background-color: #b30000; }
-        .tab button.active { background-color: #3b4a6b; }
-        .tabcontent { display: none; padding: 6px 12px; border-top: none; background-color: #2a3a5c; margin: 0 auto; width: 90%; border-radius: 0 0 5px 5px; }
-        #Videos { display: block; }
-        @media only screen and (max-width: 1200px) { .titles-grid { grid-template-columns: repeat(3, 1fr); } .grid-item img, .grid-item video { height: 200px; } h1, .info, .container, .tab, .tabcontent { width: 90%; } .rank-container { width: 90%; } }
-        @media only screen and (max-width: 768px) { .titles-grid { grid-template-columns: repeat(3, 1fr); } .grid-item img, .grid-item video { height: 150px; } .container { width: 90%; max-height: 400px; } h1 { margin: 10px auto; font-size: 30px; } .info, .tab, .tabcontent, .rank-container { width: 90%; } .rank-container { flex-direction: column; gap: 10px; } .chart-container { max-width: 100%; } .column { flex: 0 0 80px; max-width: 80px; } .mySlides img, .mySlides video { object-fit: contain; } .tab button { font-size: 14px; padding: 10px; } }
+        body {{ font-family: Arial, sans-serif; margin: 20px; background-color: #1e2a44; color: #ffffff; text-align: center; }}
+        h1, h2 {{ color: #e6b800; width: 90%; margin: 20px auto; text-align: center; font-size: 36px; }}
+        .info {{ background-color: #2a3a5c; padding: 10px; border-radius: 5px; margin-bottom: 20px; width: 90%; margin-left: auto; margin-right: auto; }}
+        .hashtags {{ list-style-type: none; padding: 0; }}
+        .hashtag-item {{ background-color: #3b4a6b; margin: 5px 0; padding: 5px; border-radius: 3px; display: inline-block; width: 200px; color: #ffffff; }}
+        .rank-container {{ width: 90%; margin: 20px auto; display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap; }}
+        .rank-number {{ font-size: 48px; font-weight: bold; color: #e6b800; display: inline-block; }}
+        @keyframes countUp {{ from {{ content: "0"; }} to {{ content: attr(data-rank); }} }}
+        .rank-number::before {{ content: "0"; animation: countUp 2s ease-out forwards; display: inline-block; min-width: 60px; }}
+        .chart-container {{ max-width: 400px; width: 100%; background-color: #2a3a5c; padding: 10px; border-radius: 5px; }}
+        canvas {{ width: 100% !important; height: auto !important; }}
+        .titles-grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 20px 0; width: 100%; box-sizing: border-box; }}
+        .grid-item {{ background-color: #2a3a5c; padding: 10px; border-radius: 5px; text-align: center; display: flex; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box; }}
+        .grid-item img, .grid-item video {{ width: 100%; height: 300px; border-radius: 5px; object-fit: cover; }}
+        .grid-item .title {{ margin: 10px 0 5px; font-size: 16px; font-weight: bold; color: #e6b800; }}
+        .grid-item .date {{ margin: 0; font-size: 14px; color: #cccccc; }}
+        .titles-table {{ width: 100%; margin: 20px 0; border-collapse: collapse; background-color: #2a3a5c; }}
+        .titles-table th, .titles-table td {{ padding: 10px; border: 1px solid #3b4a6b; text-align: left; vertical-align: middle; color: #ffffff; }}
+        .titles-table th {{ background-color: #e6b800; color: #1e2a44; cursor: pointer; }}
+        .titles-table th:hover {{ background-color: #b30000; }}
+        a {{ color: #e6b800; text-decoration: none; }}
+        a:hover {{ color: #b30000; text-decoration: underline; }}
+        .container {{ position: relative; width: 90%; margin: 20px auto; height: auto; max-height: 600px; display: block; overflow: hidden; background-color: #2a3a5c; }}
+        .mySlides {{ display: none; width: 100%; height: auto; aspect-ratio: 16/9; }}
+        .mySlides img, .mySlides video {{ width: 100%; height: auto; object-fit: contain; }}
+        .cursor {{ cursor: pointer; }}
+        .prev, .next {{ cursor: pointer; position: absolute; top: 50%; transform: translateY(-50%); width: auto; padding: 16px; color: #e6b800; font-weight: bold; font-size: 20px; border-radius: 0 3px 3px 0; user-select: none; -webkit-user-select: none; z-index: 10; }}
+        .prev {{ left: 0; }}
+        .next {{ right: 0; border-radius: 3px 0 0 3px; }}
+        .prev:hover, .next:hover {{ background-color: #b30000; }}
+        .numbertext {{ color: #e6b800; font-size: 12px; padding: 8px 12px; position: absolute; top: 0; z-index: 10; }}
+        .caption-container {{ text-align: center; background-color: #1e2a44; padding: 2px 16px; color: #e6b800; }}
+        .row {{ display: flex; flex-wrap: wrap; justify-content: center; margin-top: 10px; }}
+        .column {{ flex: 0 0 {100 / len(photo_paths) if photo_paths else 100}%; max-width: 100px; padding: 5px; }}
+        .demo {{ opacity: 0.6; width: 100%; height: auto; object-fit: cover; }}
+        .active, .demo:hover {{ opacity: 1; }}
+        .tab {{ overflow: hidden; margin: 20px auto; width: 90%; background-color: #2a3a5c; border-radius: 5px 5px 0 0; }}
+        .tab button {{ background-color: #2a3a5c; color: #e6b800; float: left; border: none; outline: none; cursor: pointer; padding: 14px 16px; transition: 0.3s; font-size: 17px; width: 50%; }}
+        .tab button:hover {{ background-color: #b30000; }}
+        .tab button.active {{ background-color: #3b4a6b; }}
+        .tabcontent {{ display: none; padding: 6px 12px; border-top: none; background-color: #2a3a5c; margin: 0 auto; width: 90%; border-radius: 0 0 5px 5px; }}
+        #Videos {{ display: block; }}
+        @media only screen and (max-width: 1200px) {{ .titles-grid {{ grid-template-columns: repeat(3, 1fr); }} .grid-item img, .grid-item video {{ height: 200px; }} h1, .info, .container, .tab, .tabcontent {{ width: 90%; }} .rank-container {{ width: 90%; }} }}
+        @media only screen and (max-width: 768px) {{ .titles-grid {{ grid-template-columns: repeat(3, 1fr); }} .grid-item img, .grid-item video {{ height: 150px; }} .container {{ width: 90%; max-height: 400px; }} h1 {{ margin: 10px auto; font-size: 30px; }} .info, .tab, .tabcontent, .rank-container {{ width: 90%; }} .rank-container {{ flex-direction: column; gap: 10px; }} .chart-container {{ max-width: 100%; }} .column {{ flex: 0 0 80px; max-width: 80px; }} .mySlides img, .mySlides video {{ object-fit: contain; }} .tab button {{ font-size: 14px; padding: 10px; }} }}
     </style>
 </head>
 <body>
@@ -387,15 +388,15 @@ for chat in chats:
     <script>
         let slideIndex = 1;
         showSlides(slideIndex);
-        function plusSlides(n) { clearInterval(autoSlide); showSlides(slideIndex += n); autoSlide = setInterval(() => plusSlides(1), 3000); }
-        function currentSlide(n) { clearInterval(autoSlide); showSlides(slideIndex = n); autoSlide = setInterval(() => plusSlides(1), 3000); }
-        function showSlides(n) { let i; let slides = document.getElementsByClassName("mySlides"); let dots = document.getElementsByClassName("demo"); let captionText = document.getElementById("caption"); if (n > slides.length) { slideIndex = 1 } if (n < 1) { slideIndex = slides.length } for (i = 0; i < slides.length; i++) { slides[i].style.display = "none"; } for (i = 0; i < dots.length; i++) { dots[i].className = dots[i].className.replace(" active", ""); } slides[slideIndex-1].style.display = "block"; dots[slideIndex-1].className += " active"; captionText.innerHTML = dots[slideIndex-1].alt; }
+        function plusSlides(n) {{ clearInterval(autoSlide); showSlides(slideIndex += n); autoSlide = setInterval(() => plusSlides(1), 3000); }}
+        function currentSlide(n) {{ clearInterval(autoSlide); showSlides(slideIndex = n); autoSlide = setInterval(() => plusSlides(1), 3000); }}
+        function showSlides(n) {{ let i; let slides = document.getElementsByClassName("mySlides"); let dots = document.getElementsByClassName("demo"); let captionText = document.getElementById("caption"); if (n > slides.length) {{ slideIndex = 1 }} if (n < 1) {{ slideIndex = slides.length }} for (i = 0; i < slides.length; i++) {{ slides[i].style.display = "none"; }} for (i = 0; i < dots.length; i++) {{ dots[i].className = dots[i].className.replace(" active", ""); }} slides[slideIndex-1].style.display = "block"; dots[slideIndex-1].className += " active"; captionText.innerHTML = dots[slideIndex-1].alt; }}
         let autoSlide = setInterval(() => plusSlides(1), 3000);
-        function openTab(evt, tabName) { let i, tabcontent, tablinks; tabcontent = document.getElementsByClassName("tabcontent"); for (i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; } tablinks = document.getElementsByClassName("tablinks"); for (i = 0; i < tablinks.length; i++) { tablinks[i].className = tablinks[i].className.replace(" active", ""); } document.getElementById(tabName).style.display = "block"; evt.currentTarget.className += " active"; }
-        document.addEventListener('DOMContentLoaded', function() { const ctx = document.getElementById('rankChart').getContext('2d'); const historyData = {history_data_json}; const dates = historyData.map(entry => entry.date); const ranks = historyData.map(entry => entry.rank); new Chart(ctx, { type: 'line', data: { labels: dates, datasets: [{ label: 'Rank Over Time', data: ranks, borderColor: '#e6b800', backgroundColor: 'rgba(230, 184, 0, 0.2)', fill: true, tension: 0.4 }] }, options: { scales: { y: { beginAtZero: true, title: { display: true, text: 'Rank', color: '#e6b800' }, ticks: { stepSize: 1, color: '#ffffff' }, suggestedMax: {len(chats) + 1}, grid: { color: '#3b4a6b' } }, x: { title: { display: true, text: 'Date', color: '#e6b800' }, ticks: { color: '#ffffff' }, grid: { color: '#3b4a6b' } } }, plugins: { legend: { display: true, labels: { color: '#e6b800' } } } } }); sortTitlesTable(0, -1); });
+        function openTab(evt, tabName) {{ let i, tabcontent, tablinks; tabcontent = document.getElementsByClassName("tabcontent"); for (i = 0; i < tabcontent.length; i++) {{ tabcontent[i].style.display = "none"; }} tablinks = document.getElementsByClassName("tablinks"); for (i = 0; i < tablinks.length; i++) {{ tablinks[i].className = tablinks[i].className.replace(" active", ""); }} document.getElementById(tabName).style.display = "block"; evt.currentTarget.className += " active"; }}
+        document.addEventListener('DOMContentLoaded', function() {{ const ctx = document.getElementById('rankChart').getContext('2d'); const historyData = {history_data_json}; const dates = historyData.map(entry => entry.date); const ranks = historyData.map(entry => entry.rank); new Chart(ctx, {{ type: 'line', data: {{ labels: dates, datasets: [{{ label: 'Rank Over Time', data: ranks, borderColor: '#e6b800', backgroundColor: 'rgba(230, 184, 0, 0.2)', fill: true, tension: 0.4 }}] }}, options: {{ scales: {{ y: {{ beginAtZero: true, title: {{ display: true, text: 'Rank', color: '#e6b800' }}, ticks: {{ stepSize: 1, color: '#ffffff' }}, suggestedMax: {len(chats) + 1}, grid: {{ color: '#3b4a6b' }} }}, x: {{ title: {{ display: true, text: 'Date', color: '#e6b800' }}, ticks: {{ color: '#ffffff' }}, grid: {{ color: '#3b4a6b' }} }} }}, plugins: {{ legend: {{ display: true, labels: {{ color: '#e6b800' }} }} }} }} }}); sortTitlesTable(0, -1); }});
         let titlesSortDirections = [-1, 0, 0];
-        function sortTitlesTable(columnIndex, forceDirection) { const tbody = document.getElementById('titlesTableBody'); const rows = Array.from(tbody.getElementsByTagName('tr')); const direction = forceDirection !== undefined ? forceDirection : (titlesSortDirections[columnIndex] === 1 ? -1 : 1); rows.sort((a, b) => { let aValue = a.cells[columnIndex].innerText; let bValue = b.cells[columnIndex].innerText; if (columnIndex === 0) { aValue = parseInt(aValue); bValue = parseInt(bValue); return direction * (aValue - bValue); } else if (columnIndex === 2) { aValue = new Date(aValue); bValue = new Date(bValue); return direction * (aValue - bValue); } else if (columnIndex === 1) { return direction * aValue.localeCompare(bValue); } return 0; }); while (tbody.firstChild) { tbody.removeChild(tbody.firstChild); } rows.forEach(row => tbody.appendChild(row)); titlesSortDirections[columnIndex] = direction; titlesSortDirections = titlesSortDirections.map((d, i) => i === columnIndex ? d : 0); sortTitlesGrid(columnIndex, direction); }
-        function sortTitlesGrid(columnIndex, direction) { const grid = document.getElementById('titlesGrid'); const items = Array.from(grid.getElementsByClassName('grid-item')); items.sort((a, b) => { let aValue, bValue; if (columnIndex === 0) { aValue = parseInt(a.querySelector('.date').innerText.split('S.No: ')[1].split(' | ')[0]); bValue = parseInt(b.querySelector('.date').innerText.split('S.No: ')[1].split(' | ')[0]); return direction * (aValue - bValue); } else if (columnIndex === 1) { aValue = a.querySelector('.title').innerText; bValue = b.querySelector('.title').innerText; return direction * aValue.localeCompare(bValue); } else if (columnIndex === 2) { aValue = new Date(a.querySelector('.date').innerText.split(' | ')[1]); bValue = new Date(b.querySelector('.date').innerText.split(' | ')[1]); return direction * (aValue - bValue); } return 0; }); while (grid.firstChild) { grid.removeChild(grid.firstChild); } items.forEach(item => grid.appendChild(item)); }
+        function sortTitlesTable(columnIndex, forceDirection) {{ const tbody = document.getElementById('titlesTableBody'); const rows = Array.from(tbody.getElementsByTagName('tr')); const direction = forceDirection !== undefined ? forceDirection : (titlesSortDirections[columnIndex] === 1 ? -1 : 1); rows.sort((a, b) => {{ let aValue = a.cells[columnIndex].innerText; let bValue = b.cells[columnIndex].innerText; if (columnIndex === 0) {{ aValue = parseInt(aValue); bValue = parseInt(bValue); return direction * (aValue - bValue); }} else if (columnIndex === 2) {{ aValue = new Date(aValue); bValue = new Date(bValue); return direction * (aValue - bValue); }} else if (columnIndex === 1) {{ return direction * aValue.localeCompare(bValue); }} return 0; }}); while (tbody.firstChild) {{ tbody.removeChild(tbody.firstChild); }} rows.forEach(row => tbody.appendChild(row)); titlesSortDirections[columnIndex] = direction; titlesSortDirections = titlesSortDirections.map((d, i) => i === columnIndex ? d : 0); sortTitlesGrid(columnIndex, direction); }}
+        function sortTitlesGrid(columnIndex, direction) {{ const grid = document.getElementById('titlesGrid'); const items = Array.from(grid.getElementsByClassName('grid-item')); items.sort((a, b) => {{ let aValue, bValue; if (columnIndex === 0) {{ aValue = parseInt(a.querySelector('.date').innerText.split('S.No: ')[1].split(' | ')[0]); bValue = parseInt(b.querySelector('.date').innerText.split('S.No: ')[1].split(' | ')[0]); return direction * (aValue - bValue); }} else if (columnIndex === 1) {{ aValue = a.querySelector('.title').innerText; bValue = b.querySelector('.title').innerText; return direction * aValue.localeCompare(bValue); }} else if (columnIndex === 2) {{ aValue = new Date(a.querySelector('.date').innerText.split(' | ')[1]); bValue = new Date(b.querySelector('.date').innerText.split(' | ')[1]); return direction * (aValue - bValue); }} return 0; }}); while (grid.firstChild) {{ grid.removeChild(grid.firstChild); }} items.forEach(item => grid.appendChild(item)); }}
     </script>
 </body>
 </html>
@@ -582,41 +583,41 @@ ranking_html_content = f"""<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PS Ranking - {current_date}</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #1e2a44; color: #ffffff; margin: 20px; text-align: center; }
-        h1, h2 { color: #e6b800; }
-        table { width: 80%; margin: 20px auto; border-collapse: collapse; background-color: #2a3a5c; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); }
-        th, td { border: 1px solid #3b4a6b; text-align: center; vertical-align: middle; padding: 15px; color: #ffffff; }
-        th { background-color: #e6b800; color: #1e2a44; cursor: pointer; }
-        th:hover { background-color: #b30000; }
-        tr:hover { background-color: #3b4a6b; }
-        .up-down-img { width: 20px; height: 20px; vertical-align: middle; }
-        a { text-decoration: none; color: #e6b800; }
-        a:hover { color: #b30000; text-decoration: underline; }
-        .flip-card { background-color: transparent; width: 300px; height: 300px; perspective: 1000px; margin: 10px auto; }
-        .flip-card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); }
-        .flip-card:hover .flip-card-inner { transform: rotateY(180deg); }
-        .flip-card-front, .flip-card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 5px; }
-        .flip-card-front { background-color: #2a3a5c; color: #ffffff; }
-        .flip-card-back { background-color: #3b4a6b; color: #e6b800; transform: rotateY(180deg); display: flex; justify-content: center; align-items: center; flex-direction: column; }
-        .flip-card-back h1 { margin: 0; font-size: 24px; word-wrap: break-word; padding: 10px; }
-        .mover-info { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 320px; }
-        .mover-info p { margin: 5px 0; font-size: 16px; }
-        #topMoversTable td { min-width: 340px; }
-        .grid-view { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; width: 80%; margin: 20px auto; padding: 20px; background-color: #2a3a5c; border-radius: 5px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); }
-        .grid-item { background-color: #3b4a6b; padding: 15px; border-radius: 5px; text-align: center; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); }
-        .grid-item p { margin: 5px 0; font-size: 14px; }
-        .grid-item .flip-card { width: 100%; height: 200px; margin-bottom: 10px; }
-        .grid-item .flip-card-inner { width: 100%; height: 100%; }
-        .grid-item .flip-card-front img { width: 100%; height: 200px; object-fit: cover; }
-        .grid-item .flip-card-back h1 { font-size: 18px; }
-        .pagination { display: flex; justify-content: center; align-items: center; gap: 10px; margin: 20px auto; width: 80%; }
-        .pagination button, .pagination span { padding: 10px 15px; border: none; background-color: #e6b800; color: #1e2a44; border-radius: 5px; cursor: pointer; font-size: 16px; }
-        .pagination button:hover { background-color: #b30000; }
-        .pagination button:disabled { background-color: #3b4a6b; cursor: not-allowed; opacity: 0.6; }
-        .pagination span { background-color: #2a3a5c; color: #e6b800; }
-        .pagination span.active { background-color: #b30000; font-weight: bold; }
-        @media only screen and (max-width: 1200px) { table { width: 90%; } .flip-card { width: 200px; height: 200px; } .flip-card-back h1 { font-size: 18px; } th, td { font-size: 14px; padding: 10px; } .mover-info { width: 220px; } .mover-info p { font-size: 14px; } #topMoversTable td { min-width: 240px; } .grid-view { grid-template-columns: repeat(2, 1fr); width: 90%; } .grid-item .flip-card { width: 100%; height: 150px; } .grid-item .flip-card-front img { height: 150px; } .grid-item p { font-size: 12px; } .pagination { width: 90%; } .pagination button, .pagination span { font-size: 14px; padding: 8px 12px; } }
-        @media only screen and (max-width: 768px) { table { width: 95%; } .flip-card { width: 150px; height: 150px; } .flip-card-back h1 { font-size: 16px; } th, td { font-size: 12px; padding: 8px; } .mover-info { width: 170px; } .mover-info p { font-size: 12px; } #topMoversTable td { min-width: 190px; } #topMoversTable { display: block; overflow-x: auto; white-space: nowrap; } .grid-view { grid-template-columns: 1fr; width: 95%; } .grid-item .flip-card { width: 100%; height: 120px; } .grid-item .flip-card-front img { height: 120px; } .grid-item p { font-size: 10px; } .pagination { width: 95%; flex-wrap: wrap; } .pagination button, .pagination span { font-size: 12px; padding: 6px 10px; } }
+        body {{ font-family: Arial, sans-serif; background-color: #1e2a44; color: #ffffff; margin: 20px; text-align: center; }}
+        h1, h2 {{ color: #e6b800; }}
+        table {{ width: 80%; margin: 20px auto; border-collapse: collapse; background-color: #2a3a5c; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); }}
+        th, td {{ border: 1px solid #3b4a6b; text-align: center; vertical-align: middle; padding: 15px; color: #ffffff; }}
+        th {{ background-color: #e6b800; color: #1e2a44; cursor: pointer; }}
+        th:hover {{ background-color: #b30000; }}
+        tr:hover {{ background-color: #3b4a6b; }}
+        .up-down-img {{ width: 20px; height: 20px; vertical-align: middle; }}
+        a {{ text-decoration: none; color: #e6b800; }}
+        a:hover {{ color: #b30000; text-decoration: underline; }}
+        .flip-card {{ background-color: transparent; width: 300px; height: 300px; perspective: 1000px; margin: 10px auto; }}
+        .flip-card-inner {{ position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); }}
+        .flip-card:hover .flip-card-inner {{ transform: rotateY(180deg); }}
+        .flip-card-front, .flip-card-back {{ position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 5px; }}
+        .flip-card-front {{ background-color: #2a3a5c; color: #ffffff; }}
+        .flip-card-back {{ background-color: #3b4a6b; color: #e6b800; transform: rotateY(180deg); display: flex; justify-content: center; align-items: center; flex-direction: column; }}
+        .flip-card-back h1 {{ margin: 0; font-size: 24px; word-wrap: break-word; padding: 10px; }}
+        .mover-info {{ display: flex; flex-direction: column; align-items: center; gap: 10px; width: 320px; }}
+        .mover-info p {{ margin: 5px 0; font-size: 16px; }}
+        #topMoversTable td {{ min-width: 340px; }}
+        .grid-view {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; width: 80%; margin: 20px auto; padding: 20px; background-color: #2a3a5c; border-radius: 5px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); }}
+        .grid-item {{ background-color: #3b4a6b; padding: 15px; border-radius: 5px; text-align: center; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); }}
+        .grid-item p {{ margin: 5px 0; font-size: 14px; }}
+        .grid-item .flip-card {{ width: 100%; height: 200px; margin-bottom: 10px; }}
+        .grid-item .flip-card-inner {{ width: 100%; height: 100%; }}
+        .grid-item .flip-card-front img {{ width: 100%; height: 200px; object-fit: cover; }}
+        .grid-item .flip-card-back h1 {{ font-size: 18px; }}
+        .pagination {{ display: flex; justify-content: center; align-items: center; gap: 10px; margin: 20px auto; width: 80%; }}
+        .pagination button, .pagination span {{ padding: 10px 15px; border: none; background-color: #e6b800; color: #1e2a44; border-radius: 5px; cursor: pointer; font-size: 16px; }}
+        .pagination button:hover {{ background-color: #b30000; }}
+        .pagination button:disabled {{ background-color: #3b4a6b; cursor: not-allowed; opacity: 0.6; }}
+        .pagination span {{ background-color: #2a3a5c; color: #e6b800; }}
+        .pagination span.active {{ background-color: #b30000; font-weight: bold; }}
+        @media only screen and (max-width: 1200px) {{ table {{ width: 90%; }} .flip-card {{ width: 200px; height: 200px; }} .flip-card-back h1 {{ font-size: 18px; }} th, td {{ font-size: 14px; padding: 10px; }} .mover-info {{ width: 220px; }} .mover-info p {{ font-size: 14px; }} #topMoversTable td {{ min-width: 240px; }} .grid-view {{ grid-template-columns: repeat(2, 1fr); width: 90%; }} .grid-item .flip-card {{ width: 100%; height: 150px; }} .grid-item .flip-card-front img {{ height: 150px; }} .grid-item p {{ font-size: 12px; }} .pagination {{ width: 90%; }} .pagination button, .pagination span {{ font-size: 14px; padding: 8px 12px; }} }}
+        @media only screen and (max-width: 768px) {{ table {{ width: 95%; }} .flip-card {{ width: 150px; height: 150px; }} .flip-card-back h1 {{ font-size: 16px; }} th, td {{ font-size: 12px; padding: 8px; }} .mover-info {{ width: 170px; }} .mover-info p {{ font-size: 12px; }} #topMoversTable td {{ min-width: 190px; }} #topMoversTable {{ display: block; overflow-x: auto; white-space: nowrap; }} .grid-view {{ grid-template-columns: 1fr; width: 95%; }} .grid-item .flip-card {{ width: 100%; height: 120px; }} .grid-item .flip-card-front img {{ height: 120px; }} .grid-item p {{ font-size: 10px; }} .pagination {{ width: 95%; flex-wrap: wrap; }} .pagination button, .pagination span {{ font-size: 12px; padding: 6px 10px; }} }}
     </style>
 </head>
 <body>
@@ -656,10 +657,10 @@ ranking_html_content = f"""<!DOCTYPE html>
     <div class="pagination" id="pagination"></div>
     <script>
         let sortDirections = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-        function sortTable(columnIndex) { if (columnIndex === 4) return; const tbody = document.getElementById('tableBody'); const rows = Array.from(tbody.getElementsByTagName('tr')); const isNumeric = [true, true, true, false, false, true, true, true, true, true, true, true]; const direction = sortDirections[columnIndex] === 1 ? -1 : 1; rows.sort((a, b) => { let aValue = a.cells[columnIndex].textContent; let bValue = b.cells[columnIndex].textContent; if (columnIndex === 1) { if (aValue === 'N/A' && bValue === 'N/A') return 0; if (aValue === 'N/A') return direction * 1; if (bValue === 'N/A') return direction * -1; aValue = parseFloat(aValue.split(' ')[0]); bValue = parseFloat(bValue.split(' ')[0]); return direction * (aValue - bValue); } else if (columnIndex === 2) { if (aValue === 'N/A' && bValue === 'N/A') return 0; if (aValue === 'N/A') return direction * 1; if (bValue === 'N/A') return direction * -1; aValue = parseFloat(aValue.split(' ')[0]); bValue = parseFloat(bValue.split(' ')[0]); return direction * (aValue - bValue); } else if (columnIndex === 5) { if (aValue === 'N/A' && bValue === 'N/A') return 0; if (aValue === 'N/A') return direction * 1; if (bValue === 'N/A') return direction * -1; aValue = parseInt(aValue); bValue = parseInt(bValue); return direction * (aValue - bValue); } if (isNumeric[columnIndex]) { aValue = parseFloat(aValue) || aValue; bValue = parseFloat(bValue) || bValue; return direction * (aValue - bValue); } return direction * aValue.localeCompare(bValue); }); while (tbody.firstChild) { tbody.removeChild(tbody.firstChild); } rows.forEach(row => tbody.appendChild(row)); sortDirections[columnIndex] = direction; sortDirections = sortDirections.map((d, i) => i === columnIndex ? d : 0); }
+        function sortTable(columnIndex) {{ if (columnIndex === 4) return; const tbody = document.getElementById('tableBody'); const rows = Array.from(tbody.getElementsByTagName('tr')); const isNumeric = [true, true, true, false, false, true, true, true, true, true, true, true]; const direction = sortDirections[columnIndex] === 1 ? -1 : 1; rows.sort((a, b) => {{ let aValue = a.cells[columnIndex].textContent; let bValue = b.cells[columnIndex].textContent; if (columnIndex === 1) {{ if (aValue === 'N/A' && bValue === 'N/A') return 0; if (aValue === 'N/A') return direction * 1; if (bValue === 'N/A') return direction * -1; aValue = parseFloat(aValue.split(' ')[0]); bValue = parseFloat(bValue.split(' ')[0]); return direction * (aValue - bValue); }} else if (columnIndex === 2) {{ if (aValue === 'N/A' && bValue === 'N/A') return 0; if (aValue === 'N/A') return direction * 1; if (bValue === 'N/A') return direction * -1; aValue = parseFloat(aValue.split(' ')[0]); bValue = parseFloat(bValue.split(' ')[0]); return direction * (aValue - bValue); }} else if (columnIndex === 5) {{ if (aValue === 'N/A' && bValue === 'N/A') return 0; if (aValue === 'N/A') return direction * 1; if (bValue === 'N/A') return direction * -1; aValue = parseInt(aValue); bValue = parseInt(bValue); return direction * (aValue - bValue); }} if (isNumeric[columnIndex]) {{ aValue = parseFloat(aValue) || aValue; bValue = parseFloat(bValue) || bValue; return direction * (aValue - bValue); }} return direction * aValue.localeCompare(bValue); }}); while (tbody.firstChild) {{ tbody.removeChild(tbody.firstChild); }} rows.forEach(row => tbody.appendChild(row)); sortDirections[columnIndex] = direction; sortDirections = sortDirections.map((d, i) => i === columnIndex ? d : 0); }}
         const itemsPerPage = 50;
         let currentPage = 1;
-        function setupPagination() { const gridItems = document.querySelectorAll('#gridView .grid-item'); const totalItems = gridItems.length; const totalPages = Math.ceil(totalItems / itemsPerPage); const pagination = document.getElementById('pagination'); function showPage(page) { gridItems.forEach((item, index) => { item.style.display = (index >= (page - 1) * itemsPerPage && index < page * itemsPerPage) ? 'flex' : 'none'; }); currentPage = page; pagination.innerHTML = ''; const prevButton = document.createElement('button'); prevButton.textContent = 'Previous'; prevButton.disabled = page === 1; prevButton.onclick = () => showPage(page - 1); pagination.appendChild(prevButton); let startPage = Math.max(1, page - 2); let endPage = Math.min(totalPages, startPage + 4); if (endPage - startPage < 4) { startPage = Math.max(1, endPage - 4); } for (let i = startPage; i <= endPage; i++) { const pageSpan = document.createElement('span'); pageSpan.textContent = i; pageSpan.className = i === page ? 'active' : ''; pageSpan.onclick = () => showPage(i); pagination.appendChild(pageSpan); } const nextButton = document.createElement('button'); nextButton.textContent = 'Next'; nextButton.disabled = page === totalPages; nextButton.onclick = () => showPage(page + 1); pagination.appendChild(nextButton); } if (totalItems > 0) { showPage(1); } else { pagination.innerHTML = '<p>No groups available.</p>'; } }
+        function setupPagination() {{ const gridItems = document.querySelectorAll('#gridView .grid-item'); const totalItems = gridItems.length; const totalPages = Math.ceil(totalItems / itemsPerPage); const pagination = document.getElementById('pagination'); function showPage(page) {{ gridItems.forEach((item, index) => {{ item.style.display = (index >= (page - 1) * itemsPerPage && index < page * itemsPerPage) ? 'flex' : 'none'; }}); currentPage = page; pagination.innerHTML = ''; const prevButton = document.createElement('button'); prevButton.textContent = 'Previous'; prevButton.disabled = page === 1; prevButton.onclick = () => showPage(page - 1); pagination.appendChild(prevButton); let startPage = Math.max(1, page - 2); let endPage = Math.min(totalPages, startPage + 4); if (endPage - startPage < 4) {{ startPage = Math.max(1, endPage - 4); }} for (let i = startPage; i <= endPage; i++) {{ const pageSpan = document.createElement('span'); pageSpan.textContent = i; pageSpan.className = i === page ? 'active' : ''; pageSpan.onclick = () => showPage(i); pagination.appendChild(pageSpan); }} const nextButton = document.createElement('button'); nextButton.textContent = 'Next'; nextButton.disabled = page === totalPages; nextButton.onclick = () => showPage(page + 1); pagination.appendChild(nextButton); }} if (totalItems > 0) {{ showPage(1); }} else {{ pagination.innerHTML = '<p>No groups available.</p>'; }} }}
         document.addEventListener('DOMContentLoaded', setupPagination);
     </script>
 </body>
@@ -687,3 +688,4 @@ logger.info("Disk usage after processing:")
 subprocess.run(["df", "-h"])
 
 logger.info(f"Processed {len(chats)} groups. Output written to {output_folder}")
+```
