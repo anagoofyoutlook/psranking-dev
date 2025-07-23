@@ -7,46 +7,54 @@ import re
 import zipfile
 import random
 from html import escape
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(message)s')
+logger = logging.getLogger(__name__)
 
 # Define folder paths
 input_folder = 'PS'
 output_folder = 'docs'
 html_subfolder = os.path.join(output_folder, 'HTML')
-photos_folder = 'Photos'
-docs_photos_folder = os.path.join(output_folder, 'Photos')
+photos_folder = 'Photos'  # Root Photos/ folder
 history_csv_file = os.path.join(output_folder, 'history.csv')
-
-# Define CSV output path
 csv_file = os.path.join(output_folder, 'output.csv')
 
 # Ensure directories exist
-for folder in [input_folder, output_folder, html_subfolder, photos_folder]:
+for folder in [input_folder, output_folder, html_subfolder]:
     if not os.path.exists(folder):
         os.makedirs(folder)
-        print(f"Created directory: {folder}")
-    else:
-        print(f"Directory already exists: {folder}")
+        logger.info(f"Created directory: {folder}")
 
-# Copy Photos/ to docs/Photos/
-if os.path.exists(photos_folder):
-    if os.path.exists(docs_photos_folder):
-        shutil.rmtree(docs_photos_folder)
-    shutil.copytree(photos_folder, docs_photos_folder)
-    print(f"Copied {photos_folder}/ to {docs_photos_folder}/")
-else:
-    os.makedirs(docs_photos_folder)
-    print(f"Created empty {docs_photos_folder}/ (no photos found in {photos_folder}/)")
+# Verify Photos/ folder exists
+if not os.path.exists(photos_folder):
+    os.makedirs(photos_folder)
+    logger.warning(f"Photos folder not found, created empty {photos_folder}/")
+
+# Log contents of Photos/
+logger.info(f"Contents of {photos_folder}/:")
+for root, dirs, files in os.walk(photos_folder):
+    rel_path = os.path.relpath(root, photos_folder)
+    logger.info(f"Directory: {rel_path}")
+    logger.info(f"Files: {files}")
 
 # Path to result.zip
 zip_file = os.path.join(input_folder, 'result.zip')
 temp_json_file = os.path.join(input_folder, 'result.json')
 
-# Verify ZIP file existence and extract result.json
+# Verify ZIP file size and existence
 if not os.path.exists(zip_file):
-    print(f"Error: 'result.zip' not found in '{input_folder}'. Exiting.")
+    logger.error(f"'result.zip' not found in '{input_folder}'. Exiting.")
     exit(1)
+zip_size = os.path.getsize(zip_file) / (1024 * 1024)  # Size in MB
+if zip_size > 1000:  # 1 GB limit
+    logger.error(f"result.zip is too large: {zip_size:.2f} MB")
+    exit(1)
+logger.info(f"result.zip size: {zip_size:.2f} MB")
 
-print(f"Extracting {zip_file}")
+# Extract result.json
+logger.info(f"Extracting {zip_file}")
 try:
     with zipfile.ZipFile(zip_file, 'r') as zip_ref:
         json_found = False
@@ -57,37 +65,37 @@ try:
                 if extracted_path != temp_json_file:
                     shutil.move(extracted_path, temp_json_file)
                 json_found = True
-                print(f"Extracted 'result.json' to {temp_json_file}")
+                logger.info(f"Extracted 'result.json' to {temp_json_file}")
                 break
         if not json_found:
-            print(f"Error: 'result.json' not found in '{zip_file}'. Exiting.")
+            logger.error(f"'result.json' not found in '{zip_file}'. Exiting.")
             exit(1)
 except zipfile.BadZipFile:
-    print(f"Error: '{zip_file}' is not a valid ZIP file. Exiting.")
+    logger.error(f"'{zip_file}' is not a valid ZIP file. Exiting.")
     exit(1)
 
-# Verify extracted file existence
+# Verify extracted file
 if not os.path.exists(temp_json_file):
-    print(f"Error: Failed to extract 'result.json' from '{zip_file}'. Exiting.")
+    logger.error(f"Failed to extract 'result.json' from '{zip_file}'. Exiting.")
     exit(1)
 
 # Load JSON data
-print(f"Loading {temp_json_file}")
+logger.info(f"Loading {temp_json_file}")
 with open(temp_json_file, 'r', encoding='utf-8') as f:
     data = json.load(f)
 
-# Clean up the temporary JSON file
+# Clean up temporary JSON file
 try:
     os.remove(temp_json_file)
-    print(f"Removed temporary file: {temp_json_file}")
+    logger.info(f"Removed temporary file: {temp_json_file}")
 except OSError as e:
-    print(f"Warning: Could not remove {temp_json_file}: {e}")
+    logger.warning(f"Could not remove {temp_json_file}: {e}")
 
 # Access chats list
 chats = data.get('chats', {}).get('list', [])
-print(f"Found {len(chats)} chats in result.json")
+logger.info(f"Found {len(chats)} chats in result.json")
 if not chats:
-    print("No chats found in 'result.json'. Exiting.")
+    logger.error("No chats found in 'result.json'. Exiting.")
     exit(1)
 
 # Define CSV columns
@@ -116,19 +124,15 @@ if os.path.exists(history_csv_file):
                 rank = int(row.get('rank', '0'))
                 if group not in history_data:
                     history_data[group] = {}
-                if date != current_date:  # Exclude current date entries
-                    # Store entries by date, keep the lowest (highest-ranking) rank
+                if date != current_date:
                     if date not in history_data[group] or rank < history_data[group][date]['rank']:
                         history_data[group][date] = {'date': date, 'rank': rank}
             except (ValueError, TypeError) as e:
-                print(f"Skipping invalid rank for group '{group}' on date '{date}': {row}. Error: {e}")
-    # Convert history_data[group] from dict to list
+                logger.warning(f"Skipping invalid rank for group '{group}' on date '{date}': {row}. Error: {e}")
     for group in history_data:
         history_data[group] = list(history_data[group].values())
-        history_data[group].sort(key=lambda x: x['date'])  # Sort by date for chart
-    print(f"Loaded {sum(len(v) for v in history_data.values())} history entries from {history_csv_file}")
-else:
-    print(f"No existing {history_csv_file} found")
+        history_data[group].sort(key=lambda x: x['date'])
+    logger.info(f"Loaded {sum(len(v) for v in history_data.values())} history entries from {history_csv_file}")
 
 # Initialize data storage
 all_data = []
@@ -142,14 +146,14 @@ def sanitize_filename(name):
     return name.lower()
 
 # Function to find media file by serial number
-def find_serial_match_media(serial_number, media_files):
-    print(f"Searching for serial number '{serial_number}' in media files: {media_files}")
+def find_serial_match_media(serial_number, media_files, group_name):
     for media in media_files:
         media_base = os.path.splitext(media)[0]
         if media_base == str(serial_number):
-            print(f"Match found for serial number '{serial_number}': '{media}'")
-            return media
-    print(f"No match found for serial number '{serial_number}'")
+            path = f"../Photos/{group_name}/thumbs/{media}"
+            logger.info(f"Matched serial {serial_number} to {path}")
+            return path
+    logger.warning(f"No media found for serial {serial_number} in Photos/{group_name}/thumbs/")
     return None
 
 # Process each chat
@@ -159,7 +163,7 @@ for chat in chats:
         group_id = str(chat['id'])
         telegram_group_id = group_id[4:] if group_id.startswith('-100') else group_id
         messages = chat.get('messages', [])
-        print(f"Processing group: {group_name} (ID: {group_id})")
+        logger.info(f"Processing group: {group_name}")
 
         total_messages = sum(1 for msg in messages if msg.get('type') == 'message')
         max_messages = max(max_messages, total_messages)
@@ -198,7 +202,6 @@ for chat in chats:
             today = datetime.now()
             date_diff = (today - newest_date).days
             date_diffs.append(date_diff)
-        print(f"Group {group_name}: Total messages = {total_messages}, Date diff = {date_diff}")
 
         # Hashtag lists
         special_ratings = ['#FIVE', '#FOUR', '#THREE']
@@ -206,18 +209,18 @@ for chat in chats:
         ratings_hashtag_list = ''.join(f'<li class="hashtag-item">{h}: {hashtag_counts[h]}</li>\n' for h in sorted(hashtag_counts) if h in special_ratings) or '<li>No rating hashtags (#FIVE, #FOUR, #Three) found</li>'
         scene_types_hashtag_list = ''.join(f'<li class="hashtag-item">{h}: {hashtag_counts[h]}</li>\n' for h in sorted(hashtag_counts) if h in special_scene_types) or '<li>No scene type hashtags found</li>'
         other_hashtag_list = ''.join(f'<li class="hashtag-item">{h}: {hashtag_counts[h]}</li>\n' for h in sorted(hashtag_counts) if h not in special_ratings and h not in special_scene_types) or '<li>No other hashtags found</li>'
-
         scene_type_count = sum(hashtag_counts.get(h, 0) for h in special_scene_types)
         date_diff_text = f'{date_diff} days' if date_diff is not None else 'N/A'
 
         # Titles with serial numbers
         titles = []
-        media_extensions = ['.mp4', '.webm', '.ogg', '.gif']
-        group_subfolder = os.path.join(docs_photos_folder, group_name)
+        media_extensions = ['.jpg', '.jpeg', '.png', '.webp', '.mp4']
+        group_subfolder = os.path.join(photos_folder, group_name)
         thumbs_subfolder = os.path.join(group_subfolder, 'thumbs')
         media_files = [f for f in os.listdir(thumbs_subfolder) if f.lower().endswith(tuple(media_extensions))] if os.path.exists(thumbs_subfolder) else []
-        fallback_photos = [f for f in os.listdir(group_subfolder) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) and os.path.isfile(os.path.join(group_subfolder, f))] if os.path.exists(group_subfolder) else []
-        print(f"Group {group_name}: Thumbs media files = {media_files}, Fallback photos = {fallback_photos}")
+        fallback_photos = [f for f in os.listdir(group_subfolder) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.webp', '.mp4')) and os.path.isfile(os.path.join(group_subfolder, f))] if os.path.exists(group_subfolder) else []
+        logger.info(f"Media files in Photos/{group_name}/thumbs/: {media_files}")
+        logger.info(f"Fallback photos in Photos/{group_name}/: {fallback_photos}")
         serial_number = 1
         for message in messages:
             if message.get('action') == 'topic_created':
@@ -230,18 +233,15 @@ for chat in chats:
                         media_path = 'https://via.placeholder.com/600x300'
                         is_gif = False
                         if media_files:
-                            serial_match = find_serial_match_media(serial_number, media_files)
+                            serial_match = find_serial_match_media(serial_number, media_files, group_name)
                             if serial_match:
-                                media_path = f"../Photos/{group_name}/thumbs/{serial_match}"
-                                is_gif = serial_match.lower().endswith('.gif')
-                                print(f"Group {group_name}, Title '{title}' (S.No {serial_number}): Matched media '{serial_match}', selected path {media_path}")
-                        else:
-                            print(f"Group {group_name}, Title '{title}' (S.No {serial_number}): No media files in {thumbs_subfolder}")
-                            if fallback_photos:
-                                random_photo = random.choice(fallback_photos)
-                                media_path = f"../Photos/{group_name}/{random_photo}"
-                                is_gif = random_photo.lower().endswith('.gif')
-                                print(f"  Using fallback photo: {media_path}")
+                                media_path = serial_match
+                                is_gif = serial_match.lower().endswith('.mp4')
+                        elif fallback_photos:
+                            random_photo = random.choice(fallback_photos)
+                            media_path = f"../Photos/{group_name}/{random_photo}"
+                            is_gif = random_photo.lower().endswith('.mp4')
+                        logger.info(f"Using media for {group_name} serial {serial_number}: {media_path}")
                         titles.append({
                             'title': title,
                             'message_id': message_id,
@@ -253,20 +253,16 @@ for chat in chats:
                         serial_number += 1
                     except ValueError:
                         continue
-        titles.sort(key=lambda x: x['date'], reverse=True)  # Sort by date, newest first
+        titles.sort(key=lambda x: x['date'], reverse=True)
         titles_count = len(titles)
 
         # Titles grid
         titles_grid = f"<p>Total Titles: {titles_count}</p><div class='titles-grid' id='titlesGrid'>"
         for t in titles:
-            media_element = (
-                f"<img src='{t['media_path']}' alt='Media for {t['title']}' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>"
-                if t['is_gif'] or t['media_path'] == 'https://via.placeholder.com/600x300'
-                else f"<video src='{t['media_path']}' style='width:100%;height:300px;object-fit:cover;border-radius:5px;' loop muted playsinline></video>"
-            )
+            media_content = f"<video controls style='width:100%;height:300px;object-fit:cover;border-radius:5px;'><source src='{t['media_path']}' type='video/mp4'></video>" if t['is_gif'] else f"<img src='{t['media_path']}' alt='Media for {t['title']}' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>"
             titles_grid += f"""
                 <div class='grid-item'>
-                    {media_element}
+                    {media_content}
                     <p class='title'><a href='https://t.me/c/{telegram_group_id}/{t['message_id']}' target='_blank'>{t['title']}</a></p>
                     <p class='date'>S.No: {t['serial_number']} | {t['date']}</p>
                 </div>
@@ -279,32 +275,32 @@ for chat in chats:
             titles_table += f"<tr><td>{t['serial_number']}</td><td><a href='https://t.me/c/{telegram_group_id}/{t['message_id']}' target='_blank'>{t['title']}</a></td><td>{t['date']}</td></tr>"
         titles_table += f"</tbody></table>" if titles else f"<p>No titles found</p>"
 
-        # Photos for slideshow
+        # Photos and videos for slideshow
         photo_paths = []
         if os.path.exists(group_subfolder):
-            photo_paths = [f"../Photos/{group_name}/{f}" for f in os.listdir(group_subfolder) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) and os.path.isfile(os.path.join(group_subfolder, f))]
-            print(f"Group {group_name}: Found {len(photo_paths)} photos in {group_subfolder}: {photo_paths}")
+            photo_paths = [f"../Photos/{group_name}/{f}" for f in os.listdir(group_subfolder) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.webp', '.mp4'))]
         if not photo_paths:
             photo_paths = ['https://via.placeholder.com/1920x800']
-            print(f"Group {group_name}: Using placeholder for slideshow")
-
-        slideshow_content = '<div class="container">\n' + ''.join(f'<div class="mySlides"><div class="numbertext">{i} / {len(photo_paths)}</div><img src="{p}" style="width:100%;height:auto;"></div>' for i, p in enumerate(photo_paths, 1)) + """
+            logger.warning(f"No photos or videos found in Photos/{group_name}/, using placeholder")
+        logger.info(f"Slideshow paths for {group_name}: {photo_paths}")
+        slideshow_content = '<div class="container">\n'
+        for i, p in enumerate(photo_paths, 1):
+            if p.lower().endswith(('.mp4')):
+                slideshow_content += f'<div class="mySlides"><div class="numbertext">{i} / {len(photo_paths)}</div><video controls style="width:100%;height:auto;object-fit:contain;"><source src="{p}" type="video/mp4"></video></div>'
+            else:
+                slideshow_content += f'<div class="mySlides"><div class="numbertext">{i} / {len(photo_paths)}</div><img src="{p}" style="width:100%;height:auto;"></div>'
+        slideshow_content += """
             <a class="prev" onclick="plusSlides(-1)">❮</a>
             <a class="next" onclick="plusSlides(1)">❯</a>
             <div class="caption-container"><p id="caption"></p></div>
             <div class="row">
-        """ + ''.join(f'<div class="column"><img class="demo cursor" src="{p}" style="width:100%" onclick="currentSlide({i})" alt="{group_name} Photo {i}"></div>' for i, p in enumerate(photo_paths, 1)) + '</div></div>'
+        """ + ''.join(f'<div class="column"><img class="demo cursor" src="{p}" style="width:100%" onclick="currentSlide({i})" alt="{group_name} Photo {i}"></div>' for i, p in enumerate(photo_paths, 1) if not p.lower().endswith(('.mp4'))) + '</div></div>'
 
-        photo_file_name = next((f"{group_name}{ext}" for ext in ('.jpg', '.jpeg', '.png', '.gif', '.webp') if os.path.exists(os.path.join(docs_photos_folder, f"{group_name}{ext}"))), None)
-        if photo_file_name:
-            print(f"Group {group_name}: Found single photo at {docs_photos_folder}/{photo_file_name}")
-        else:
-            print(f"Group {group_name}: No single photo found in {docs_photos_folder}/")
+        photo_file_name = next((f"{group_name}{ext}" for ext in ('.jpg', '.jpeg', '.png', '.webp', '.mp4') if os.path.exists(os.path.join(photos_folder, f"{group_name}/{group_name}{ext}"))), None)
 
         if group_name not in history_data:
             history_data[group_name] = []
 
-        # Pre-compute JSON for history data to avoid f-string issue
         history_data_json = json.dumps(history_data.get(group_name, []))
 
         # HTML content for group pages
@@ -316,205 +312,50 @@ for chat in chats:
     <title>{group_name}</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <style>
-        body {{ font-family: Arial, sans-serif; margin: 20px; background-color: #1e2a44; color: #ffffff; text-align: center; }}
-        h1, h2 {{ color: #e6b800; width: 90%; margin: 20px auto; text-align: center; font-size: 36px; }}
-        .info {{ background-color: #2a3a5c; padding: 10px; border-radius: 5px; margin-bottom: 20px; width: 90%; margin-left: auto; margin-right: auto; }}
-        .hashtags {{ list-style-type: none; padding: 0; }}
-        .hashtag-item {{ background-color: #3b4a6b; margin: 5px 0; padding: 5px; border-radius: 3px; display: inline-block; width: 200px; color: #ffffff; }}
-        .rank-container {{ 
-            width: 90%; 
-            margin: 20px auto; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            gap: 20px; 
-            flex-wrap: wrap; 
-        }}
-        .rank-number {{ font-size: 48px; font-weight: bold; color: #e6b800; display: inline-block; }}
-        @keyframes countUp {{ from {{ content: "0"; }} to {{ content: attr(data-rank); }} }}
-        .rank-number::before {{ content: "0"; animation: countUp 2s ease-out forwards; display: inline-block; min-width: 60px; }}
-        .chart-container {{ max-width: 400px; width: 100%; background-color: #2a3a5c; padding: 10px; border-radius: 5px; }}
-        canvas {{ width: 100% !important; height: auto !important; }}
-        .titles-grid {{ 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 20px; 
-            margin: 20px 0; 
-            width: 100%; 
-            box-sizing: border-box; 
-        }}
-        .grid-item {{ 
-            background-color: #2a3a5c; 
-            padding: 10px; 
-            border-radius: 5px; 
-            text-align: center; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            width: 100%; 
-            box-sizing: border-box; 
-        }}
-        .grid-item video, .grid-item img {{ 
-            width: 100%; 
-            height: 300px; 
-            border-radius: 5px; 
-            object-fit: cover; 
-        }}
-        .grid-item .title {{ 
-            margin: 10px 0 5px; 
-            font-size: 16px; 
-            font-weight: bold; 
-            color: #e6b800; 
-        }}
-        .grid-item .date {{ 
-            margin: 0; 
-            font-size: 14px; 
-            color: #cccccc; 
-        }}
-        .titles-table {{ 
-            width: 100%; 
-            margin: 20px 0; 
-            border-collapse: collapse; 
-            background-color: #2a3a5c; 
-        }}
-        .titles-table th, .titles-table td {{ 
-            padding: 10px; 
-            border: 1px solid #3b4a6b; 
-            text-align: left; 
-            vertical-align: middle; 
-            color: #ffffff; 
-        }}
-        .titles-table th {{ 
-            background-color: #e6b800; 
-            color: #1e2a44; 
-            cursor: pointer; 
-        }}
-        .titles-table th:hover {{ 
-            background-color: #b30000; 
-        }}
-        a {{ color: #e6b800; text-decoration: none; }}
-        a:hover {{ color: #b30000; text-decoration: underline; }}
-        .container {{ 
-            position: relative; 
-            width: 90%; 
-            margin: 20px auto; 
-            height: auto; 
-            max-height: 600px; 
-            display: block; 
-            overflow: hidden; 
-            background-color: #2a3a5c; 
-        }}
-        .mySlides {{ 
-            display: none; 
-            width: 100%; 
-            height: auto; 
-            aspect-ratio: 16/9; 
-        }}
-        .mySlides img {{ 
-            width: 100%; 
-            height: auto; 
-            object-fit: contain; 
-        }}
-        .cursor {{ cursor: pointer; }}
-        .prev, .next {{ 
-            cursor: pointer; 
-            position: absolute; 
-            top: 50%; 
-            transform: translateY(-50%); 
-            width: auto; 
-            padding: 16px; 
-            color: #e6b800; 
-            font-weight: bold; 
-            font-size: 20px; 
-            border-radius: 0 3px 3px 0; 
-            user-select: none; 
-            -webkit-user-select: none; 
-            z-index: 10; 
-        }}
-        .prev {{ left: 0; }}
-        .next {{ right: 0; border-radius: 3px 0 0 3px; }}
-        .prev:hover, .next:hover {{ background-color: #b30000; }}
-        .numbertext {{ 
-            color: #e6b800; 
-            font-size: 12px; 
-            padding: 8px 12px; 
-            position: absolute; 
-            top: 0; 
-            z-index: 10; 
-        }}
-        .caption-container {{ 
-            text-align: center; 
-            background-color: #1e2a44; 
-            padding: 2px 16px; 
-            color: #e6b800; 
-        }}
-        .row {{ 
-            display: flex; 
-            flex-wrap: wrap; 
-            justify-content: center; 
-            margin-top: 10px; 
-        }}
-        .column {{ 
-            flex: 0 0 {100 / len(photo_paths) if photo_paths else 100}%; 
-            max-width: 100px; 
-            padding: 5px; 
-        }}
-        .demo {{ 
-            opacity: 0.6; 
-            width: 100%; 
-            height: auto; 
-            object-fit: cover; 
-        }}
-        .active, .demo:hover {{ opacity: 1; }}
-        .tab {{ 
-            overflow: hidden; 
-            margin: 20px auto; 
-            width: 90%; 
-            background-color: #2a3a5c; 
-            border-radius: 5px 5px 0 0; 
-        }}
-        .tab button {{ 
-            background-color: #2a3a5c; 
-            color: #e6b800; 
-            float: left; 
-            border: none; 
-            outline: none; 
-            cursor: pointer; 
-            padding: 14px 16px; 
-            transition: 0.3s; 
-            font-size: 17px; 
-            width: 50%; 
-        }}
-        .tab button:hover {{ background-color: #b30000; }}
-        .tab button.active {{ background-color: #3b4a6b; }}
-        .tabcontent {{ 
-            display: none; 
-            padding: 6px 12px; 
-            border-top: none; 
-            background-color: #2a3a5c; 
-            margin: 0 auto; 
-            width: 90%; 
-            border-radius: 0 0 5px 5px; 
-        }}
-        #Videos {{ display: block; }}
-        @media only screen and (max-width: 1200px) {{ 
-            .titles-grid {{ grid-template-columns: repeat(3, 1fr); }} 
-            .grid-item video, .grid-item img {{ height: 200px; }}
-            h1, .info, .container, .tab, .tabcontent {{ width: 90%; }}
-            .rank-container {{ width: 90%; }}
-        }}
-        @media only screen and (max-width: 768px) {{ 
-            .titles-grid {{ grid-template-columns: repeat(3, 1fr); }} 
-            .grid-item video, .grid-item img {{ height: 150px; }}
-            .container {{ width: 90%; max-height: 400px; }} 
-            h1 {{ margin: 10px auto; font-size: 30px; }}
-            .info, .tab, .tabcontent, .rank-container {{ width: 90%; }}
-            .rank-container {{ flex-direction: column; gap: 10px; }} 
-            .chart-container {{ max-width: 100%; }} 
-            .column {{ flex: 0 0 80px; max-width: 80px; }} 
-            .mySlides img {{ object-fit: contain; }} 
-            .tab button {{ font-size: 14px; padding: 10px; }}
-        }}
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #1e2a44; color: #ffffff; text-align: center; }
+        h1, h2 { color: #e6b800; width: 90%; margin: 20px auto; text-align: center; font-size: 36px; }
+        .info { background-color: #2a3a5c; padding: 10px; border-radius: 5px; margin-bottom: 20px; width: 90%; margin-left: auto; margin-right: auto; }
+        .hashtags { list-style-type: none; padding: 0; }
+        .hashtag-item { background-color: #3b4a6b; margin: 5px 0; padding: 5px; border-radius: 3px; display: inline-block; width: 200px; color: #ffffff; }
+        .rank-container { width: 90%; margin: 20px auto; display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap; }
+        .rank-number { font-size: 48px; font-weight: bold; color: #e6b800; display: inline-block; }
+        @keyframes countUp { from { content: "0"; } to { content: attr(data-rank); } }
+        .rank-number::before { content: "0"; animation: countUp 2s ease-out forwards; display: inline-block; min-width: 60px; }
+        .chart-container { max-width: 400px; width: 100%; background-color: #2a3a5c; padding: 10px; border-radius: 5px; }
+        canvas { width: 100% !important; height: auto !important; }
+        .titles-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 20px 0; width: 100%; box-sizing: border-box; }
+        .grid-item { background-color: #2a3a5c; padding: 10px; border-radius: 5px; text-align: center; display: flex; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box; }
+        .grid-item img, .grid-item video { width: 100%; height: 300px; border-radius: 5px; object-fit: cover; }
+        .grid-item .title { margin: 10px 0 5px; font-size: 16px; font-weight: bold; color: #e6b800; }
+        .grid-item .date { margin: 0; font-size: 14px; color: #cccccc; }
+        .titles-table { width: 100%; margin: 20px 0; border-collapse: collapse; background-color: #2a3a5c; }
+        .titles-table th, .titles-table td { padding: 10px; border: 1px solid #3b4a6b; text-align: left; vertical-align: middle; color: #ffffff; }
+        .titles-table th { background-color: #e6b800; color: #1e2a44; cursor: pointer; }
+        .titles-table th:hover { background-color: #b30000; }
+        a { color: #e6b800; text-decoration: none; }
+        a:hover { color: #b30000; text-decoration: underline; }
+        .container { position: relative; width: 90%; margin: 20px auto; height: auto; max-height: 600px; display: block; overflow: hidden; background-color: #2a3a5c; }
+        .mySlides { display: none; width: 100%; height: auto; aspect-ratio: 16/9; }
+        .mySlides img, .mySlides video { width: 100%; height: auto; object-fit: contain; }
+        .cursor { cursor: pointer; }
+        .prev, .next { cursor: pointer; position: absolute; top: 50%; transform: translateY(-50%); width: auto; padding: 16px; color: #e6b800; font-weight: bold; font-size: 20px; border-radius: 0 3px 3px 0; user-select: none; -webkit-user-select: none; z-index: 10; }
+        .prev { left: 0; }
+        .next { right: 0; border-radius: 3px 0 0 3px; }
+        .prev:hover, .next:hover { background-color: #b30000; }
+        .numbertext { color: #e6b800; font-size: 12px; padding: 8px 12px; position: absolute; top: 0; z-index: 10; }
+        .caption-container { text-align: center; background-color: #1e2a44; padding: 2px 16px; color: #e6b800; }
+        .row { display: flex; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
+        .column { flex: 0 0 {100 / len(photo_paths) if photo_paths else 100}%; max-width: 100px; padding: 5px; }
+        .demo { opacity: 0.6; width: 100%; height: auto; object-fit: cover; }
+        .active, .demo:hover { opacity: 1; }
+        .tab { overflow: hidden; margin: 20px auto; width: 90%; background-color: #2a3a5c; border-radius: 5px 5px 0 0; }
+        .tab button { background-color: #2a3a5c; color: #e6b800; float: left; border: none; outline: none; cursor: pointer; padding: 14px 16px; transition: 0.3s; font-size: 17px; width: 50%; }
+        .tab button:hover { background-color: #b30000; }
+        .tab button.active { background-color: #3b4a6b; }
+        .tabcontent { display: none; padding: 6px 12px; border-top: none; background-color: #2a3a5c; margin: 0 auto; width: 90%; border-radius: 0 0 5px 5px; }
+        #Videos { display: block; }
+        @media only screen and (max-width: 1200px) { .titles-grid { grid-template-columns: repeat(3, 1fr); } .grid-item img, .grid-item video { height: 200px; } h1, .info, .container, .tab, .tabcontent { width: 90%; } .rank-container { width: 90%; } }
+        @media only screen and (max-width: 768px) { .titles-grid { grid-template-columns: repeat(3, 1fr); } .grid-item img, .grid-item video { height: 150px; } .container { width: 90%; max-height: 400px; } h1 { margin: 10px auto; font-size: 30px; } .info, .tab, .tabcontent, .rank-container { width: 90%; } .rank-container { flex-direction: column; gap: 10px; } .chart-container { max-width: 100%; } .column { flex: 0 0 80px; max-width: 80px; } .mySlides img, .mySlides video { object-fit: contain; } .tab button { font-size: 14px; padding: 10px; } }
     </style>
 </head>
 <body>
@@ -533,7 +374,7 @@ for chat in chats:
     <div class="info">
         <h2>Titles</h2>
         <div class="tab">
-            <button class="tablinks active" onclick="openTab(event, 'Videos')">Videos</button>
+            <button class="tablinks active" onclick="openTab(event, 'Videos')">Images & Videos</button>
             <button class="tablinks" onclick="openTab(event, 'Table')">Table</button>
         </div>
         <div id="Videos" class="tabcontent">
@@ -546,169 +387,21 @@ for chat in chats:
     <script>
         let slideIndex = 1;
         showSlides(slideIndex);
-        function plusSlides(n) {{ 
-            clearInterval(autoSlide); 
-            showSlides(slideIndex += n); 
-            autoSlide = setInterval(() => plusSlides(1), 3000); 
-        }}
-        function currentSlide(n) {{ 
-            clearInterval(autoSlide); 
-            showSlides(slideIndex = n); 
-            autoSlide = setInterval(() => plusSlides(1), 3000); 
-        }}
-        function showSlides(n) {{
-            let i;
-            let slides = document.getElementsByClassName("mySlides");
-            let dots = document.getElementsByClassName("demo");
-            let captionText = document.getElementById("caption");
-            if (n > slides.length) {{ slideIndex = 1 }}
-            if (n < 1) {{ slideIndex = slides.length }}
-            for (i = 0; i < slides.length; i++) {{ 
-                slides[i].style.display = "none"; 
-            }}
-            for (i = 0; i < dots.length; i++) {{ 
-                dots[i].className = dots[i].className.replace(" active", ""); 
-            }}
-            slides[slideIndex-1].style.display = "block";
-            dots[slideIndex-1].className += " active";
-            captionText.innerHTML = dots[slideIndex-1].alt;
-        }}
+        function plusSlides(n) { clearInterval(autoSlide); showSlides(slideIndex += n); autoSlide = setInterval(() => plusSlides(1), 3000); }
+        function currentSlide(n) { clearInterval(autoSlide); showSlides(slideIndex = n); autoSlide = setInterval(() => plusSlides(1), 3000); }
+        function showSlides(n) { let i; let slides = document.getElementsByClassName("mySlides"); let dots = document.getElementsByClassName("demo"); let captionText = document.getElementById("caption"); if (n > slides.length) { slideIndex = 1 } if (n < 1) { slideIndex = slides.length } for (i = 0; i < slides.length; i++) { slides[i].style.display = "none"; } for (i = 0; i < dots.length; i++) { dots[i].className = dots[i].className.replace(" active", ""); } slides[slideIndex-1].style.display = "block"; dots[slideIndex-1].className += " active"; captionText.innerHTML = dots[slideIndex-1].alt; }
         let autoSlide = setInterval(() => plusSlides(1), 3000);
-
-        function openTab(evt, tabName) {{
-            let i, tabcontent, tablinks;
-            tabcontent = document.getElementsByClassName("tabcontent");
-            for (i = 0; i < tabcontent.length; i++) {{
-                tabcontent[i].style.display = "none";
-            }}
-            tablinks = document.getElementsByClassName("tablinks");
-            for (i = 0; i < tablinks.length; i++) {{
-                tablinks[i].className = tablinks[i].className.replace(" active", "");
-            }}
-            document.getElementById(tabName).style.display = "block";
-            evt.currentTarget.className += " active";
-        }}
-
-        // Chart.js for rank history
-        document.addEventListener('DOMContentLoaded', function() {{
-            const ctx = document.getElementById('rankChart').getContext('2d');
-            const historyData = {history_data_json};
-            const dates = historyData.map(entry => entry.date);
-            const ranks = historyData.map(entry => entry.rank);
-            new Chart(ctx, {{
-                type: 'line',
-                data: {{ 
-                    labels: dates, 
-                    datasets: [{{
-                        label: 'Rank Over Time', 
-                        data: ranks, 
-                        borderColor: '#e6b800', 
-                        backgroundColor: 'rgba(230, 184, 0, 0.2)', 
-                        fill: true, 
-                        tension: 0.4 
-                    }}] 
-                }},
-                options: {{ 
-                    scales: {{ 
-                        y: {{ 
-                            beginAtZero: true, 
-                            title: {{ display: true, text: 'Rank', color: '#e6b800' }}, 
-                            ticks: {{ stepSize: 1, color: '#ffffff' }}, 
-                            suggestedMax: {len(chats) + 1},
-                            grid: {{ color: '#3b4a6b' }}
-                        }}, 
-                        x: {{ 
-                            title: {{ display: true, text: 'Date', color: '#e6b800' }}, 
-                            ticks: {{ color: '#ffffff' }}, 
-                            grid: {{ color: '#3b4a6b' }}
-                        }} 
-                    }}, 
-                    plugins: {{ 
-                        legend: {{ display: true, labels: {{ color: '#e6b800' }} }} 
-                    }} 
-                }}
-            }});
-
-            // Add hover-to-play for videos in titles grid
-            const videos = document.querySelectorAll('.grid-item video');
-            videos.forEach(video => {{
-                video.addEventListener('mouseover', () => {{
-                    video.play().catch(error => {{
-                        console.error('Error playing video:', error);
-                    }});
-                }});
-                video.addEventListener('mouseout', () => {{
-                    video.pause();
-                }});
-            }});
-
-            // Initialize titles table sorted by S.No descending (highest ID at top)
-            sortTitlesTable(0, -1); // Sort by S.No column, highest first
-        }});
-
-        // Titles table and grid sorting
-        let titlesSortDirections = [-1, 0, 0]; // S.No starts descending
-        function sortTitlesTable(columnIndex, forceDirection) {{
-            const tbody = document.getElementById('titlesTableBody');
-            const rows = Array.from(tbody.getElementsByTagName('tr'));
-            const direction = forceDirection !== undefined ? forceDirection : (titlesSortDirections[columnIndex] === 1 ? -1 : 1);
-            rows.sort((a, b) => {{
-                let aValue = a.cells[columnIndex].innerText;
-                let bValue = b.cells[columnIndex].innerText;
-                if (columnIndex === 0) {{ // S.No column
-                    aValue = parseInt(aValue);
-                    bValue = parseInt(bValue);
-                    return direction * (aValue - bValue);
-                }} else if (columnIndex === 2) {{ // Date column
-                    aValue = new Date(aValue);
-                    bValue = new Date(bValue);
-                    return direction * (aValue - bValue);
-                }} else if (columnIndex === 1) {{ // Items column
-                    return direction * aValue.localeCompare(bValue);
-                }}
-                return 0;
-            }});
-            while (tbody.firstChild) {{ 
-                tbody.removeChild(tbody.firstChild); 
-            }}
-            rows.forEach(row => tbody.appendChild(row));
-            titlesSortDirections[columnIndex] = direction;
-            titlesSortDirections = titlesSortDirections.map((d, i) => i === columnIndex ? d : 0);
-            // Sync grid with table
-            sortTitlesGrid(columnIndex, direction);
-        }}
-
-        function sortTitlesGrid(columnIndex, direction) {{
-            const grid = document.getElementById('titlesGrid');
-            const items = Array.from(grid.getElementsByClassName('grid-item'));
-            items.sort((a, b) => {{
-                let aValue, bValue;
-                if (columnIndex === 0) {{ // S.No
-                    aValue = parseInt(a.querySelector('.date').innerText.split('S.No: ')[1].split(' | ')[0]);
-                    bValue = parseInt(b.querySelector('.date').innerText.split('S.No: ')[1].split(' | ')[0]);
-                    return direction * (aValue - bValue);
-                }} else if (columnIndex === 1) {{ // Items
-                    aValue = a.querySelector('.title').innerText;
-                    bValue = b.querySelector('.title').innerText;
-                    return direction * aValue.localeCompare(bValue);
-                }} else if (columnIndex === 2) {{ // Date
-                    aValue = new Date(a.querySelector('.date').innerText.split(' | ')[1]);
-                    bValue = new Date(b.querySelector('.date').innerText.split(' | ')[1]);
-                    return direction * (aValue - bValue);
-                }}
-                return 0;
-            }});
-            while (grid.firstChild) {{ 
-                grid.removeChild(grid.firstChild); 
-            }}
-            items.forEach(item => grid.appendChild(item));
-        }}
+        function openTab(evt, tabName) { let i, tabcontent, tablinks; tabcontent = document.getElementsByClassName("tabcontent"); for (i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; } tablinks = document.getElementsByClassName("tablinks"); for (i = 0; i < tablinks.length; i++) { tablinks[i].className = tablinks[i].className.replace(" active", ""); } document.getElementById(tabName).style.display = "block"; evt.currentTarget.className += " active"; }
+        document.addEventListener('DOMContentLoaded', function() { const ctx = document.getElementById('rankChart').getContext('2d'); const historyData = {history_data_json}; const dates = historyData.map(entry => entry.date); const ranks = historyData.map(entry => entry.rank); new Chart(ctx, { type: 'line', data: { labels: dates, datasets: [{ label: 'Rank Over Time', data: ranks, borderColor: '#e6b800', backgroundColor: 'rgba(230, 184, 0, 0.2)', fill: true, tension: 0.4 }] }, options: { scales: { y: { beginAtZero: true, title: { display: true, text: 'Rank', color: '#e6b800' }, ticks: { stepSize: 1, color: '#ffffff' }, suggestedMax: {len(chats) + 1}, grid: { color: '#3b4a6b' } }, x: { title: { display: true, text: 'Date', color: '#e6b800' }, ticks: { color: '#ffffff' }, grid: { color: '#3b4a6b' } } }, plugins: { legend: { display: true, labels: { color: '#e6b800' } } } } }); sortTitlesTable(0, -1); });
+        let titlesSortDirections = [-1, 0, 0];
+        function sortTitlesTable(columnIndex, forceDirection) { const tbody = document.getElementById('titlesTableBody'); const rows = Array.from(tbody.getElementsByTagName('tr')); const direction = forceDirection !== undefined ? forceDirection : (titlesSortDirections[columnIndex] === 1 ? -1 : 1); rows.sort((a, b) => { let aValue = a.cells[columnIndex].innerText; let bValue = b.cells[columnIndex].innerText; if (columnIndex === 0) { aValue = parseInt(aValue); bValue = parseInt(bValue); return direction * (aValue - bValue); } else if (columnIndex === 2) { aValue = new Date(aValue); bValue = new Date(bValue); return direction * (aValue - bValue); } else if (columnIndex === 1) { return direction * aValue.localeCompare(bValue); } return 0; }); while (tbody.firstChild) { tbody.removeChild(tbody.firstChild); } rows.forEach(row => tbody.appendChild(row)); titlesSortDirections[columnIndex] = direction; titlesSortDirections = titlesSortDirections.map((d, i) => i === columnIndex ? d : 0); sortTitlesGrid(columnIndex, direction); }
+        function sortTitlesGrid(columnIndex, direction) { const grid = document.getElementById('titlesGrid'); const items = Array.from(grid.getElementsByClassName('grid-item')); items.sort((a, b) => { let aValue, bValue; if (columnIndex === 0) { aValue = parseInt(a.querySelector('.date').innerText.split('S.No: ')[1].split(' | ')[0]); bValue = parseInt(b.querySelector('.date').innerText.split('S.No: ')[1].split(' | ')[0]); return direction * (aValue - bValue); } else if (columnIndex === 1) { aValue = a.querySelector('.title').innerText; bValue = b.querySelector('.title').innerText; return direction * aValue.localeCompare(bValue); } else if (columnIndex === 2) { aValue = new Date(a.querySelector('.date').innerText.split(' | ')[1]); bValue = new Date(b.querySelector('.date').innerText.split(' | ')[1]); return direction * (aValue - bValue); } return 0; }); while (grid.firstChild) { grid.removeChild(grid.firstChild); } items.forEach(item => grid.appendChild(item)); }
     </script>
 </body>
 </html>
 """
 
-        # Find last rank and its date from history_data
+        # Find last rank and date
         last_rank = 'N/A'
         last_rank_date = 'N/A'
         if group_name in history_data and history_data[group_name]:
@@ -733,11 +426,11 @@ for chat in chats:
             'rank': 0,
             'last rank': last_rank,
             'last rank date': last_rank_date,
-            'up down': 'N/A',  # Will be calculated after ranking
+            'up down': 'N/A',
             'total titles': titles_count,
             'html_file': html_file,
             'html_content': html_content,
-            'photo_file_name': f"Photos/{photo_file_name}" if photo_file_name else None
+            'photo_file_name': f"Photos/{group_name}/{photo_file_name}" if photo_file_name else None
         })
 
 # Calculate scores
@@ -750,7 +443,6 @@ for entry in all_data:
     three_count = entry['count of the hashtag "#Three"']
     messages = entry['total messages']
     diff = entry['Datedifference']
-
     hashtag_score = (10 * five_count) + (5 * four_count) + (1 * three_count)
     messages_score = (messages / max_messages) * 10 if max_messages > 0 else 0
     date_score = 0
@@ -762,7 +454,6 @@ for entry in all_data:
 sorted_data = sorted(all_data, key=lambda x: x['score'], reverse=True)
 for i, entry in enumerate(sorted_data, 1):
     entry['rank'] = i
-    # Calculate up down (last_rank - rank)
     if entry['last rank'] != 'N/A':
         entry['up down'] = int(entry['last rank']) - i
     history_data[entry['group name']].append({'date': current_date, 'rank': i})
@@ -770,7 +461,6 @@ for i, entry in enumerate(sorted_data, 1):
     html_path = os.path.join(html_subfolder, entry['html_file'])
     with open(html_path, 'w', encoding='utf-8') as f:
         f.write(html_content_with_rank)
-    print(f"Wrote HTML file: {html_path}")
 
 # Write current run to output.csv
 csv_data = [{k: v for k, v in entry.items() if k in csv_columns} for entry in sorted_data]
@@ -778,11 +468,9 @@ with open(csv_file, 'w', newline='', encoding='utf-8') as f:
     writer = csv.DictWriter(f, fieldnames=csv_columns)
     writer.writeheader()
     writer.writerows(csv_data)
-print(f"\nWrote CSV file: {csv_file}")
 
 # Append new history entries to history.csv
 new_history_rows = [{'date': current_date, 'group name': entry['group name'], 'rank': entry['rank']} for entry in sorted_data]
-new_history_rows = [row for row in new_history_rows if row.get('group name') and row.get('rank') is not None]
 if new_history_rows:
     write_header = not os.path.exists(history_csv_file)
     with open(history_csv_file, 'a', newline='', encoding='utf-8') as f:
@@ -790,20 +478,14 @@ if new_history_rows:
         if write_header:
             writer.writeheader()
         writer.writerows(new_history_rows)
-    print(f"\nAppended {len(new_history_rows)} rows to {history_csv_file}")
-else:
-    print(f"No new history entries to append to {history_csv_file}")
 
-# Generate top 5 up, down, and unchanged table
+# Generate top movers table
 up_groups = [entry for entry in sorted_data if entry['up down'] != 'N/A' and entry['up down'] > 0]
 down_groups = [entry for entry in sorted_data if entry['up down'] != 'N/A' and entry['up down'] < 0]
 unchanged_groups = [entry for entry in sorted_data if entry['up down'] == 0]
-
-# Sort by up_down (primary) and rank (secondary, ascending for higher rank)
 up_groups = sorted(up_groups, key=lambda x: (x['up down'], -x['rank']), reverse=True)[:5]
 down_groups = sorted(down_groups, key=lambda x: (x['up down'], -x['rank']), reverse=True)[:5]
-unchanged_groups = sorted(unchanged_groups, key=lambda x: x['rank'])[:5]  # Sort by rank ascending
-
+unchanged_groups = sorted(unchanged_groups, key=lambda x: x['rank'])[:5]
 top_movers_rows = ''
 if up_groups or down_groups or unchanged_groups:
     for group_list, title in [(up_groups, 'Top 5 Up'), (down_groups, 'Top 5 Down'), (unchanged_groups, 'Top 5 Unchanged')]:
@@ -817,12 +499,7 @@ if up_groups or down_groups or unchanged_groups:
                 last_rank_date = entry['last rank date']
                 last_rank_display = f"{last_rank} ({last_rank_date})" if last_rank != 'N/A' else 'N/A'
                 up_down = entry['up down']
-                if up_down > 0:
-                    up_down_content = f"{up_down} <img src='Photos/up.png' alt='Up' class='up-down-img'>"
-                elif up_down < 0:
-                    up_down_content = f"{up_down} <img src='Photos/down.png' alt='Down' class='up-down-img'>"
-                else:
-                    up_down_content = f"{up_down} <img src='Photos/0.png' alt='No Change' class='up-down-img'>"
+                up_down_content = f"{up_down} <img src='Photos/up.png' alt='Up' class='up-down-img'>" if up_down > 0 else f"{up_down} <img src='Photos/down.png' alt='Down' class='up-down-img'>" if up_down < 0 else f"{up_down} <img src='Photos/0.png' alt='No Change' class='up-down-img'>"
                 top_movers_rows += f"""
                     <td>
                         <div class="mover-info">
@@ -838,8 +515,7 @@ if up_groups or down_groups or unchanged_groups:
 else:
     top_movers_rows = '<tr><td>No significant rank changes</td></tr>'
 
-# Generate ranking HTML
-total_groups = len(sorted_data)
+# Generate table rows for ranking table
 table_rows = ''
 for entry in sorted_data:
     group_name = escape(entry['group name'])
@@ -850,15 +526,7 @@ for entry in sorted_data:
     last_rank_date = entry['last rank date']
     last_rank_display = f"{last_rank} ({last_rank_date})" if last_rank != 'N/A' else 'N/A'
     up_down = entry['up down']
-    # Add image based on up_down value
-    up_down_content = up_down
-    if up_down != 'N/A':
-        if up_down > 0:
-            up_down_content = f"{up_down} <img src='Photos/up.png' alt='Up' class='up-down-img'>"
-        elif up_down < 0:
-            up_down_content = f"{up_down} <img src='Photos/down.png' alt='Down' class='up-down-img'>"
-        else:  # up_down == 0
-            up_down_content = f"{up_down} <img src='Photos/0.png' alt='No Change' class='up-down-img'>"
+    up_down_content = f"{up_down} <img src='Photos/up.png' alt='Up' class='up-down-img'>" if up_down != 'N/A' and up_down > 0 else f"{up_down} <img src='Photos/down.png' alt='Down' class='up-down-img'>" if up_down != 'N/A' and up_down < 0 else f"{up_down} <img src='Photos/0.png' alt='No Change' class='up-down-img'>" if up_down != 'N/A' else up_down
     table_rows += f"""
     <tr>
         <td>{entry['rank']}</td>
@@ -876,6 +544,37 @@ for entry in sorted_data:
     </tr>
     """
 
+# Generate grid view content
+grid_rows = ''
+for entry in sorted_data:
+    group_name = escape(entry['group name'])
+    photo_src = entry['photo_file_name'] if entry['photo_file_name'] else 'https://via.placeholder.com/300'
+    html_link = f"HTML/{entry['html_file']}"
+    last_scene = f"{entry['Datedifference']} days" if entry['Datedifference'] != 'N/A' else 'N/A'
+    last_rank = entry['last rank']
+    last_rank_date = entry['last rank date']
+    last_rank_display = f"{last_rank} ({last_rank_date})" if last_rank != 'N/A' else 'N/A'
+    up_down = entry['up down']
+    up_down_content = f"{up_down} <img src='Photos/up.png' alt='Up' class='up-down-img'>" if up_down != 'N/A' and up_down > 0 else f"{up_down} <img src='Photos/down.png' alt='Down' class='up-down-img'>" if up_down != 'N/A' and up_down < 0 else f"{up_down} <img src='Photos/0.png' alt='No Change' class='up-down-img'>" if up_down != 'N/A' else up_down
+    grid_rows += f"""
+        <div class='grid-item' style='display: none;'>
+            <div class='flip-card'><div class='flip-card-inner'><div class='flip-card-front'><img src='{photo_src}' alt='{group_name}' style='width:100%;height:200px;object-fit:cover;'></div><div class='flip-card-back'><a href='{html_link}' target='_blank' style='color: #e6b800; text-decoration: none;'><h1>{group_name}</h1></a></div></div></div>
+            <p><strong>Group Name:</strong> <a href='{html_link}' target='_blank'>{group_name}</a></p>
+            <p><strong>Rank:</strong> {entry['rank']}</p>
+            <p><strong>Last Rank:</strong> {last_rank_display}</p>
+            <p><strong>Up Down:</strong> {up_down_content}</p>
+            <p><strong>Last Scene:</strong> {last_scene}</p>
+            <p><strong>Total Titles:</strong> {entry['total titles']}</p>
+            <p><strong>#FIVE:</strong> {entry['count of the hashtag "#FIVE"']}</p>
+            <p><strong>#FOUR:</strong> {entry['count of the hashtag "#FOUR"']}</p>
+            <p><strong>#Three:</strong> {entry['count of the hashtag "#Three"']}</p>
+            <p><strong>Thumbnails:</strong> {entry['count of the hashtag "#SceneType"']}</p>
+            <p><strong>Score:</strong> {entry['score']:.2f}</p>
+        </div>
+    """
+
+# Generate ranking HTML
+total_groups = len(sorted_data)
 ranking_html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -883,45 +582,41 @@ ranking_html_content = f"""<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PS Ranking - {current_date}</title>
     <style>
-        body {{ font-family: Arial, sans-serif; background-color: #1e2a44; color: #ffffff; margin: 20px; text-align: center; }}
-        h1, h2 {{ color: #e6b800; }}
-        table {{ width: 80%; margin: 20px auto; border-collapse: collapse; background-color: #2a3a5c; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); }}
-        th, td {{ border: 1px solid #3b4a6b; text-align: center; vertical-align: middle; padding: 15px; color: #ffffff; }}
-        th {{ background-color: #e6b800; color: #1e2a44; cursor: pointer; }}
-        th:hover {{ background-color: #b30000; }}
-        tr:hover {{ background-color: #3b4a6b; }}
-        .up-down-img {{ width: 20px; height: 20px; vertical-align: middle; }}
-        a {{ text-decoration: none; color: #e6b800; }}
-        a:hover {{ color: #b30000; text-decoration: underline; }}
-        .flip-card {{ background-color: transparent; width: 300px; height: 300px; perspective: 1000px; margin: 10px auto; }}
-        .flip-card-inner {{ position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); }}
-        .flip-card:hover .flip-card-inner {{ transform: rotateY(180deg); }}
-        .flip-card-front, .flip-card-back {{ position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 5px; }}
-        .flip-card-front {{ background-color: #2a3a5c; color: #ffffff; }}
-        .flip-card-back {{ background-color: #3b4a6b; color: #e6b800; transform: rotateY(180deg); display: flex; justify-content: center; align-items: center; flex-direction: column; }}
-        .flip-card-back h1 {{ margin: 0; font-size: 24px; word-wrap: break-word; padding: 10px; }}
-        .mover-info {{ display: flex; flex-direction: column; align-items: center; gap: 10px; width: 320px; }}
-        .mover-info p {{ margin: 5px 0; font-size: 16px; }}
-        #topMoversTable td {{ min-width: 340px; }}
-        @media only screen and (max-width: 1200px) {{ 
-            table {{ width: 90%; }} 
-            .flip-card {{ width: 200px; height: 200px; }} 
-            .flip-card-back h1 {{ font-size: 18px; }}
-            th, td {{ font-size: 14px; padding: 10px; }}
-            .mover-info {{ width: 220px; }}
-            .mover-info p {{ font-size: 14px; }}
-            #topMoversTable td {{ min-width: 240px; }}
-        }}
-        @media only screen and (max-width: 768px) {{ 
-            table {{ width: 95%; }} 
-            .flip-card {{ width: 150px; height: 150px; }} 
-            .flip-card-back h1 {{ font-size: 16px; }}
-            th, td {{ font-size: 12px; padding: 8px; }}
-            .mover-info {{ width: 170px; }}
-            .mover-info p {{ font-size: 12px; }}
-            #topMoversTable td {{ min-width: 190px; }}
-            #topMoversTable {{ display: block; overflow-x: auto; white-space: nowrap; }}
-        }}
+        body { font-family: Arial, sans-serif; background-color: #1e2a44; color: #ffffff; margin: 20px; text-align: center; }
+        h1, h2 { color: #e6b800; }
+        table { width: 80%; margin: 20px auto; border-collapse: collapse; background-color: #2a3a5c; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); }
+        th, td { border: 1px solid #3b4a6b; text-align: center; vertical-align: middle; padding: 15px; color: #ffffff; }
+        th { background-color: #e6b800; color: #1e2a44; cursor: pointer; }
+        th:hover { background-color: #b30000; }
+        tr:hover { background-color: #3b4a6b; }
+        .up-down-img { width: 20px; height: 20px; vertical-align: middle; }
+        a { text-decoration: none; color: #e6b800; }
+        a:hover { color: #b30000; text-decoration: underline; }
+        .flip-card { background-color: transparent; width: 300px; height: 300px; perspective: 1000px; margin: 10px auto; }
+        .flip-card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); }
+        .flip-card:hover .flip-card-inner { transform: rotateY(180deg); }
+        .flip-card-front, .flip-card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 5px; }
+        .flip-card-front { background-color: #2a3a5c; color: #ffffff; }
+        .flip-card-back { background-color: #3b4a6b; color: #e6b800; transform: rotateY(180deg); display: flex; justify-content: center; align-items: center; flex-direction: column; }
+        .flip-card-back h1 { margin: 0; font-size: 24px; word-wrap: break-word; padding: 10px; }
+        .mover-info { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 320px; }
+        .mover-info p { margin: 5px 0; font-size: 16px; }
+        #topMoversTable td { min-width: 340px; }
+        .grid-view { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; width: 80%; margin: 20px auto; padding: 20px; background-color: #2a3a5c; border-radius: 5px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); }
+        .grid-item { background-color: #3b4a6b; padding: 15px; border-radius: 5px; text-align: center; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); }
+        .grid-item p { margin: 5px 0; font-size: 14px; }
+        .grid-item .flip-card { width: 100%; height: 200px; margin-bottom: 10px; }
+        .grid-item .flip-card-inner { width: 100%; height: 100%; }
+        .grid-item .flip-card-front img { width: 100%; height: 200px; object-fit: cover; }
+        .grid-item .flip-card-back h1 { font-size: 18px; }
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 10px; margin: 20px auto; width: 80%; }
+        .pagination button, .pagination span { padding: 10px 15px; border: none; background-color: #e6b800; color: #1e2a44; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .pagination button:hover { background-color: #b30000; }
+        .pagination button:disabled { background-color: #3b4a6b; cursor: not-allowed; opacity: 0.6; }
+        .pagination span { background-color: #2a3a5c; color: #e6b800; }
+        .pagination span.active { background-color: #b30000; font-weight: bold; }
+        @media only screen and (max-width: 1200px) { table { width: 90%; } .flip-card { width: 200px; height: 200px; } .flip-card-back h1 { font-size: 18px; } th, td { font-size: 14px; padding: 10px; } .mover-info { width: 220px; } .mover-info p { font-size: 14px; } #topMoversTable td { min-width: 240px; } .grid-view { grid-template-columns: repeat(2, 1fr); width: 90%; } .grid-item .flip-card { width: 100%; height: 150px; } .grid-item .flip-card-front img { height: 150px; } .grid-item p { font-size: 12px; } .pagination { width: 90%; } .pagination button, .pagination span { font-size: 14px; padding: 8px 12px; } }
+        @media only screen and (max-width: 768px) { table { width: 95%; } .flip-card { width: 150px; height: 150px; } .flip-card-back h1 { font-size: 16px; } th, td { font-size: 12px; padding: 8px; } .mover-info { width: 170px; } .mover-info p { font-size: 12px; } #topMoversTable td { min-width: 190px; } #topMoversTable { display: block; overflow-x: auto; white-space: nowrap; } .grid-view { grid-template-columns: 1fr; width: 95%; } .grid-item .flip-card { width: 100%; height: 120px; } .grid-item .flip-card-front img { height: 120px; } .grid-item p { font-size: 10px; } .pagination { width: 95%; flex-wrap: wrap; } .pagination button, .pagination span { font-size: 12px; padding: 6px 10px; } }
     </style>
 </head>
 <body>
@@ -954,69 +649,41 @@ ranking_html_content = f"""<!DOCTYPE html>
             {table_rows}
         </tbody>
     </table>
+    <h2>Grid View</h2>
+    <div class="grid-view" id="gridView">
+        {grid_rows}
+    </div>
+    <div class="pagination" id="pagination"></div>
     <script>
         let sortDirections = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-        function sortTable(columnIndex) {{
-            if (columnIndex === 4) return; // Skip Photo column
-            const tbody = document.getElementById('tableBody');
-            const rows = Array.from(tbody.getElementsByTagName('tr'));
-            const isNumeric = [true, true, true, false, false, true, true, true, true, true, true, true];
-            const direction = sortDirections[columnIndex] === 1 ? -1 : 1;
-
-            rows.sort((a, b) => {{
-                let aValue = a.cells[columnIndex].textContent;
-                let bValue = b.cells[columnIndex].textContent;
-
-                if (columnIndex === 1) {{ // Last Rank
-                    if (aValue === 'N/A' && bValue === 'N/A') return 0;
-                    if (aValue === 'N/A') return direction * 1;
-                    if (bValue === 'N/A') return direction * -1;
-                    // Extract rank from "rank (date)" format
-                    aValue = parseFloat(aValue.split(' ')[0]);
-                    bValue = parseFloat(bValue.split(' ')[0]);
-                    return direction * (aValue - bValue);
-                }} else if (columnIndex === 2) {{ // Up Down
-                    if (aValue === 'N/A' && bValue === 'N/A') return 0;
-                    if (aValue === 'N/A') return direction * 1;
-                    if (bValue === 'N/A') return direction * -1;
-                    aValue = parseFloat(aValue.split(' ')[0]);
-                    bValue = parseFloat(bValue.split(' ')[0]);
-                    return direction * (aValue - bValue);
-                }} else if (columnIndex === 5) {{ // Last Scene
-                    if (aValue === 'N/A' && bValue === 'N/A') return 0;
-                    if (aValue === 'N/A') return direction * 1;
-                    if (bValue === 'N/A') return direction * -1;
-                    aValue = parseInt(aValue);
-                    bValue = parseInt(bValue);
-                    return direction * (aValue - bValue);
-                }}
-
-                if (isNumeric[columnIndex]) {{ 
-                    aValue = parseFloat(aValue) || aValue; 
-                    bValue = parseFloat(bValue) || bValue; 
-                    return direction * (aValue - bValue); 
-                }}
-                return direction * aValue.localeCompare(bValue);
-            }});
-
-            while (tbody.firstChild) {{ 
-                tbody.removeChild(tbody.firstChild); 
-            }}
-            rows.forEach(row => tbody.appendChild(row));
-            sortDirections[columnIndex] = direction;
-            sortDirections = sortDirections.map((d, i) => i === columnIndex ? d : 0);
-        }}
+        function sortTable(columnIndex) { if (columnIndex === 4) return; const tbody = document.getElementById('tableBody'); const rows = Array.from(tbody.getElementsByTagName('tr')); const isNumeric = [true, true, true, false, false, true, true, true, true, true, true, true]; const direction = sortDirections[columnIndex] === 1 ? -1 : 1; rows.sort((a, b) => { let aValue = a.cells[columnIndex].textContent; let bValue = b.cells[columnIndex].textContent; if (columnIndex === 1) { if (aValue === 'N/A' && bValue === 'N/A') return 0; if (aValue === 'N/A') return direction * 1; if (bValue === 'N/A') return direction * -1; aValue = parseFloat(aValue.split(' ')[0]); bValue = parseFloat(bValue.split(' ')[0]); return direction * (aValue - bValue); } else if (columnIndex === 2) { if (aValue === 'N/A' && bValue === 'N/A') return 0; if (aValue === 'N/A') return direction * 1; if (bValue === 'N/A') return direction * -1; aValue = parseFloat(aValue.split(' ')[0]); bValue = parseFloat(bValue.split(' ')[0]); return direction * (aValue - bValue); } else if (columnIndex === 5) { if (aValue === 'N/A' && bValue === 'N/A') return 0; if (aValue === 'N/A') return direction * 1; if (bValue === 'N/A') return direction * -1; aValue = parseInt(aValue); bValue = parseInt(bValue); return direction * (aValue - bValue); } if (isNumeric[columnIndex]) { aValue = parseFloat(aValue) || aValue; bValue = parseFloat(bValue) || bValue; return direction * (aValue - bValue); } return direction * aValue.localeCompare(bValue); }); while (tbody.firstChild) { tbody.removeChild(tbody.firstChild); } rows.forEach(row => tbody.appendChild(row)); sortDirections[columnIndex] = direction; sortDirections = sortDirections.map((d, i) => i === columnIndex ? d : 0); }
+        const itemsPerPage = 50;
+        let currentPage = 1;
+        function setupPagination() { const gridItems = document.querySelectorAll('#gridView .grid-item'); const totalItems = gridItems.length; const totalPages = Math.ceil(totalItems / itemsPerPage); const pagination = document.getElementById('pagination'); function showPage(page) { gridItems.forEach((item, index) => { item.style.display = (index >= (page - 1) * itemsPerPage && index < page * itemsPerPage) ? 'flex' : 'none'; }); currentPage = page; pagination.innerHTML = ''; const prevButton = document.createElement('button'); prevButton.textContent = 'Previous'; prevButton.disabled = page === 1; prevButton.onclick = () => showPage(page - 1); pagination.appendChild(prevButton); let startPage = Math.max(1, page - 2); let endPage = Math.min(totalPages, startPage + 4); if (endPage - startPage < 4) { startPage = Math.max(1, endPage - 4); } for (let i = startPage; i <= endPage; i++) { const pageSpan = document.createElement('span'); pageSpan.textContent = i; pageSpan.className = i === page ? 'active' : ''; pageSpan.onclick = () => showPage(i); pagination.appendChild(pageSpan); } const nextButton = document.createElement('button'); nextButton.textContent = 'Next'; nextButton.disabled = page === totalPages; nextButton.onclick = () => showPage(page + 1); pagination.appendChild(nextButton); } if (totalItems > 0) { showPage(1); } else { pagination.innerHTML = '<p>No groups available.</p>'; } }
+        document.addEventListener('DOMContentLoaded', setupPagination);
     </script>
 </body>
 </html>
 """
 
-
-   
 # Write ranking HTML file
 ranking_html_file = os.path.join(output_folder, 'index.html')
 with open(ranking_html_file, 'w', encoding='utf-8') as f:
     f.write(ranking_html_content)
-print(f"\nWrote ranking HTML file: {ranking_html_file}")
-  
-print(f"\nProcessed {len(chats)} groups. Output written to {output_folder}")
+logger.info(f"Wrote ranking HTML file: {ranking_html_file}")
+
+# Final cleanup
+try:
+    for temp_file in os.listdir(input_folder):
+        if temp_file.endswith('.json') or temp_file.endswith('.zip'):
+            os.remove(os.path.join(input_folder, temp_file))
+            logger.info(f"Removed temporary file: {os.path.join(input_folder, temp_file)}")
+except OSError as e:
+    logger.warning(f"Could not clean up temporary files in {input_folder}: {e}")
+
+# Log disk usage
+import subprocess
+logger.info("Disk usage after processing:")
+subprocess.run(["df", "-h"])
+
+logger.info(f"Processed {len(chats)} groups. Output written to {output_folder}")
