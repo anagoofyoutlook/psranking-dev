@@ -11,200 +11,45 @@
         .info { background-color: #2a3a5c; padding: 10px; border-radius: 5px; margin-bottom: 20px; width: 90%; margin-left: auto; margin-right: auto; }
         .hashtags { list-style-type: none; padding: 0; }
         .hashtag-item { background-color: #3b4a6b; margin: 5px 0; padding: 5px; border-radius: 3px; display: inline-block; width: 200px; color: #ffffff; }
-        .rank-container { 
-            width: 90%; 
-            margin: 20px auto; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            gap: 20px; 
-            flex-wrap: wrap; 
-        }
+        .rank-container { width: 90%; margin: 20px auto; display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap; }
         .rank-number { font-size: 48px; font-weight: bold; color: #e6b800; display: inline-block; }
         @keyframes countUp { from { content: "0"; } to { content: attr(data-rank); } }
         .rank-number::before { content: "0"; animation: countUp 2s ease-out forwards; display: inline-block; min-width: 60px; }
         .chart-container { max-width: 400px; width: 100%; background-color: #2a3a5c; padding: 10px; border-radius: 5px; }
         canvas { width: 100% !important; height: auto !important; }
-        .titles-grid { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 20px; 
-            margin: 20px 0; 
-            width: 100%; 
-            box-sizing: border-box; 
-        }
-        .grid-item { 
-            background-color: #2a3a5c; 
-            padding: 10px; 
-            border-radius: 5px; 
-            text-align: center; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            width: 100%; 
-            box-sizing: border-box; 
-        }
-        .grid-item video, .grid-item img { 
-            width: 100%; 
-            height: 300px; 
-            border-radius: 5px; 
-            object-fit: cover; 
-        }
-        .grid-item .title { 
-            margin: 10px 0 5px; 
-            font-size: 16px; 
-            font-weight: bold; 
-            color: #e6b800; 
-        }
-        .grid-item .date { 
-            margin: 0; 
-            font-size: 14px; 
-            color: #cccccc; 
-        }
-        .titles-table { 
-            width: 100%; 
-            margin: 20px 0; 
-            border-collapse: collapse; 
-            background-color: #2a3a5c; 
-        }
-        .titles-table th, .titles-table td { 
-            padding: 10px; 
-            border: 1px solid #3b4a6b; 
-            text-align: left; 
-            vertical-align: middle; 
-            color: #ffffff; 
-        }
-        .titles-table th { 
-            background-color: #e6b800; 
-            color: #1e2a44; 
-            cursor: pointer; 
-        }
-        .titles-table th:hover { 
-            background-color: #b30000; 
-        }
+        .titles-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 20px 0; width: 100%; box-sizing: border-box; }
+        .grid-item { background-color: #2a3a5c; padding: 10px; border-radius: 5px; text-align: center; display: flex; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box; }
+        .grid-item img, .grid-item video { width: 100%; height: 300px; border-radius: 5px; object-fit: cover; }
+        .grid-item .title { margin: 10px 0 5px; font-size: 16px; font-weight: bold; color: #e6b800; }
+        .grid-item .date { margin: 0; font-size: 14px; color: #cccccc; }
+        .titles-table { width: 100%; margin: 20px 0; border-collapse: collapse; background-color: #2a3a5c; }
+        .titles-table th, .titles-table td { padding: 10px; border: 1px solid #3b4a6b; text-align: left; vertical-align: middle; color: #ffffff; }
+        .titles-table th { background-color: #e6b800; color: #1e2a44; cursor: pointer; }
+        .titles-table th:hover { background-color: #b30000; }
         a { color: #e6b800; text-decoration: none; }
         a:hover { color: #b30000; text-decoration: underline; }
-        .container { 
-            position: relative; 
-            width: 90%; 
-            margin: 20px auto; 
-            height: auto; 
-            max-height: 600px; 
-            display: block; 
-            overflow: hidden; 
-            background-color: #2a3a5c; 
-        }
-        .mySlides { 
-            display: none; 
-            width: 100%; 
-            height: auto; 
-            aspect-ratio: 16/9; 
-        }
-        .mySlides img { 
-            width: 100%; 
-            height: auto; 
-            object-fit: contain; 
-        }
+        .container { position: relative; width: 90%; margin: 20px auto; height: auto; max-height: 600px; display: block; overflow: hidden; background-color: #2a3a5c; }
+        .mySlides { display: none; width: 100%; height: auto; aspect-ratio: 16/9; }
+        .mySlides img, .mySlides video { width: 100%; height: auto; object-fit: contain; }
         .cursor { cursor: pointer; }
-        .prev, .next { 
-            cursor: pointer; 
-            position: absolute; 
-            top: 50%; 
-            transform: translateY(-50%); 
-            width: auto; 
-            padding: 16px; 
-            color: #e6b800; 
-            font-weight: bold; 
-            font-size: 20px; 
-            border-radius: 0 3px 3px 0; 
-            user-select: none; 
-            -webkit-user-select: none; 
-            z-index: 10; 
-        }
+        .prev, .next { cursor: pointer; position: absolute; top: 50%; transform: translateY(-50%); width: auto; padding: 16px; color: #e6b800; font-weight: bold; font-size: 20px; border-radius: 0 3px 3px 0; user-select: none; -webkit-user-select: none; z-index: 10; }
         .prev { left: 0; }
         .next { right: 0; border-radius: 3px 0 0 3px; }
         .prev:hover, .next:hover { background-color: #b30000; }
-        .numbertext { 
-            color: #e6b800; 
-            font-size: 12px; 
-            padding: 8px 12px; 
-            position: absolute; 
-            top: 0; 
-            z-index: 10; 
-        }
-        .caption-container { 
-            text-align: center; 
-            background-color: #1e2a44; 
-            padding: 2px 16px; 
-            color: #e6b800; 
-        }
-        .row { 
-            display: flex; 
-            flex-wrap: wrap; 
-            justify-content: center; 
-            margin-top: 10px; 
-        }
-        .column { 
-            flex: 0 0 3.5714285714285716%; 
-            max-width: 100px; 
-            padding: 5px; 
-        }
-        .demo { 
-            opacity: 0.6; 
-            width: 100%; 
-            height: auto; 
-            object-fit: cover; 
-        }
+        .numbertext { color: #e6b800; font-size: 12px; padding: 8px 12px; position: absolute; top: 0; z-index: 10; }
+        .caption-container { text-align: center; background-color: #1e2a44; padding: 2px 16px; color: #e6b800; }
+        .row { display: flex; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
+        .column { flex: 0 0 3.5714285714285716%; max-width: 100px; padding: 5px; }
+        .demo { opacity: 0.6; width: 100%; height: auto; object-fit: cover; }
         .active, .demo:hover { opacity: 1; }
-        .tab { 
-            overflow: hidden; 
-            margin: 20px auto; 
-            width: 90%; 
-            background-color: #2a3a5c; 
-            border-radius: 5px 5px 0 0; 
-        }
-        .tab button { 
-            background-color: #2a3a5c; 
-            color: #e6b800; 
-            float: left; 
-            border: none; 
-            outline: none; 
-            cursor: pointer; 
-            padding: 14px 16px; 
-            transition: 0.3s; 
-            font-size: 17px; 
-            width: 50%; 
-        }
+        .tab { overflow: hidden; margin: 20px auto; width: 90%; background-color: #2a3a5c; border-radius: 5px 5px 0 0; }
+        .tab button { background-color: #2a3a5c; color: #e6b800; float: left; border: none; outline: none; cursor: pointer; padding: 14px 16px; transition: 0.3s; font-size: 17px; width: 50%; }
         .tab button:hover { background-color: #b30000; }
         .tab button.active { background-color: #3b4a6b; }
-        .tabcontent { 
-            display: none; 
-            padding: 6px 12px; 
-            border-top: none; 
-            background-color: #2a3a5c; 
-            margin: 0 auto; 
-            width: 90%; 
-            border-radius: 0 0 5px 5px; 
-        }
+        .tabcontent { display: none; padding: 6px 12px; border-top: none; background-color: #2a3a5c; margin: 0 auto; width: 90%; border-radius: 0 0 5px 5px; }
         #Videos { display: block; }
-        @media only screen and (max-width: 1200px) { 
-            .titles-grid { grid-template-columns: repeat(3, 1fr); } 
-            .grid-item video, .grid-item img { height: 200px; }
-            h1, .info, .container, .tab, .tabcontent { width: 90%; }
-            .rank-container { width: 90%; }
-        }
-        @media only screen and (max-width: 768px) { 
-            .titles-grid { grid-template-columns: repeat(3, 1fr); } 
-            .grid-item video, .grid-item img { height: 150px; }
-            .container { width: 90%; max-height: 400px; } 
-            h1 { margin: 10px auto; font-size: 30px; }
-            .info, .tab, .tabcontent, .rank-container { width: 90%; }
-            .rank-container { flex-direction: column; gap: 10px; } 
-            .chart-container { max-width: 100%; } 
-            .column { flex: 0 0 80px; max-width: 80px; } 
-            .mySlides img { object-fit: contain; } 
-            .tab button { font-size: 14px; padding: 10px; }
-        }
+        @media only screen and (max-width: 1200px) { .titles-grid { grid-template-columns: repeat(3, 1fr); } .grid-item img, .grid-item video { height: 200px; } h1, .info, .container, .tab, .tabcontent { width: 90%; } .rank-container { width: 90%; } }
+        @media only screen and (max-width: 768px) { .titles-grid { grid-template-columns: repeat(3, 1fr); } .grid-item img, .grid-item video { height: 150px; } .container { width: 90%; max-height: 400px; } h1 { margin: 10px auto; font-size: 30px; } .info, .tab, .tabcontent, .rank-container { width: 90%; } .rank-container { flex-direction: column; gap: 10px; } .chart-container { max-width: 100%; } .column { flex: 0 0 80px; max-width: 80px; } .mySlides img, .mySlides video { object-fit: contain; } .tab button { font-size: 14px; padding: 10px; } }
     </style>
 </head>
 <body>
@@ -252,151 +97,151 @@
     <div class="info">
         <h2>Titles</h2>
         <div class="tab">
-            <button class="tablinks active" onclick="openTab(event, 'Videos')">Videos</button>
+            <button class="tablinks active" onclick="openTab(event, 'Videos')">Images & Videos</button>
             <button class="tablinks" onclick="openTab(event, 'Table')">Table</button>
         </div>
         <div id="Videos" class="tabcontent">
             <p>Total Titles: 24</p><div class='titles-grid' id='titlesGrid'>
                 <div class='grid-item'>
-                    <video src='../Photos/Anita Rover/982594381315649175_9999.jpg' style='width:100%;height:300px;object-fit:cover;border-radius:5px;' loop muted playsinline></video>
+                    <img src='../Photos/Anita Rover/982594381315649175_9999.jpg' alt='Media for Anita Rover Unfaithful Sex' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>
                     <p class='title'><a href='https://t.me/c/2213136792/1257' target='_blank'>Anita Rover Unfaithful Sex</a></p>
                     <p class='date'>S.No: 24 | 2025-06-10</p>
                 </div>
             
                 <div class='grid-item'>
-                    <video src='../Photos/Anita Rover/585195668031378075_9999.jpg' style='width:100%;height:300px;object-fit:cover;border-radius:5px;' loop muted playsinline></video>
+                    <img src='../Photos/Anita Rover/868851420866369062_9999.jpg' alt='Media for ElegantRaw Veronica Leal , Anita Rover - What besties are for 255x 6000x4000 04-26-2025' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>
                     <p class='title'><a href='https://t.me/c/2213136792/841' target='_blank'>ElegantRaw Veronica Leal , Anita Rover - What besties are for 255x 6000x4000 04-26-2025</a></p>
                     <p class='date'>S.No: 22 | 2025-04-28</p>
                 </div>
             
                 <div class='grid-item'>
-                    <video src='../Photos/Anita Rover/244492031576500870_9999.jpg' style='width:100%;height:300px;object-fit:cover;border-radius:5px;' loop muted playsinline></video>
+                    <img src='../Photos/Anita Rover/982594381315649175_9999.jpg' alt='Media for Hustler Anita Rover - Sex In Paris - Scene 1 - 04/25/25' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>
                     <p class='title'><a href='https://t.me/c/2213136792/1102' target='_blank'>Hustler Anita Rover - Sex In Paris - Scene 1 - 04/25/25</a></p>
                     <p class='date'>S.No: 23 | 2025-04-28</p>
                 </div>
             
                 <div class='grid-item'>
-                    <video src='../Photos/Anita Rover/478334439262265799_9999.jpg' style='width:100%;height:300px;object-fit:cover;border-radius:5px;' loop muted playsinline></video>
+                    <img src='../Photos/Anita Rover/746233515049538544_9999.jpg' alt='Media for Dorcel Club Facing her desire' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>
                     <p class='title'><a href='https://t.me/c/2213136792/821' target='_blank'>Dorcel Club Facing her desire</a></p>
                     <p class='date'>S.No: 21 | 2025-04-24</p>
                 </div>
             
                 <div class='grid-item'>
-                    <video src='../Photos/Anita Rover/269490666187726868_9999.jpg' style='width:100%;height:300px;object-fit:cover;border-radius:5px;' loop muted playsinline></video>
+                    <img src='../Photos/Anita Rover/980998522123885893_9999.jpg' alt='Media for Alice Wild Anita Rover Clea Gaultier Diana Lawrence Orgy Party With My Friends At My Home' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>
                     <p class='title'><a href='https://t.me/c/2213136792/805' target='_blank'>Alice Wild Anita Rover Clea Gaultier Diana Lawrence Orgy Party With My Friends At My Home</a></p>
                     <p class='date'>S.No: 20 | 2025-04-08</p>
                 </div>
             
                 <div class='grid-item'>
-                    <video src='../Photos/Anita Rover/244492031576500870_9999.jpg' style='width:100%;height:300px;object-fit:cover;border-radius:5px;' loop muted playsinline></video>
+                    <img src='../Photos/Anita Rover/175505770326205857_9999.jpg' alt='Media for DorcelClub THR3E #6 Beyond conventions' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>
                     <p class='title'><a href='https://t.me/c/2213136792/717' target='_blank'>DorcelClub THR3E #6 Beyond conventions</a></p>
                     <p class='date'>S.No: 19 | 2025-03-17</p>
                 </div>
             
                 <div class='grid-item'>
-                    <video src='../Photos/Anita Rover/795903209064588802_9999.jpg' style='width:100%;height:300px;object-fit:cover;border-radius:5px;' loop muted playsinline></video>
+                    <img src='../Photos/Anita Rover/272769109112165982_9999.jpg' alt='Media for MariskaX - Anita Rover Anouk Grey Lena Coxx Tanya Virago And Mia Nins Free For All Fucking Part 2' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>
                     <p class='title'><a href='https://t.me/c/2213136792/704' target='_blank'>MariskaX - Anita Rover Anouk Grey Lena Coxx Tanya Virago And Mia Nins Free For All Fucking Part 2</a></p>
                     <p class='date'>S.No: 18 | 2025-03-15</p>
                 </div>
             
                 <div class='grid-item'>
-                    <video src='../Photos/Anita Rover/219810442885861807_9999.jpg' style='width:100%;height:300px;object-fit:cover;border-radius:5px;' loop muted playsinline></video>
+                    <img src='../Photos/Anita Rover/980998522123885893_9999.jpg' alt='Media for Dorcelclub Anita Rover Naughty Evening (07 02 2025)' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>
                     <p class='title'><a href='https://t.me/c/2213136792/622' target='_blank'>Dorcelclub Anita Rover Naughty Evening (07 02 2025)</a></p>
                     <p class='date'>S.No: 14 | 2025-03-12</p>
                 </div>
             
                 <div class='grid-item'>
-                    <video src='../Photos/Anita Rover/812072349128340097_9999.jpg' style='width:100%;height:300px;object-fit:cover;border-radius:5px;' loop muted playsinline></video>
+                    <img src='../Photos/Anita Rover/868851420866369062_9999.jpg' alt='Media for 5KLPorn She Doesn't Roll Over' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>
                     <p class='title'><a href='https://t.me/c/2213136792/639' target='_blank'>5KLPorn She Doesn't Roll Over</a></p>
                     <p class='date'>S.No: 15 | 2025-03-12</p>
                 </div>
             
                 <div class='grid-item'>
-                    <video src='../Photos/Anita Rover/746233515049538544_9999.jpg' style='width:100%;height:300px;object-fit:cover;border-radius:5px;' loop muted playsinline></video>
+                    <img src='../Photos/Anita Rover/529474288530963339_9999.jpg' alt='Media for Mariskax 25 03 07 Anita Rover Anouk Grey Lena Coxx Tanya Virago And Mia Nins Free For All Fucking' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>
                     <p class='title'><a href='https://t.me/c/2213136792/641' target='_blank'>Mariskax 25 03 07 Anita Rover Anouk Grey Lena Coxx Tanya Virago And Mia Nins Free For All Fucking</a></p>
                     <p class='date'>S.No: 16 | 2025-03-12</p>
                 </div>
             
                 <div class='grid-item'>
-                    <video src='../Photos/Anita Rover/89412110706078933_9999.jpg' style='width:100%;height:300px;object-fit:cover;border-radius:5px;' loop muted playsinline></video>
+                    <img src='../Photos/Anita Rover/152144906822970849_9999.jpg' alt='Media for JacquieEtMichelTV Anita Rover & Pam For Pam, There is Always a Solution 1080' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>
                     <p class='title'><a href='https://t.me/c/2213136792/673' target='_blank'>JacquieEtMichelTV Anita Rover & Pam For Pam, There is Always a Solution 1080</a></p>
                     <p class='date'>S.No: 17 | 2025-03-12</p>
                 </div>
             
                 <div class='grid-item'>
-                    <video src='../Photos/Anita Rover/269490666187726868_9999.jpg' style='width:100%;height:300px;object-fit:cover;border-radius:5px;' loop muted playsinline></video>
+                    <img src='../Photos/Anita Rover/913430302986275358_9999.jpg' alt='Media for MariskaX - Anita Rover & Lena Coxx - 2 Pussies Are Better Than 1 (February 28, 2025)' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>
                     <p class='title'><a href='https://t.me/c/2213136792/589' target='_blank'>MariskaX - Anita Rover & Lena Coxx - 2 Pussies Are Better Than 1 (February 28, 2025)</a></p>
                     <p class='date'>S.No: 13 | 2025-03-11</p>
                 </div>
             
                 <div class='grid-item'>
-                    <video src='../Photos/Anita Rover/868851420866369062_9999.jpg' style='width:100%;height:300px;object-fit:cover;border-radius:5px;' loop muted playsinline></video>
+                    <img src='../Photos/Anita Rover/73144023977719982_9999.jpg' alt='Media for MariskaX Anita Fucks 3 Dicks' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>
                     <p class='title'><a href='https://t.me/c/2213136792/572' target='_blank'>MariskaX Anita Fucks 3 Dicks</a></p>
                     <p class='date'>S.No: 12 | 2025-02-18</p>
                 </div>
             
                 <div class='grid-item'>
-                    <video src='../Photos/Anita Rover/272769109112165982_9999.jpg' style='width:100%;height:300px;object-fit:cover;border-radius:5px;' loop muted playsinline></video>
+                    <img src='../Photos/Anita Rover/868851420866369062_9999.jpg' alt='Media for JacquieEtMichelTV Anita Rover Ava Rose Ava Forces Her Destiny With Anita' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>
                     <p class='title'><a href='https://t.me/c/2213136792/549' target='_blank'>JacquieEtMichelTV Anita Rover Ava Rose Ava Forces Her Destiny With Anita</a></p>
                     <p class='date'>S.No: 11 | 2025-02-07</p>
                 </div>
             
                 <div class='grid-item'>
-                    <video src='../Photos/Anita Rover/244492031576500870_9999.jpg' style='width:100%;height:300px;object-fit:cover;border-radius:5px;' loop muted playsinline></video>
+                    <img src='../Photos/Anita Rover/219810442885861807_9999.jpg' alt='Media for After Dark Scene 4 Anita Rover Takes Anal Pounding From Her Neighbor' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>
                     <p class='title'><a href='https://t.me/c/2213136792/534' target='_blank'>After Dark Scene 4 Anita Rover Takes Anal Pounding From Her Neighbor</a></p>
                     <p class='date'>S.No: 10 | 2024-11-19</p>
                 </div>
             
                 <div class='grid-item'>
-                    <video src='../Photos/Anita Rover/478334439262265799_9999.jpg' style='width:100%;height:300px;object-fit:cover;border-radius:5px;' loop muted playsinline></video>
+                    <img src='../Photos/Anita Rover/529474288530963339_9999.jpg' alt='Media for DES HOMMES POUR NOËL Cast: Miss Alice Wild+, Lullabyebye, Chloe Duval+, Anita Rover' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>
                     <p class='title'><a href='https://t.me/c/2213136792/502' target='_blank'>DES HOMMES POUR NOËL Cast: Miss Alice Wild+, Lullabyebye, Chloe Duval+, Anita Rover</a></p>
                     <p class='date'>S.No: 9 | 2024-10-29</p>
                 </div>
             
                 <div class='grid-item'>
-                    <video src='../Photos/Anita Rover/89412110706078933_9999.jpg' style='width:100%;height:300px;object-fit:cover;border-radius:5px;' loop muted playsinline></video>
+                    <img src='../Photos/Anita Rover/175505770326205857_9999.jpg' alt='Media for Les fantasmes d'Anita Rover' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>
                     <p class='title'><a href='https://t.me/c/2213136792/241' target='_blank'>Les fantasmes d'Anita Rover</a></p>
                     <p class='date'>S.No: 7 | 2024-10-21</p>
                 </div>
             
                 <div class='grid-item'>
-                    <video src='../Photos/Anita Rover/980998522123885893_9999.jpg' style='width:100%;height:300px;object-fit:cover;border-radius:5px;' loop muted playsinline></video>
+                    <img src='../Photos/Anita Rover/13330782601173537_9999.jpg' alt='Media for Perversions By Nikita' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>
                     <p class='title'><a href='https://t.me/c/2213136792/424' target='_blank'>Perversions By Nikita</a></p>
                     <p class='date'>S.No: 8 | 2024-10-21</p>
                 </div>
             
                 <div class='grid-item'>
-                    <video src='../Photos/Anita Rover/478334439262265799_9999.jpg' style='width:100%;height:300px;object-fit:cover;border-radius:5px;' loop muted playsinline></video>
+                    <img src='../Photos/Anita Rover/464721262830027580_9999.jpg' alt='Media for Porn Fidelity Turning Her Over' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>
                     <p class='title'><a href='https://t.me/c/2213136792/31' target='_blank'>Porn Fidelity Turning Her Over</a></p>
                     <p class='date'>S.No: 2 | 2024-08-23</p>
                 </div>
             
                 <div class='grid-item'>
-                    <video src='../Photos/Anita Rover/540401600875339010_9999.jpg' style='width:100%;height:300px;object-fit:cover;border-radius:5px;' loop muted playsinline></video>
+                    <img src='../Photos/Anita Rover/478334439262265799_9999.jpg' alt='Media for ONLYFANS' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>
                     <p class='title'><a href='https://t.me/c/2213136792/33' target='_blank'>ONLYFANS</a></p>
                     <p class='date'>S.No: 3 | 2024-08-23</p>
                 </div>
             
                 <div class='grid-item'>
-                    <video src='../Photos/Anita Rover/585195668031378075_9999.jpg' style='width:100%;height:300px;object-fit:cover;border-radius:5px;' loop muted playsinline></video>
+                    <img src='../Photos/Anita Rover/585195668031378075_9999.jpg' alt='Media for DORCEL Girls at Work - Team Building Sc2 Escape in the forest' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>
                     <p class='title'><a href='https://t.me/c/2213136792/45' target='_blank'>DORCEL Girls at Work - Team Building Sc2 Escape in the forest</a></p>
                     <p class='date'>S.No: 4 | 2024-08-23</p>
                 </div>
             
                 <div class='grid-item'>
-                    <video src='../Photos/Anita Rover/89412110706078933_9999.jpg' style='width:100%;height:300px;object-fit:cover;border-radius:5px;' loop muted playsinline></video>
+                    <img src='../Photos/Anita Rover/219810442885861807_9999.jpg' alt='Media for VirtualTaboo Anita Rover, Rika Fane - Relax Time' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>
                     <p class='title'><a href='https://t.me/c/2213136792/47' target='_blank'>VirtualTaboo Anita Rover, Rika Fane - Relax Time</a></p>
                     <p class='date'>S.No: 5 | 2024-08-23</p>
                 </div>
             
                 <div class='grid-item'>
-                    <video src='../Photos/Anita Rover/868851420866369062_9999.jpg' style='width:100%;height:300px;object-fit:cover;border-radius:5px;' loop muted playsinline></video>
+                    <img src='../Photos/Anita Rover/269490666187726868_9999.jpg' alt='Media for DORCEL Girls at Work - Team Building Sc4 Office Threesome With Anita Rover' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>
                     <p class='title'><a href='https://t.me/c/2213136792/50' target='_blank'>DORCEL Girls at Work - Team Building Sc4 Office Threesome With Anita Rover</a></p>
                     <p class='date'>S.No: 6 | 2024-08-23</p>
                 </div>
             
                 <div class='grid-item'>
-                    <video src='../Photos/Anita Rover/860702478441485415_9999.jpg' style='width:100%;height:300px;object-fit:cover;border-radius:5px;' loop muted playsinline></video>
+                    <img src='../Photos/Anita Rover/219810442885861807_9999.jpg' alt='Media for Alice Drake, Anita Rover - 5 Years Later Scene 2' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>
                     <p class='title'><a href='https://t.me/c/2213136792/2' target='_blank'>Alice Drake, Anita Rover - 5 Years Later Scene 2</a></p>
                     <p class='date'>S.No: 1 | 2024-07-31</p>
                 </div>
@@ -409,163 +254,15 @@
     <script>
         let slideIndex = 1;
         showSlides(slideIndex);
-        function plusSlides(n) { 
-            clearInterval(autoSlide); 
-            showSlides(slideIndex += n); 
-            autoSlide = setInterval(() => plusSlides(1), 3000); 
-        }
-        function currentSlide(n) { 
-            clearInterval(autoSlide); 
-            showSlides(slideIndex = n); 
-            autoSlide = setInterval(() => plusSlides(1), 3000); 
-        }
-        function showSlides(n) {
-            let i;
-            let slides = document.getElementsByClassName("mySlides");
-            let dots = document.getElementsByClassName("demo");
-            let captionText = document.getElementById("caption");
-            if (n > slides.length) { slideIndex = 1 }
-            if (n < 1) { slideIndex = slides.length }
-            for (i = 0; i < slides.length; i++) { 
-                slides[i].style.display = "none"; 
-            }
-            for (i = 0; i < dots.length; i++) { 
-                dots[i].className = dots[i].className.replace(" active", ""); 
-            }
-            slides[slideIndex-1].style.display = "block";
-            dots[slideIndex-1].className += " active";
-            captionText.innerHTML = dots[slideIndex-1].alt;
-        }
+        function plusSlides(n) { clearInterval(autoSlide); showSlides(slideIndex += n); autoSlide = setInterval(() => plusSlides(1), 3000); }
+        function currentSlide(n) { clearInterval(autoSlide); showSlides(slideIndex = n); autoSlide = setInterval(() => plusSlides(1), 3000); }
+        function showSlides(n) { let i; let slides = document.getElementsByClassName("mySlides"); let dots = document.getElementsByClassName("demo"); let captionText = document.getElementById("caption"); if (n > slides.length) { slideIndex = 1 } if (n < 1) { slideIndex = slides.length } for (i = 0; i < slides.length; i++) { slides[i].style.display = "none"; } for (i = 0; i < dots.length; i++) { dots[i].className = dots[i].className.replace(" active", ""); } slides[slideIndex-1].style.display = "block"; dots[slideIndex-1].className += " active"; captionText.innerHTML = dots[slideIndex-1].alt; }
         let autoSlide = setInterval(() => plusSlides(1), 3000);
-
-        function openTab(evt, tabName) {
-            let i, tabcontent, tablinks;
-            tabcontent = document.getElementsByClassName("tabcontent");
-            for (i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = "none";
-            }
-            tablinks = document.getElementsByClassName("tablinks");
-            for (i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(" active", "");
-            }
-            document.getElementById(tabName).style.display = "block";
-            evt.currentTarget.className += " active";
-        }
-
-        // Chart.js for rank history
-        document.addEventListener('DOMContentLoaded', function() {
-            const ctx = document.getElementById('rankChart').getContext('2d');
-            const historyData = [];
-            const dates = historyData.map(entry => entry.date);
-            const ranks = historyData.map(entry => entry.rank);
-            new Chart(ctx, {
-                type: 'line',
-                data: { 
-                    labels: dates, 
-                    datasets: [{
-                        label: 'Rank Over Time', 
-                        data: ranks, 
-                        borderColor: '#e6b800', 
-                        backgroundColor: 'rgba(230, 184, 0, 0.2)', 
-                        fill: true, 
-                        tension: 0.4 
-                    }] 
-                },
-                options: { 
-                    scales: { 
-                        y: { 
-                            beginAtZero: true, 
-                            title: { display: true, text: 'Rank', color: '#e6b800' }, 
-                            ticks: { stepSize: 1, color: '#ffffff' }, 
-                            suggestedMax: 353,
-                            grid: { color: '#3b4a6b' }
-                        }, 
-                        x: { 
-                            title: { display: true, text: 'Date', color: '#e6b800' }, 
-                            ticks: { color: '#ffffff' }, 
-                            grid: { color: '#3b4a6b' }
-                        } 
-                    }, 
-                    plugins: { 
-                        legend: { display: true, labels: { color: '#e6b800' } } 
-                    } 
-                }
-            });
-
-            // Add hover-to-play for videos in titles grid
-            const videos = document.querySelectorAll('.grid-item video');
-            videos.forEach(video => {
-                video.addEventListener('mouseover', () => {
-                    video.play().catch(error => {
-                        console.error('Error playing video:', error);
-                    });
-                });
-                video.addEventListener('mouseout', () => {
-                    video.pause();
-                });
-            });
-
-            // Initialize titles table sorted by S.No descending (highest ID at top)
-            sortTitlesTable(0, -1); // Sort by S.No column, highest first
-        });
-
-        // Titles table and grid sorting
-        let titlesSortDirections = [-1, 0, 0]; // S.No starts descending
-        function sortTitlesTable(columnIndex, forceDirection) {
-            const tbody = document.getElementById('titlesTableBody');
-            const rows = Array.from(tbody.getElementsByTagName('tr'));
-            const direction = forceDirection !== undefined ? forceDirection : (titlesSortDirections[columnIndex] === 1 ? -1 : 1);
-            rows.sort((a, b) => {
-                let aValue = a.cells[columnIndex].innerText;
-                let bValue = b.cells[columnIndex].innerText;
-                if (columnIndex === 0) { // S.No column
-                    aValue = parseInt(aValue);
-                    bValue = parseInt(bValue);
-                    return direction * (aValue - bValue);
-                } else if (columnIndex === 2) { // Date column
-                    aValue = new Date(aValue);
-                    bValue = new Date(bValue);
-                    return direction * (aValue - bValue);
-                } else if (columnIndex === 1) { // Items column
-                    return direction * aValue.localeCompare(bValue);
-                }
-                return 0;
-            });
-            while (tbody.firstChild) { 
-                tbody.removeChild(tbody.firstChild); 
-            }
-            rows.forEach(row => tbody.appendChild(row));
-            titlesSortDirections[columnIndex] = direction;
-            titlesSortDirections = titlesSortDirections.map((d, i) => i === columnIndex ? d : 0);
-            // Sync grid with table
-            sortTitlesGrid(columnIndex, direction);
-        }
-
-        function sortTitlesGrid(columnIndex, direction) {
-            const grid = document.getElementById('titlesGrid');
-            const items = Array.from(grid.getElementsByClassName('grid-item'));
-            items.sort((a, b) => {
-                let aValue, bValue;
-                if (columnIndex === 0) { // S.No
-                    aValue = parseInt(a.querySelector('.date').innerText.split('S.No: ')[1].split(' | ')[0]);
-                    bValue = parseInt(b.querySelector('.date').innerText.split('S.No: ')[1].split(' | ')[0]);
-                    return direction * (aValue - bValue);
-                } else if (columnIndex === 1) { // Items
-                    aValue = a.querySelector('.title').innerText;
-                    bValue = b.querySelector('.title').innerText;
-                    return direction * aValue.localeCompare(bValue);
-                } else if (columnIndex === 2) { // Date
-                    aValue = new Date(a.querySelector('.date').innerText.split(' | ')[1]);
-                    bValue = new Date(b.querySelector('.date').innerText.split(' | ')[1]);
-                    return direction * (aValue - bValue);
-                }
-                return 0;
-            });
-            while (grid.firstChild) { 
-                grid.removeChild(grid.firstChild); 
-            }
-            items.forEach(item => grid.appendChild(item));
-        }
+        function openTab(evt, tabName) { let i, tabcontent, tablinks; tabcontent = document.getElementsByClassName("tabcontent"); for (i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; } tablinks = document.getElementsByClassName("tablinks"); for (i = 0; i < tablinks.length; i++) { tablinks[i].className = tablinks[i].className.replace(" active", ""); } document.getElementById(tabName).style.display = "block"; evt.currentTarget.className += " active"; }
+        document.addEventListener('DOMContentLoaded', function() { const ctx = document.getElementById('rankChart').getContext('2d'); const historyData = []; const dates = historyData.map(entry => entry.date); const ranks = historyData.map(entry => entry.rank); new Chart(ctx, { type: 'line', data: { labels: dates, datasets: [{ label: 'Rank Over Time', data: ranks, borderColor: '#e6b800', backgroundColor: 'rgba(230, 184, 0, 0.2)', fill: true, tension: 0.4 }] }, options: { scales: { y: { beginAtZero: true, title: { display: true, text: 'Rank', color: '#e6b800' }, ticks: { stepSize: 1, color: '#ffffff' }, suggestedMax: 353, grid: { color: '#3b4a6b' } }, x: { title: { display: true, text: 'Date', color: '#e6b800' }, ticks: { color: '#ffffff' }, grid: { color: '#3b4a6b' } } }, plugins: { legend: { display: true, labels: { color: '#e6b800' } } } } }); sortTitlesTable(0, -1); });
+        let titlesSortDirections = [-1, 0, 0];
+        function sortTitlesTable(columnIndex, forceDirection) { const tbody = document.getElementById('titlesTableBody'); const rows = Array.from(tbody.getElementsByTagName('tr')); const direction = forceDirection !== undefined ? forceDirection : (titlesSortDirections[columnIndex] === 1 ? -1 : 1); rows.sort((a, b) => { let aValue = a.cells[columnIndex].innerText; let bValue = b.cells[columnIndex].innerText; if (columnIndex === 0) { aValue = parseInt(aValue); bValue = parseInt(bValue); return direction * (aValue - bValue); } else if (columnIndex === 2) { aValue = new Date(aValue); bValue = new Date(bValue); return direction * (aValue - bValue); } else if (columnIndex === 1) { return direction * aValue.localeCompare(bValue); } return 0; }); while (tbody.firstChild) { tbody.removeChild(tbody.firstChild); } rows.forEach(row => tbody.appendChild(row)); titlesSortDirections[columnIndex] = direction; titlesSortDirections = titlesSortDirections.map((d, i) => i === columnIndex ? d : 0); sortTitlesGrid(columnIndex, direction); }
+        function sortTitlesGrid(columnIndex, direction) { const grid = document.getElementById('titlesGrid'); const items = Array.from(grid.getElementsByClassName('grid-item')); items.sort((a, b) => { let aValue, bValue; if (columnIndex === 0) { aValue = parseInt(a.querySelector('.date').innerText.split('S.No: ')[1].split(' | ')[0]); bValue = parseInt(b.querySelector('.date').innerText.split('S.No: ')[1].split(' | ')[0]); return direction * (aValue - bValue); } else if (columnIndex === 1) { aValue = a.querySelector('.title').innerText; bValue = b.querySelector('.title').innerText; return direction * aValue.localeCompare(bValue); } else if (columnIndex === 2) { aValue = new Date(a.querySelector('.date').innerText.split(' | ')[1]); bValue = new Date(b.querySelector('.date').innerText.split(' | ')[1]); return direction * (aValue - bValue); } return 0; }); while (grid.firstChild) { grid.removeChild(grid.firstChild); } items.forEach(item => grid.appendChild(item)); }
     </script>
 </body>
 </html>
