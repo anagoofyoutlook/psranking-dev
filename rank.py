@@ -1,4 +1,3 @@
-```python
 import json
 import csv
 import os
@@ -688,4 +687,3 @@ logger.info("Disk usage after processing:")
 subprocess.run(["df", "-h"])
 
 logger.info(f"Processed {len(chats)} groups. Output written to {output_folder}")
-```
