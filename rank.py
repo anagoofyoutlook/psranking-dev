@@ -1011,6 +1011,8 @@ ranking_html_content = f"""<!DOCTYPE html>
 </html>
 """
 
+
+
 # Write ranking HTML file
 ranking_html_file = os.path.join(output_folder, 'index.html')
 with open(ranking_html_file, 'w', encoding='utf-8') as f:
