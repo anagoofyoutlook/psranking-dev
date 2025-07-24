@@ -220,7 +220,7 @@
             <div class="caption-container"><p id="caption"></p></div>
             <div class="row">
         <div class="column"><img class="demo cursor" src="https://via.placeholder.com/1920x800" style="width:100%" onclick="currentSlide(1)" alt="Ava Austen Photo 1"></div></div></div>
-    <div class="info"><p>Scenes: 8</p><p>Last Scene: 162 days</p></div>
+    <div class="info"><p>Scenes: 8</p><p>Last Scene: 163 days</p></div>
     <div class="info">
         <h2>Rating Hashtag Counts (#FIVE, #FOUR, #Three)</h2><ul class="hashtags"><li>No rating hashtags (#FIVE, #FOUR, #Three) found</li></ul>
         <h2>Scene Type Hashtag Counts</h2><ul class="hashtags"><li>No scene type hashtags found</li></ul>
@@ -295,7 +295,7 @@
         // Chart.js for rank history
         document.addEventListener('DOMContentLoaded', function() {
             const ctx = document.getElementById('rankChart').getContext('2d');
-            const historyData = [];
+            const historyData = [{"date": "2025-07-23", "rank": 307}];
             const dates = historyData.map(entry => entry.date);
             const ranks = historyData.map(entry => entry.rank);
             new Chart(ctx, {

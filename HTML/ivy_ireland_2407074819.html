@@ -211,7 +211,7 @@
     <h1>Ivy Ireland</h1>
     <div class="rank-container">
         <div class="chart-container"><h2>Rank History</h2><canvas id="rankChart"></canvas></div>
-        <p>Rank: <span class="rank-number" data-rank="239"></span></p>
+        <p>Rank: <span class="rank-number" data-rank="210"></span></p>
     </div>
     <div class="container">
 <div class="mySlides"><div class="numbertext">1 / 1</div><img src="https://via.placeholder.com/1920x800" style="width:100%;height:auto;"></div>
@@ -220,13 +220,14 @@
             <div class="caption-container"><p id="caption"></p></div>
             <div class="row">
         <div class="column"><img class="demo cursor" src="https://via.placeholder.com/1920x800" style="width:100%" onclick="currentSlide(1)" alt="Ivy Ireland Photo 1"></div></div></div>
-    <div class="info"><p>Scenes: 208</p><p>Last Scene: 139 days</p></div>
+    <div class="info"><p>Scenes: 211</p><p>Last Scene: 2 days</p></div>
     <div class="info">
         <h2>Rating Hashtag Counts (#FIVE, #FOUR, #Three)</h2><ul class="hashtags"><li class="hashtag-item">#FOUR: 1</li>
 </ul>
         <h2>Scene Type Hashtag Counts</h2><ul class="hashtags"><li class="hashtag-item">#FM: 1</li>
 </ul>
         <h2>Other Hashtag Counts</h2><ul class="hashtags"><li class="hashtag-item">#DoghouseDigital: 1</li>
+<li class="hashtag-item">#OF: 1</li>
 </ul>
     </div>
     <div class="info">
@@ -236,7 +237,13 @@
             <button class="tablinks" onclick="openTab(event, 'Table')">Table</button>
         </div>
         <div id="Videos" class="tabcontent">
-            <p>Total Titles: 1</p><div class='titles-grid' id='titlesGrid'>
+            <p>Total Titles: 2</p><div class='titles-grid' id='titlesGrid'>
+                <div class='grid-item'>
+                    <img src='https://via.placeholder.com/600x300' alt='Media for ONLYFANS' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>
+                    <p class='title'><a href='https://t.me/c/2407074819/212' target='_blank'>ONLYFANS</a></p>
+                    <p class='date'>S.No: 2 | 2025-07-21</p>
+                </div>
+            
                 <div class='grid-item'>
                     <img src='https://via.placeholder.com/600x300' alt='Media for DoghouseDigital Ivy Ireland - Full Service Massage 10 - Scene 1 - Hot Sex and Deep Massages - 204x - (March 05, 2025)' style='width:100%;height:300px;object-fit:cover;border-radius:5px;'>
                     <p class='title'><a href='https://t.me/c/2407074819/2' target='_blank'>DoghouseDigital Ivy Ireland - Full Service Massage 10 - Scene 1 - Hot Sex and Deep Massages - 204x - (March 05, 2025)</a></p>
@@ -245,7 +252,7 @@
             </div>
         </div>
         <div id="Table" class="tabcontent">
-            <table class='titles-table' id='titlesTable'><thead><tr><th onclick='sortTitlesTable(0)'>S.No</th><th onclick='sortTitlesTable(1)'>Items</th><th onclick='sortTitlesTable(2)'>Date</th></tr></thead><tbody id='titlesTableBody'><tr><td>1</td><td><a href='https://t.me/c/2407074819/2' target='_blank'>DoghouseDigital Ivy Ireland - Full Service Massage 10 - Scene 1 - Hot Sex and Deep Massages - 204x - (March 05, 2025)</a></td><td>2025-03-06</td></tr></tbody></table>
+            <table class='titles-table' id='titlesTable'><thead><tr><th onclick='sortTitlesTable(0)'>S.No</th><th onclick='sortTitlesTable(1)'>Items</th><th onclick='sortTitlesTable(2)'>Date</th></tr></thead><tbody id='titlesTableBody'><tr><td>2</td><td><a href='https://t.me/c/2407074819/212' target='_blank'>ONLYFANS</a></td><td>2025-07-21</td></tr><tr><td>1</td><td><a href='https://t.me/c/2407074819/2' target='_blank'>DoghouseDigital Ivy Ireland - Full Service Massage 10 - Scene 1 - Hot Sex and Deep Massages - 204x - (March 05, 2025)</a></td><td>2025-03-06</td></tr></tbody></table>
         </div>
     </div>
     <script>
@@ -297,7 +304,7 @@
         // Chart.js for rank history
         document.addEventListener('DOMContentLoaded', function() {
             const ctx = document.getElementById('rankChart').getContext('2d');
-            const historyData = [];
+            const historyData = [{"date": "2025-07-23", "rank": 239}];
             const dates = historyData.map(entry => entry.date);
             const ranks = historyData.map(entry => entry.rank);
             new Chart(ctx, {
