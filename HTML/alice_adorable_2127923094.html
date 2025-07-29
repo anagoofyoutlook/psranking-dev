@@ -214,13 +214,13 @@
         <p>Rank: <span class="rank-number" data-rank="134"></span></p>
     </div>
     <div class="container">
-<div class="mySlides"><div class="numbertext">1 / 3</div><img src="../Photos/Alice adorable/photo_2025-06-24_16-18-49.jpg" style="width:100%;height:auto;"></div><div class="mySlides"><div class="numbertext">2 / 3</div><img src="../Photos/Alice adorable/photo_2024-01-09_03-47-01.jpg" style="width:100%;height:auto;"></div><div class="mySlides"><div class="numbertext">3 / 3</div><img src="../Photos/Alice adorable/photo_2024-01-09_02-58-13.jpg" style="width:100%;height:auto;"></div>
+<div class="mySlides"><div class="numbertext">1 / 3</div><img src="https://raw.githubusercontent.com/<username>/<repo>/main/Photos/Alice adorable/photo_2025-06-24_16-18-49.jpg" style="width:100%;height:auto;"></div><div class="mySlides"><div class="numbertext">2 / 3</div><img src="https://raw.githubusercontent.com/<username>/<repo>/main/Photos/Alice adorable/photo_2024-01-09_03-47-01.jpg" style="width:100%;height:auto;"></div><div class="mySlides"><div class="numbertext">3 / 3</div><img src="https://raw.githubusercontent.com/<username>/<repo>/main/Photos/Alice adorable/photo_2024-01-09_02-58-13.jpg" style="width:100%;height:auto;"></div>
             <a class="prev" onclick="plusSlides(-1)">❮</a>
             <a class="next" onclick="plusSlides(1)">❯</a>
             <div class="caption-container"><p id="caption"></p></div>
             <div class="row">
-        <div class="column"><img class="demo cursor" src="../Photos/Alice adorable/photo_2025-06-24_16-18-49.jpg" style="width:100%" onclick="currentSlide(1)" alt="Alice adorable Photo 1"></div><div class="column"><img class="demo cursor" src="../Photos/Alice adorable/photo_2024-01-09_03-47-01.jpg" style="width:100%" onclick="currentSlide(2)" alt="Alice adorable Photo 2"></div><div class="column"><img class="demo cursor" src="../Photos/Alice adorable/photo_2024-01-09_02-58-13.jpg" style="width:100%" onclick="currentSlide(3)" alt="Alice adorable Photo 3"></div></div></div>
-    <div class="info"><p>Scenes: 114</p><p>Last Scene: 21 days</p></div>
+        <div class="column"><img class="demo cursor" src="https://raw.githubusercontent.com/<username>/<repo>/main/Photos/Alice adorable/photo_2025-06-24_16-18-49.jpg" style="width:100%" onclick="currentSlide(1)" alt="Alice adorable Photo 1"></div><div class="column"><img class="demo cursor" src="https://raw.githubusercontent.com/<username>/<repo>/main/Photos/Alice adorable/photo_2024-01-09_03-47-01.jpg" style="width:100%" onclick="currentSlide(2)" alt="Alice adorable Photo 2"></div><div class="column"><img class="demo cursor" src="https://raw.githubusercontent.com/<username>/<repo>/main/Photos/Alice adorable/photo_2024-01-09_02-58-13.jpg" style="width:100%" onclick="currentSlide(3)" alt="Alice adorable Photo 3"></div></div></div>
+    <div class="info"><p>Scenes: 114</p><p>Last Scene: 26 days</p></div>
     <div class="info">
         <h2>Rating Hashtag Counts (#FIVE, #FOUR, #Three)</h2><ul class="hashtags"><li class="hashtag-item">#FIVE: 1</li>
 <li class="hashtag-item">#FOUR: 2</li>
@@ -289,10 +289,9 @@
             evt.currentTarget.className += " active";
         }
 
-        // Chart.js for rank history
         document.addEventListener('DOMContentLoaded', function() {
             const ctx = document.getElementById('rankChart').getContext('2d');
-            const historyData = [{"date": "2025-07-23", "rank": 134}];
+            const historyData = [{"date": "2025-07-23", "rank": 134}, {"date": "2025-07-24", "rank": 134}];
             const dates = historyData.map(entry => entry.date);
             const ranks = historyData.map(entry => entry.rank);
             new Chart(ctx, {
@@ -329,7 +328,6 @@
                 }
             });
 
-            // Add hover-to-play for videos in titles grid
             const videos = document.querySelectorAll('.grid-item video');
             videos.forEach(video => {
                 video.addEventListener('mouseover', () => {
@@ -342,12 +340,10 @@
                 });
             });
 
-            // Initialize titles table sorted by S.No descending (highest ID at top)
-            sortTitlesTable(0, -1); // Sort by S.No column, highest first
+            sortTitlesTable(0, -1);
         });
 
-        // Titles table and grid sorting
-        let titlesSortDirections = [-1, 0, 0]; // S.No starts descending
+        let titlesSortDirections = [-1, 0, 0];
         function sortTitlesTable(columnIndex, forceDirection) {
             const tbody = document.getElementById('titlesTableBody');
             const rows = Array.from(tbody.getElementsByTagName('tr'));
@@ -355,15 +351,15 @@
             rows.sort((a, b) => {
                 let aValue = a.cells[columnIndex].innerText;
                 let bValue = b.cells[columnIndex].innerText;
-                if (columnIndex === 0) { // S.No column
+                if (columnIndex === 0) { 
                     aValue = parseInt(aValue);
                     bValue = parseInt(bValue);
                     return direction * (aValue - bValue);
-                } else if (columnIndex === 2) { // Date column
+                } else if (columnIndex === 2) { 
                     aValue = new Date(aValue);
                     bValue = new Date(bValue);
                     return direction * (aValue - bValue);
-                } else if (columnIndex === 1) { // Items column
+                } else if (columnIndex === 1) { 
                     return direction * aValue.localeCompare(bValue);
                 }
                 return 0;
@@ -374,7 +370,6 @@
             rows.forEach(row => tbody.appendChild(row));
             titlesSortDirections[columnIndex] = direction;
             titlesSortDirections = titlesSortDirections.map((d, i) => i === columnIndex ? d : 0);
-            // Sync grid with table
             sortTitlesGrid(columnIndex, direction);
         }
 
@@ -383,15 +378,15 @@
             const items = Array.from(grid.getElementsByClassName('grid-item'));
             items.sort((a, b) => {
                 let aValue, bValue;
-                if (columnIndex === 0) { // S.No
+                if (columnIndex === 0) { 
                     aValue = parseInt(a.querySelector('.date').innerText.split('S.No: ')[1].split(' | ')[0]);
                     bValue = parseInt(b.querySelector('.date').innerText.split('S.No: ')[1].split(' | ')[0]);
                     return direction * (aValue - bValue);
-                } else if (columnIndex === 1) { // Items
+                } else if (columnIndex === 1) { 
                     aValue = a.querySelector('.title').innerText;
                     bValue = b.querySelector('.title').innerText;
                     return direction * aValue.localeCompare(bValue);
-                } else if (columnIndex === 2) { // Date
+                } else if (columnIndex === 2) { 
                     aValue = new Date(a.querySelector('.date').innerText.split(' | ')[1]);
                     bValue = new Date(b.querySelector('.date').innerText.split(' | ')[1]);
                     return direction * (aValue - bValue);
