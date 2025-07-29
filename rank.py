@@ -313,29 +313,21 @@ for chat in chats:
         # Single photo for group (used in index.html)
         photo_file_name = None
         if os.path.exists(group_subfolder):
-            # First try <group_name>.{ext}
-            photo_file_name = next((f"{group_name}{ext}" for ext in ('.jpg', '.jpeg', '.png', '.gif', '.webp') if os.path.exists(os.path.join(group_subfolder, f"{group_name}{ext}"))), None)
-            if photo_file_name:
-                photo_url = f"{github_raw_base}/Photos/{group_name}/{photo_file_name}"
-                if is_url_accessible(photo_url):
-                    print(f"Group {group_name}: Found single photo at {photo_url}")
-                else:
-                    print(f"Group {group_name}: Single photo inaccessible at {photo_url}, trying another image")
-                    photo_file_name = None
-            # If no <group_name>.{ext}, pick any image
-            if not photo_file_name:
-                image_files = [f for f in os.listdir(group_subfolder) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) and os.path.isfile(os.path.join(group_subfolder, f))]
-                if image_files:
-                    photo_file_name = random.choice(image_files)
-                    photo_url = f"{github_raw_base}/Photos/{group_name}/{photo_file_name}"
+            # Try <group_name>.{ext} only
+            for ext in ('.jpg', '.jpeg', '.png', '.gif', '.webp'):
+                candidate = f"{group_name}{ext}"
+                if os.path.exists(os.path.join(group_subfolder, candidate)):
+                    photo_url = f"{github_raw_base}/Photos/{group_name}/{candidate}"
                     if is_url_accessible(photo_url):
-                        print(f"Group {group_name}: Selected random photo at {photo_url}")
+                        photo_file_name = candidate
+                        print(f"Group {group_name}: Found single photo at {photo_url}")
+                        break
                     else:
-                        print(f"Group {group_name}: Random photo inaccessible at {photo_url}, using placeholder")
-                        photo_file_name = None
-        if not photo_file_name:
-            print(f"Group {group_name}: No suitable photo found in {group_subfolder}, using placeholder")
-            photo_file_name = None
+                        print(f"Group {group_name}: Single photo inaccessible at {photo_url}")
+            if not photo_file_name:
+                print(f"Group {group_name}: No photo named '{group_name}.{{jpg,jpeg,png,gif,webp}}' found in {group_subfolder}, using placeholder")
+        else:
+            print(f"Group {group_name}: No group subfolder {group_subfolder}, using placeholder")
 
         if group_name not in history_data:
             history_data[group_name] = []
