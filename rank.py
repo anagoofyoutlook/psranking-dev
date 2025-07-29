@@ -7,7 +7,7 @@ import re
 import zipfile
 import random
 from html import escape
-import requests  # Added for URL validation
+import requests
 
 # Define folder paths
 input_folder = 'PS'
@@ -296,7 +296,6 @@ for chat in chats:
         photo_paths = []
         if os.path.exists(group_subfolder):
             photo_paths = [f"{github_raw_base}/Photos/{group_name}/{f}" for f in os.listdir(group_subfolder) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) and os.path.isfile(os.path.join(group_subfolder, f))]
-            # Verify accessibility of slideshow photos
             photo_paths = [p for p in photo_paths if is_url_accessible(p)]
             print(f"Group {group_name}: Found {len(photo_paths)} accessible photos in {group_subfolder}: {photo_paths}")
         if not photo_paths:
@@ -312,22 +311,27 @@ for chat in chats:
 
         # Single photo for group (used in index.html)
         photo_file_name = None
-        if os.path.exists(group_subfolder):
-            # Try <group_name>.{ext} only
+        if os.path.exists(photos_folder):
+            group_name_lower = group_name.lower()
             for ext in ('.jpg', '.jpeg', '.png', '.gif', '.webp'):
                 candidate = f"{group_name}{ext}"
-                if os.path.exists(os.path.join(group_subfolder, candidate)):
-                    photo_url = f"{github_raw_base}/Photos/{group_name}/{candidate}"
-                    if is_url_accessible(photo_url):
-                        photo_file_name = candidate
-                        print(f"Group {group_name}: Found single photo at {photo_url}")
-                        break
-                    else:
-                        print(f"Group {group_name}: Single photo inaccessible at {photo_url}")
+                candidate_lower = f"{group_name_lower}{ext}"
+                # Check exact match
+                if os.path.exists(os.path.join(photos_folder, candidate)):
+                    photo_file_name = candidate
+                    photo_url = f"{github_raw_base}/Photos/{candidate}"
+                    print(f"Group {group_name}: Found exact match photo '{candidate}' at {photo_url}")
+                    break
+                # Check case-insensitive match
+                elif os.path.exists(os.path.join(photos_folder, candidate_lower)):
+                    photo_file_name = candidate_lower
+                    photo_url = f"{github_raw_base}/Photos/{candidate_lower}"
+                    print(f"Group {group_name}: Found case-insensitive match photo '{candidate_lower}' at {photo_url}")
+                    break
             if not photo_file_name:
-                print(f"Group {group_name}: No photo named '{group_name}.{{jpg,jpeg,png,gif,webp}}' found in {group_subfolder}, using placeholder")
+                print(f"Group {group_name}: No photo named '{group_name}.{{jpg,jpeg,png,gif,webp}}' or case-insensitive match found in {photos_folder}, using placeholder")
         else:
-            print(f"Group {group_name}: No group subfolder {group_subfolder}, using placeholder")
+            print(f"Group {group_name}: No Photos folder {photos_folder}, using placeholder")
 
         if group_name not in history_data:
             history_data[group_name] = []
@@ -343,12 +347,12 @@ for chat in chats:
     <title>{group_name}</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <style>
-        body {{ font-family: Arial, sans-serif; margin: 20px; background-color: #1e2a44; color: #ffffff; text-align: center; }}
-        h1, h2 {{ color: #e6b800; width: 90%; margin: 20px auto; text-align: center; font-size: 36px; }}
-        .info {{ background-color: #2a3a5c; padding: 10px; border-radius: 5px; margin-bottom: 20px; width: 90%; margin-left: auto; margin-right: auto; }}
-        .hashtags {{ list-style-type: none; padding: 0; }}
-        .hashtag-item {{ background-color: #3b4a6b; margin: 5px 0; padding: 5px; border-radius: 3px; display: inline-block; width: 200px; color: #ffffff; }}
-        .rank-container {{ 
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #1e2a44; color: #ffffff; text-align: center; }
+        h1, h2 { color: #e6b800; width: 90%; margin: 20px auto; text-align: center; font-size: 36px; }
+        .info { background-color: #2a3a5c; padding: 10px; border-radius: 5px; margin-bottom: 20px; width: 90%; margin-left: auto; margin-right: auto; }
+        .hashtags { list-style-type: none; padding: 0; }
+        .hashtag-item { background-color: #3b4a6b; margin: 5px 0; padding: 5px; border-radius: 3px; display: inline-block; width: 200px; color: #ffffff; }
+        .rank-container { 
             width: 90%; 
             margin: 20px auto; 
             display: flex; 
@@ -356,21 +360,21 @@ for chat in chats:
             align-items: center; 
             gap: 20px; 
             flex-wrap: wrap; 
-        }}
-        .rank-number {{ font-size: 48px; font-weight: bold; color: #e6b800; display: inline-block; }}
-        @keyframes countUp {{ from {{ content: "0"; }} to {{ content: attr(data-rank); }} }}
-        .rank-number::before {{ content: "0"; animation: countUp 2s ease-out forwards; display: inline-block; min-width: 60px; }}
-        .chart-container {{ max-width: 400px; width: 100%; background-color: #2a3a5c; padding: 10px; border-radius: 5px; }}
-        canvas {{ width: 100% !important; height: auto !important; }}
-        .titles-grid {{ 
+        }
+        .rank-number { font-size: 48px; font-weight: bold; color: #e6b800; display: inline-block; }
+        @keyframes countUp { from { content: "0"; } to { content: attr(data-rank); } }
+        .rank-number::before { content: "0"; animation: countUp 2s ease-out forwards; display: inline-block; min-width: 60px; }
+        .chart-container { max-width: 400px; width: 100%; background-color: #2a3a5c; padding: 10px; border-radius: 5px; }
+        canvas { width: 100% !important; height: auto !important; }
+        .titles-grid { 
             display: grid; 
             grid-template-columns: repeat(3, 1fr); 
             gap: 20px; 
             margin: 20px 0; 
             width: 100%; 
             box-sizing: border-box; 
-        }}
-        .grid-item {{ 
+        }
+        .grid-item { 
             background-color: #2a3a5c; 
             padding: 10px; 
             border-radius: 5px; 
@@ -380,48 +384,48 @@ for chat in chats:
             align-items: center; 
             width: 100%; 
             box-sizing: border-box; 
-        }}
-        .grid-item video, .grid-item img {{ 
+        }
+        .grid-item video, .grid-item img { 
             width: 100%; 
             height: 300px; 
             border-radius: 5px; 
             object-fit: cover; 
-        }}
-        .grid-item .title {{ 
+        }
+        .grid-item .title { 
             margin: 10px 0 5px; 
             font-size: 16px; 
             font-weight: bold; 
             color: #e6b800; 
-        }}
-        .grid-item .date {{ 
+        }
+        .grid-item .date { 
             margin: 0; 
             font-size: 14px; 
             color: #cccccc; 
-        }}
-        .titles-table {{ 
+        }
+        .titles-table { 
             width: 100%; 
             margin: 20px 0; 
             border-collapse: collapse; 
             background-color: #2a3a5c; 
-        }}
-        .titles-table th, .titles-table td {{ 
+        }
+        .titles-table th, .titles-table td { 
             padding: 10px; 
             border: 1px solid #3b4a6b; 
             text-align: left; 
             vertical-align: middle; 
             color: #ffffff; 
-        }}
-        .titles-table th {{ 
+        }
+        .titles-table th { 
             background-color: #e6b800; 
             color: #1e2a44; 
             cursor: pointer; 
-        }}
-        .titles-table th:hover {{ 
+        }
+        .titles-table th:hover { 
             background-color: #b30000; 
-        }}
-        a {{ color: #e6b800; text-decoration: none; }}
-        a:hover {{ color: #b30000; text-decoration: underline; }}
-        .container {{ 
+        }
+        a { color: #e6b800; text-decoration: none; }
+        a:hover { color: #b30000; text-decoration: underline; }
+        .container { 
             position: relative; 
             width: 90%; 
             margin: 20px auto; 
@@ -430,20 +434,20 @@ for chat in chats:
             display: block; 
             overflow: hidden; 
             background-color: #2a3a5c; 
-        }}
-        .mySlides {{ 
+        }
+        .mySlides { 
             display: none; 
             width: 100%; 
             height: auto; 
             aspect-ratio: 16/9; 
-        }}
-        .mySlides img {{ 
+        }
+        .mySlides img { 
             width: 100%; 
             height: auto; 
             object-fit: contain; 
-        }}
-        .cursor {{ cursor: pointer; }}
-        .prev, .next {{ 
+        }
+        .cursor { cursor: pointer; }
+        .prev, .next { 
             cursor: pointer; 
             position: absolute; 
             top: 50%; 
@@ -457,50 +461,50 @@ for chat in chats:
             user-select: none; 
             -webkit-user-select: none; 
             z-index: 10; 
-        }}
-        .prev {{ left: 0; }}
-        .next {{ right: 0; border-radius: 3px 0 0 3px; }}
-        .prev:hover, .next:hover {{ background-color: #b30000; }}
-        .numbertext {{ 
+        }
+        .prev { left: 0; }
+        .next { right: 0; border-radius: 3px 0 0 3px; }
+        .prev:hover, .next:hover { background-color: #b30000; }
+        .numbertext { 
             color: #e6b800; 
             font-size: 12px; 
             padding: 8px 12px; 
             position: absolute; 
             top: 0; 
             z-index: 10; 
-        }}
-        .caption-container {{ 
+        }
+        .caption-container { 
             text-align: center; 
             background-color: #1e2a44; 
             padding: 2px 16px; 
             color: #e6b800; 
-        }}
-        .row {{ 
+        }
+        .row { 
             display: flex; 
             flex-wrap: wrap; 
             justify-content: center; 
             margin-top: 10px; 
-        }}
-        .column {{ 
+        }
+        .column { 
             flex: 0 0 {100 / len(photo_paths) if photo_paths else 100}%; 
             max-width: 100px; 
             padding: 5px; 
-        }}
-        .demo {{ 
+        }
+        .demo { 
             opacity: 0.6; 
             width: 100%; 
             height: auto; 
             object-fit: cover; 
-        }}
-        .active, .demo:hover {{ opacity: 1; }}
-        .tab {{ 
+        }
+        .active, .demo:hover { opacity: 1; }
+        .tab { 
             overflow: hidden; 
             margin: 20px auto; 
             width: 90%; 
             background-color: #2a3a5c; 
             border-radius: 5px 5px 0 0; 
-        }}
-        .tab button {{ 
+        }
+        .tab button { 
             background-color: #2a3a5c; 
             color: #e6b800; 
             float: left; 
@@ -511,10 +515,10 @@ for chat in chats:
             transition: 0.3s; 
             font-size: 17px; 
             width: 50%; 
-        }}
-        .tab button:hover {{ background-color: #b30000; }}
-        .tab button.active {{ background-color: #3b4a6b; }}
-        .tabcontent {{ 
+        }
+        .tab button:hover { background-color: #b30000; }
+        .tab button.active { background-color: #3b4a6b; }
+        .tabcontent { 
             display: none; 
             padding: 6px 12px; 
             border-top: none; 
@@ -522,26 +526,26 @@ for chat in chats:
             margin: 0 auto; 
             width: 90%; 
             border-radius: 0 0 5px 5px; 
-        }}
-        #Videos {{ display: block; }}
-        @media only screen and (max-width: 1200px) {{ 
-            .titles-grid {{ grid-template-columns: repeat(3, 1fr); }} 
-            .grid-item video, .grid-item img {{ height: 200px; }}
-            h1, .info, .container, .tab, .tabcontent {{ width: 90%; }}
-            .rank-container {{ width: 90%; }}
-        }}
-        @media only screen and (max-width: 768px) {{ 
-            .titles-grid {{ grid-template-columns: repeat(3, 1fr); }} 
-            .grid-item video, .grid-item img {{ height: 150px; }}
-            .container {{ width: 90%; max-height: 400px; }} 
-            h1 {{ margin: 10px auto; font-size: 30px; }}
-            .info, .tab, .tabcontent, .rank-container {{ width: 90%; }}
-            .rank-container {{ flex-direction: column; gap: 10px; }} 
-            .chart-container {{ max-width: 100%; }} 
-            .column {{ flex: 0 0 80px; max-width: 80px; }} 
-            .mySlides img {{ object-fit: contain; }} 
-            .tab button {{ font-size: 14px; padding: 10px; }}
-        }}
+        }
+        #Videos { display: block; }
+        @media only screen and (max-width: 1200px) { 
+            .titles-grid { grid-template-columns: repeat(3, 1fr); } 
+            .grid-item video, .grid-item img { height: 200px; }
+            h1, .info, .container, .tab, .tabcontent { width: 90%; }
+            .rank-container { width: 90%; }
+        }
+        @media only screen and (max-width: 768px) { 
+            .titles-grid { grid-template-columns: repeat(3, 1fr); } 
+            .grid-item video, .grid-item img { height: 150px; }
+            .container { width: 90%; max-height: 400px; } 
+            h1 { margin: 10px auto; font-size: 30px; }
+            .info, .tab, .tabcontent, .rank-container { width: 90%; }
+            .rank-container { flex-direction: column; gap: 10px; } 
+            .chart-container { max-width: 100%; } 
+            .column { flex: 0 0 80px; max-width: 80px; } 
+            .mySlides img { object-fit: contain; } 
+            .tab button { font-size: 14px; padding: 10px; }
+        }
     </style>
 </head>
 <body>
@@ -573,158 +577,158 @@ for chat in chats:
     <script>
         let slideIndex = 1;
         showSlides(slideIndex);
-        function plusSlides(n) {{ 
+        function plusSlides(n) { 
             clearInterval(autoSlide); 
             showSlides(slideIndex += n); 
             autoSlide = setInterval(() => plusSlides(1), 3000); 
-        }}
-        function currentSlide(n) {{ 
+        }
+        function currentSlide(n) { 
             clearInterval(autoSlide); 
             showSlides(slideIndex = n); 
             autoSlide = setInterval(() => plusSlides(1), 3000); 
-        }}
-        function showSlides(n) {{
+        }
+        function showSlides(n) {
             let i;
             let slides = document.getElementsByClassName("mySlides");
             let dots = document.getElementsByClassName("demo");
             let captionText = document.getElementById("caption");
-            if (n > slides.length) {{ slideIndex = 1 }}
-            if (n < 1) {{ slideIndex = slides.length }}
-            for (i = 0; i < slides.length; i++) {{ 
+            if (n > slides.length) { slideIndex = 1 }
+            if (n < 1) { slideIndex = slides.length }
+            for (i = 0; i < slides.length; i++) { 
                 slides[i].style.display = "none"; 
-            }}
-            for (i = 0; i < dots.length; i++) {{ 
+            }
+            for (i = 0; i < dots.length; i++) { 
                 dots[i].className = dots[i].className.replace(" active", ""); 
-            }}
+            }
             slides[slideIndex-1].style.display = "block";
             dots[slideIndex-1].className += " active";
             captionText.innerHTML = dots[slideIndex-1].alt;
-        }}
+        }
         let autoSlide = setInterval(() => plusSlides(1), 3000);
 
-        function openTab(evt, tabName) {{
+        function openTab(evt, tabName) {
             let i, tabcontent, tablinks;
             tabcontent = document.getElementsByClassName("tabcontent");
-            for (i = 0; i < tabcontent.length; i++) {{
+            for (i = 0; i < tabcontent.length; i++) {
                 tabcontent[i].style.display = "none";
-            }}
+            }
             tablinks = document.getElementsByClassName("tablinks");
-            for (i = 0; i < tablinks.length; i++) {{
+            for (i = 0; i < tablinks.length; i++) {
                 tablinks[i].className = tablinks[i].className.replace(" active", "");
-            }}
+            }
             document.getElementById(tabName).style.display = "block";
             evt.currentTarget.className += " active";
-        }}
+        }
 
-        document.addEventListener('DOMContentLoaded', function() {{
+        document.addEventListener('DOMContentLoaded', function() {
             const ctx = document.getElementById('rankChart').getContext('2d');
             const historyData = {history_data_json};
             const dates = historyData.map(entry => entry.date);
             const ranks = historyData.map(entry => entry.rank);
-            new Chart(ctx, {{
+            new Chart(ctx, {
                 type: 'line',
-                data: {{ 
+                data: { 
                     labels: dates, 
-                    datasets: [{{
+                    datasets: [{
                         label: 'Rank Over Time', 
                         data: ranks, 
                         borderColor: '#e6b800', 
                         backgroundColor: 'rgba(230, 184, 0, 0.2)', 
                         fill: true, 
                         tension: 0.4 
-                    }}] 
-                }},
-                options: {{ 
-                    scales: {{ 
-                        y: {{ 
+                    }] 
+                },
+                options: { 
+                    scales: { 
+                        y: { 
                             beginAtZero: true, 
-                            title: {{ display: true, text: 'Rank', color: '#e6b800' }}, 
-                            ticks: {{ stepSize: 1, color: '#ffffff' }}, 
+                            title: { display: true, text: 'Rank', color: '#e6b800' }, 
+                            ticks: { stepSize: 1, color: '#ffffff' }, 
                             suggestedMax: {len(chats) + 1},
-                            grid: {{ color: '#3b4a6b' }}
-                        }}, 
-                        x: {{ 
-                            title: {{ display: true, text: 'Date', color: '#e6b800' }}, 
-                            ticks: {{ color: '#ffffff' }}, 
-                            grid: {{ color: '#3b4a6b' }}
-                        }} 
-                    }}, 
-                    plugins: {{ 
-                        legend: {{ display: true, labels: {{ color: '#e6b800' }} }} 
-                    }} 
-                }}
-            }});
+                            grid: { color: '#3b4a6b' }
+                        }, 
+                        x: { 
+                            title: { display: true, text: 'Date', color: '#e6b800' }, 
+                            ticks: { color: '#ffffff' }, 
+                            grid: { color: '#3b4a6b' }
+                        } 
+                    }, 
+                    plugins: { 
+                        legend: { display: true, labels: { color: '#e6b800' } } 
+                    } 
+                }
+            });
 
             const videos = document.querySelectorAll('.grid-item video');
-            videos.forEach(video => {{
-                video.addEventListener('mouseover', () => {{
-                    video.play().catch(error => {{
+            videos.forEach(video => {
+                video.addEventListener('mouseover', () => {
+                    video.play().catch(error => {
                         console.error('Error playing video:', error);
-                    }});
-                }});
-                video.addEventListener('mouseout', () => {{
+                    });
+                });
+                video.addEventListener('mouseout', () => {
                     video.pause();
-                }});
-            }});
+                });
+            });
 
             sortTitlesTable(0, -1);
-        }});
+        });
 
         let titlesSortDirections = [-1, 0, 0];
-        function sortTitlesTable(columnIndex, forceDirection) {{
+        function sortTitlesTable(columnIndex, forceDirection) {
             const tbody = document.getElementById('titlesTableBody');
             const rows = Array.from(tbody.getElementsByTagName('tr'));
             const direction = forceDirection !== undefined ? forceDirection : (titlesSortDirections[columnIndex] === 1 ? -1 : 1);
-            rows.sort((a, b) => {{
+            rows.sort((a, b) => {
                 let aValue = a.cells[columnIndex].innerText;
                 let bValue = b.cells[columnIndex].innerText;
-                if (columnIndex === 0) {{ 
+                if (columnIndex === 0) { 
                     aValue = parseInt(aValue);
                     bValue = parseInt(bValue);
                     return direction * (aValue - bValue);
-                }} else if (columnIndex === 2) {{ 
+                } else if (columnIndex === 2) { 
                     aValue = new Date(aValue);
                     bValue = new Date(bValue);
                     return direction * (aValue - bValue);
-                }} else if (columnIndex === 1) {{ 
+                } else if (columnIndex === 1) { 
                     return direction * aValue.localeCompare(bValue);
-                }}
+                }
                 return 0;
-            }});
-            while (tbody.firstChild) {{ 
+            });
+            while (tbody.firstChild) { 
                 tbody.removeChild(tbody.firstChild); 
-            }}
+            }
             rows.forEach(row => tbody.appendChild(row));
             titlesSortDirections[columnIndex] = direction;
             titlesSortDirections = titlesSortDirections.map((d, i) => i === columnIndex ? d : 0);
             sortTitlesGrid(columnIndex, direction);
-        }}
+        }
 
-        function sortTitlesGrid(columnIndex, direction) {{
+        function sortTitlesGrid(columnIndex, direction) {
             const grid = document.getElementById('titlesGrid');
             const items = Array.from(grid.getElementsByClassName('grid-item'));
-            items.sort((a, b) => {{
+            items.sort((a, b) => {
                 let aValue, bValue;
-                if (columnIndex === 0) {{ 
+                if (columnIndex === 0) { 
                     aValue = parseInt(a.querySelector('.date').innerText.split('S.No: ')[1].split(' | ')[0]);
                     bValue = parseInt(b.querySelector('.date').innerText.split('S.No: ')[1].split(' | ')[0]);
                     return direction * (aValue - bValue);
-                }} else if (columnIndex === 1) {{ 
+                } else if (columnIndex === 1) { 
                     aValue = a.querySelector('.title').innerText;
                     bValue = b.querySelector('.title').innerText;
                     return direction * aValue.localeCompare(bValue);
-                }} else if (columnIndex === 2) {{ 
+                } else if (columnIndex === 2) { 
                     aValue = new Date(a.querySelector('.date').innerText.split(' | ')[1]);
                     bValue = new Date(b.querySelector('.date').innerText.split(' | ')[1]);
                     return direction * (aValue - bValue);
-                }}
+                }
                 return 0;
-            }});
-            while (grid.firstChild) {{ 
+            });
+            while (grid.firstChild) { 
                 grid.removeChild(grid.firstChild); 
-            }}
+            }
             items.forEach(item => grid.appendChild(item));
-        }}
+        }
     </script>
 </body>
 </html>
@@ -759,7 +763,7 @@ for chat in chats:
             'total titles': titles_count,
             'html_file': html_file,
             'html_content': html_content,
-            'photo_file_name': f"{github_raw_base}/Photos/{group_name}/{photo_file_name}" if photo_file_name else 'https://via.placeholder.com/300'
+            'photo_file_name': f"{github_raw_base}/Photos/{photo_file_name}" if photo_file_name else 'https://via.placeholder.com/300'
         })
 
 # Calculate scores
@@ -835,7 +839,7 @@ if up_groups or down_groups or unchanged_groups:
                 last_rank_date = entry['last rank date']
                 last_rank_display = f"{last_rank} ({last_rank_date})" if last_rank != 'N/A' else 'N/A'
                 up_down = entry['up down']
-                up_down_img = 'https://via.placeholder.com/20'  # Placeholder if image inaccessible
+                up_down_img = 'https://via.placeholder.com/20'
                 if up_down > 0:
                     up_url = f"{github_raw_base}/Photos/up.png"
                     up_down_img = up_url if is_url_accessible(up_url) else up_down_img
@@ -872,7 +876,7 @@ for entry in sorted_data:
     last_rank_date = entry['last rank date']
     last_rank_display = f"{last_rank} ({last_rank_date})" if last_rank != 'N/A' else 'N/A'
     up_down = entry['up down']
-    up_down_img = 'https://via.placeholder.com/20'  # Placeholder if image inaccessible
+    up_down_img = 'https://via.placeholder.com/20'
     if up_down != 'N/A':
         if up_down > 0:
             up_url = f"{github_raw_base}/Photos/up.png"
@@ -910,45 +914,45 @@ ranking_html_content = f"""<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PS Ranking - {current_date}</title>
     <style>
-        body {{ font-family: Arial, sans-serif; background-color: #1e2a44; color: #ffffff; margin: 20px; text-align: center; }}
-        h1, h2 {{ color: #e6b800; }}
-        table {{ width: 80%; margin: 20px auto; border-collapse: collapse; background-color: #2a3a5c; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); }}
-        th, td {{ border: 1px solid #3b4a6b; text-align: center; vertical-align: middle; padding: 15px; color: #ffffff; }}
-        th {{ background-color: #e6b800; color: #1e2a44; cursor: pointer; }}
-        th:hover {{ background-color: #b30000; }}
-        tr:hover {{ background-color: #3b4a6b; }}
-        .up-down-img {{ width: 20px; height: 20px; vertical-align: middle; }}
-        a {{ text-decoration: none; color: #e6b800; }}
-        a:hover {{ color: #b30000; text-decoration: underline; }}
-        .flip-card {{ background-color: transparent; width: 300px; height: 300px; perspective: 1000px; margin: 10px auto; }}
-        .flip-card-inner {{ position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); }}
-        .flip-card:hover .flip-card-inner {{ transform: rotateY(180deg); }}
-        .flip-card-front, .flip-card-back {{ position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 5px; }}
-        .flip-card-front {{ background-color: #2a3a5c; color: #ffffff; }}
-        .flip-card-back {{ background-color: #3b4a6b; color: #e6b800; transform: rotateY(180deg); display: flex; justify-content: center; align-items: center; flex-direction: column; }}
-        .flip-card-back h1 {{ margin: 0; font-size: 24px; word-wrap: break-word; padding: 10px; }}
-        .mover-info {{ display: flex; flex-direction: column; align-items: center; gap: 10px; width: 320px; }}
-        .mover-info p {{ margin: 5px 0; font-size: 16px; }}
-        #topMoversTable td {{ min-width: 340px; }}
-        @media only screen and (max-width: 1200px) {{ 
-            table {{ width: 90%; }} 
-            .flip-card {{ width: 200px; height: 200px; }} 
-            .flip-card-back h1 {{ font-size: 18px; }}
-            th, td {{ font-size: 14px; padding: 10px; }}
-            .mover-info {{ width: 220px; }}
-            .mover-info p {{ font-size: 14px; }}
-            #topMoversTable td {{ min-width: 240px; }}
-        }}
-        @media only screen and (max-width: 768px) {{ 
-            table {{ width: 95%; }} 
-            .flip-card {{ width: 150px; height: 150px; }} 
-            .flip-card-back h1 {{ font-size: 16px; }}
-            th, td {{ font-size: 12px; padding: 8px; }}
-            .mover-info {{ width: 170px; }}
-            .mover-info p {{ font-size: 12px; }}
-            #topMoversTable td {{ min-width: 190px; }}
-            #topMoversTable {{ display: block; overflow-x: auto; white-space: nowrap; }}
-        }}
+        body { font-family: Arial, sans-serif; background-color: #1e2a44; color: #ffffff; margin: 20px; text-align: center; }
+        h1, h2 { color: #e6b800; }
+        table { width: 80%; margin: 20px auto; border-collapse: collapse; background-color: #2a3a5c; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); }
+        th, td { border: 1px solid #3b4a6b; text-align: center; vertical-align: middle; padding: 15px; color: #ffffff; }
+        th { background-color: #e6b800; color: #1e2a44; cursor: pointer; }
+        th:hover { background-color: #b30000; }
+        tr:hover { background-color: #3b4a6b; }
+        .up-down-img { width: 20px; height: 20px; vertical-align: middle; }
+        a { text-decoration: none; color: #e6b800; }
+        a:hover { color: #b30000; text-decoration: underline; }
+        .flip-card { background-color: transparent; width: 300px; height: 300px; perspective: 1000px; margin: 10px auto; }
+        .flip-card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); }
+        .flip-card:hover .flip-card-inner { transform: rotateY(180deg); }
+        .flip-card-front, .flip-card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 5px; }
+        .flip-card-front { background-color: #2a3a5c; color: #ffffff; }
+        .flip-card-back { background-color: #3b4a6b; color: #e6b800; transform: rotateY(180deg); display: flex; justify-content: center; align-items: center; flex-direction: column; }
+        .flip-card-back h1 { margin: 0; font-size: 24px; word-wrap: break-word; padding: 10px; }
+        .mover-info { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 320px; }
+        .mover-info p { margin: 5px 0; font-size: 16px; }
+        #topMoversTable td { min-width: 340px; }
+        @media only screen and (max-width: 1200px) { 
+            table { width: 90%; } 
+            .flip-card { width: 200px; height: 200px; } 
+            .flip-card-back h1 { font-size: 18px; }
+            th, td { font-size: 14px; padding: 10px; }
+            .mover-info { width: 220px; }
+            .mover-info p { font-size: 14px; }
+            #topMoversTable td { min-width: 240px; }
+        }
+        @media only screen and (max-width: 768px) { 
+            table { width: 95%; } 
+            .flip-card { width: 150px; height: 150px; } 
+            .flip-card-back h1 { font-size: 16px; }
+            th, td { font-size: 12px; padding: 8px; }
+            .mover-info { width: 170px; }
+            .mover-info p { font-size: 12px; }
+            #topMoversTable td { min-width: 190px; }
+            #topMoversTable { display: block; overflow-x: auto; white-space: nowrap; }
+        }
     </style>
 </head>
 <body>
@@ -983,51 +987,51 @@ ranking_html_content = f"""<!DOCTYPE html>
     </table>
     <script>
         let sortDirections = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-        function sortTable(columnIndex) {{
+        function sortTable(columnIndex) {
             if (columnIndex === 4) return;
             const tbody = document.getElementById('tableBody');
             const rows = Array.from(tbody.getElementsByTagName('tr'));
             const isNumeric = [true, true, true, false, false, true, true, true, true, true, true, true];
             const direction = sortDirections[columnIndex] === 1 ? -1 : 1;
-            rows.sort((a, b) => {{
+            rows.sort((a, b) => {
                 let aValue = a.cells[columnIndex].textContent;
                 let bValue = b.cells[columnIndex].textContent;
-                if (columnIndex === 1) {{ 
+                if (columnIndex === 1) { 
                     if (aValue === 'N/A' && bValue === 'N/A') return 0;
                     if (aValue === 'N/A') return direction * 1;
                     if (bValue === 'N/A') return direction * -1;
                     aValue = parseFloat(aValue.split(' ')[0]);
                     bValue = parseFloat(bValue.split(' ')[0]);
                     return direction * (aValue - bValue);
-                }} else if (columnIndex === 2) {{ 
+                } else if (columnIndex === 2) { 
                     if (aValue === 'N/A' && bValue === 'N/A') return 0;
                     if (aValue === 'N/A') return direction * 1;
                     if (bValue === 'N/A') return direction * -1;
                     aValue = parseFloat(aValue.split(' ')[0]);
                     bValue = parseFloat(bValue.split(' ')[0]);
                     return direction * (aValue - bValue);
-                }} else if (columnIndex === 5) {{ 
+                } else if (columnIndex === 5) { 
                     if (aValue === 'N/A' && bValue === 'N/A') return 0;
                     if (aValue === 'N/A') return direction * 1;
                     if (bValue === 'N/A') return direction * -1;
                     aValue = parseInt(aValue);
                     bValue = parseInt(bValue);
                     return direction * (aValue - bValue);
-                }}
-                if (isNumeric[columnIndex]) {{ 
+                }
+                if (isNumeric[columnIndex]) { 
                     aValue = parseFloat(aValue) || aValue; 
                     bValue = parseFloat(bValue) || bValue; 
                     return direction * (aValue - bValue); 
-                }}
+                }
                 return direction * aValue.localeCompare(bValue);
-            }});
-            while (tbody.firstChild) {{ 
+            });
+            while (tbody.firstChild) { 
                 tbody.removeChild(tbody.firstChild); 
-            }}
+            }
             rows.forEach(row => tbody.appendChild(row));
             sortDirections[columnIndex] = direction;
             sortDirections = sortDirections.map((d, i) => i === columnIndex ? d : 0);
-        }}
+        }
     </script>
 </body>
 </html>
