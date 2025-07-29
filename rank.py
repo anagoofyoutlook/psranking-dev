@@ -138,6 +138,15 @@ def is_url_accessible(url):
     except requests.RequestException:
         return False
 
+# Validate up/down/no-change images
+indicator_images = ['up.png', 'down.png', '0.png']
+for img in indicator_images:
+    img_url = f"{github_raw_base}/Photos/{img}"
+    if is_url_accessible(img_url):
+        print(f"Index indicator image accessible: {img_url}")
+    else:
+        print(f"Index indicator image inaccessible: {img_url}")
+
 # Function to find media file by serial number
 def find_serial_match_media(serial_number, media_files):
     print(f"Searching for serial number '{serial_number}' in media files: {media_files}")
@@ -302,16 +311,31 @@ for chat in chats:
         """ + ''.join(f'<div class="column"><img class="demo cursor" src="{p}" style="width:100%" onclick="currentSlide({i})" alt="{group_name} Photo {i}"></div>' for i, p in enumerate(photo_paths, 1)) + '</div></div>'
 
         # Single photo for group (used in index.html)
-        photo_file_name = next((f"{group_name}{ext}" for ext in ('.jpg', '.jpeg', '.png', '.gif', '.webp') if os.path.exists(os.path.join(photos_folder, f"{group_name}/{f}"))), None)
-        if photo_file_name:
-            photo_url = f"{github_raw_base}/Photos/{group_name}/{photo_file_name}"
-            if is_url_accessible(photo_url):
-                print(f"Group {group_name}: Found single photo at {photo_url}")
-            else:
-                print(f"Group {group_name}: Single photo inaccessible at {photo_url}, using placeholder")
-                photo_file_name = None
-        else:
-            print(f"Group {group_name}: No single photo found in {photos_folder}/{group_name}/")
+        photo_file_name = None
+        if os.path.exists(group_subfolder):
+            # First try <group_name>.{ext}
+            photo_file_name = next((f"{group_name}{ext}" for ext in ('.jpg', '.jpeg', '.png', '.gif', '.webp') if os.path.exists(os.path.join(group_subfolder, f"{group_name}{ext}"))), None)
+            if photo_file_name:
+                photo_url = f"{github_raw_base}/Photos/{group_name}/{photo_file_name}"
+                if is_url_accessible(photo_url):
+                    print(f"Group {group_name}: Found single photo at {photo_url}")
+                else:
+                    print(f"Group {group_name}: Single photo inaccessible at {photo_url}, trying another image")
+                    photo_file_name = None
+            # If no <group_name>.{ext}, pick any image
+            if not photo_file_name:
+                image_files = [f for f in os.listdir(group_subfolder) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) and os.path.isfile(os.path.join(group_subfolder, f))]
+                if image_files:
+                    photo_file_name = random.choice(image_files)
+                    photo_url = f"{github_raw_base}/Photos/{group_name}/{photo_file_name}"
+                    if is_url_accessible(photo_url):
+                        print(f"Group {group_name}: Selected random photo at {photo_url}")
+                    else:
+                        print(f"Group {group_name}: Random photo inaccessible at {photo_url}, using placeholder")
+                        photo_file_name = None
+        if not photo_file_name:
+            print(f"Group {group_name}: No suitable photo found in {group_subfolder}, using placeholder")
+            photo_file_name = None
 
         if group_name not in history_data:
             history_data[group_name] = []
@@ -819,12 +843,17 @@ if up_groups or down_groups or unchanged_groups:
                 last_rank_date = entry['last rank date']
                 last_rank_display = f"{last_rank} ({last_rank_date})" if last_rank != 'N/A' else 'N/A'
                 up_down = entry['up down']
+                up_down_img = 'https://via.placeholder.com/20'  # Placeholder if image inaccessible
                 if up_down > 0:
-                    up_down_content = f"{up_down} <img src='{github_raw_base}/Photos/up.png' alt='Up' class='up-down-img'>"
+                    up_url = f"{github_raw_base}/Photos/up.png"
+                    up_down_img = up_url if is_url_accessible(up_url) else up_down_img
                 elif up_down < 0:
-                    up_down_content = f"{up_down} <img src='{github_raw_base}/Photos/down.png' alt='Down' class='up-down-img'>"
+                    down_url = f"{github_raw_base}/Photos/down.png"
+                    up_down_img = down_url if is_url_accessible(down_url) else up_down_img
                 else:
-                    up_down_content = f"{up_down} <img src='{github_raw_base}/Photos/0.png' alt='No Change' class='up-down-img'>"
+                    zero_url = f"{github_raw_base}/Photos/0.png"
+                    up_down_img = zero_url if is_url_accessible(zero_url) else up_down_img
+                print(f"Top Movers: Group {group_name}, Up Down image: {up_down_img}")
                 top_movers_rows += f"""
                     <td>
                         <div class="mover-info">
@@ -832,7 +861,7 @@ if up_groups or down_groups or unchanged_groups:
                             <div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="{photo_src}" alt="{group_name}" style="width:300px;height:300px;object-fit:cover;"></div><div class="flip-card-back"><a href="{html_link}" target="_blank" style="color: #e6b800; text-decoration: none;"><h1>{group_name}</h1></a></div></div></div>
                             <p><strong>Rank:</strong> {entry['rank']}</p>
                             <p><strong>Last Rank:</strong> {last_rank_display}</p>
-                            <p><strong>Up Down:</strong> {up_down_content}</p>
+                            <p><strong>Up Down:</strong> {up_down} <img src="{up_down_img}" alt="Up Down" class="up-down-img"></p>
                         </div>
                     </td>
                 """
@@ -851,19 +880,23 @@ for entry in sorted_data:
     last_rank_date = entry['last rank date']
     last_rank_display = f"{last_rank} ({last_rank_date})" if last_rank != 'N/A' else 'N/A'
     up_down = entry['up down']
-    up_down_content = up_down
+    up_down_img = 'https://via.placeholder.com/20'  # Placeholder if image inaccessible
     if up_down != 'N/A':
         if up_down > 0:
-            up_down_content = f"{up_down} <img src='{github_raw_base}/Photos/up.png' alt='Up' class='up-down-img'>"
+            up_url = f"{github_raw_base}/Photos/up.png"
+            up_down_img = up_url if is_url_accessible(up_url) else up_down_img
         elif up_down < 0:
-            up_down_content = f"{up_down} <img src='{github_raw_base}/Photos/down.png' alt='Down' class='up-down-img'>"
+            down_url = f"{github_raw_base}/Photos/down.png"
+            up_down_img = down_url if is_url_accessible(down_url) else up_down_img
         else:
-            up_down_content = f"{up_down} <img src='{github_raw_base}/Photos/0.png' alt='No Change' class='up-down-img'>"
+            zero_url = f"{github_raw_base}/Photos/0.png"
+            up_down_img = zero_url if is_url_accessible(zero_url) else up_down_img
+    print(f"Ranking Table: Group {group_name}, Photo: {photo_src}, Up Down image: {up_down_img}")
     table_rows += f"""
     <tr>
         <td>{entry['rank']}</td>
         <td>{last_rank_display}</td>
-        <td>{up_down_content}</td>
+        <td>{up_down} <img src="{up_down_img}" alt="Up Down" class="up-down-img"></td>
         <td><a href="{html_link}" target="_blank">{group_name}</a></td>
         <td><div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="{photo_src}" alt="{group_name}" style="width:300px;height:300px;object-fit:cover;"></div><div class="flip-card-back"><a href="{html_link}" target="_blank" style="color: #e6b800; text-decoration: none;"><h1>{group_name}</h1></a></div></div></div></td>
         <td>{last_scene}</td>
