@@ -1,4 +1,3 @@
-
 import json
 import csv
 import os
@@ -8,6 +7,7 @@ import re
 import zipfile
 import random
 from html import escape
+import requests  # Added for URL validation
 
 # Define folder paths
 input_folder = 'PS'
@@ -17,8 +17,8 @@ photos_folder = 'Photos'
 history_csv_file = os.path.join(output_folder, 'history.csv')
 csv_file = os.path.join(output_folder, 'output.csv')
 
-# GitHub raw content base URL (replace <username> and <repo> with actual values)
-github_raw_base = 'https://raw.githubusercontent.com/<username>/<repo>/main'
+# GitHub raw content base URL
+github_raw_base = 'https://raw.githubusercontent.com/anagoofyoutlook/psranking-dev/main'
 
 # Ensure directories exist
 for folder in [input_folder, output_folder, html_subfolder, photos_folder]:
@@ -130,15 +130,27 @@ def sanitize_filename(name):
     name = re.sub(r'\s+', '_', name)
     return name.lower()
 
+# Function to check if URL is accessible
+def is_url_accessible(url):
+    try:
+        response = requests.head(url, timeout=5)
+        return response.status_code == 200
+    except requests.RequestException:
+        return False
+
 # Function to find media file by serial number
 def find_serial_match_media(serial_number, media_files):
     print(f"Searching for serial number '{serial_number}' in media files: {media_files}")
     for media in media_files:
         media_base = os.path.splitext(media)[0]
         if media_base == str(serial_number):
-            print(f"Match found for serial number '{serial_number}': '{media}'")
-            return media
-    print(f"No match found for serial number '{serial_number}'")
+            media_url = f"{github_raw_base}/Photos/{group_name}/thumbs/{media}"
+            if is_url_accessible(media_url):
+                print(f"Match found for serial number '{serial_number}': '{media}' at {media_url}")
+                return media
+            else:
+                print(f"Media '{media}' at {media_url} is inaccessible")
+    print(f"No accessible match found for serial number '{serial_number}'")
     return None
 
 # Process each chat
@@ -231,6 +243,9 @@ for chat in chats:
                                 media_path = f"{github_raw_base}/Photos/{group_name}/{random_photo}"
                                 is_gif = random_photo.lower().endswith('.gif')
                                 print(f"  Using fallback photo: {media_path}")
+                                if not is_url_accessible(media_path):
+                                    print(f"  Fallback photo inaccessible: {media_path}")
+                                    media_path = 'https://via.placeholder.com/600x300'
                         titles.append({
                             'title': title,
                             'message_id': message_id,
@@ -272,7 +287,9 @@ for chat in chats:
         photo_paths = []
         if os.path.exists(group_subfolder):
             photo_paths = [f"{github_raw_base}/Photos/{group_name}/{f}" for f in os.listdir(group_subfolder) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) and os.path.isfile(os.path.join(group_subfolder, f))]
-            print(f"Group {group_name}: Found {len(photo_paths)} photos in {group_subfolder}: {photo_paths}")
+            # Verify accessibility of slideshow photos
+            photo_paths = [p for p in photo_paths if is_url_accessible(p)]
+            print(f"Group {group_name}: Found {len(photo_paths)} accessible photos in {group_subfolder}: {photo_paths}")
         if not photo_paths:
             photo_paths = ['https://via.placeholder.com/1920x800']
             print(f"Group {group_name}: Using placeholder for slideshow")
@@ -284,9 +301,15 @@ for chat in chats:
             <div class="row">
         """ + ''.join(f'<div class="column"><img class="demo cursor" src="{p}" style="width:100%" onclick="currentSlide({i})" alt="{group_name} Photo {i}"></div>' for i, p in enumerate(photo_paths, 1)) + '</div></div>'
 
+        # Single photo for group (used in index.html)
         photo_file_name = next((f"{group_name}{ext}" for ext in ('.jpg', '.jpeg', '.png', '.gif', '.webp') if os.path.exists(os.path.join(photos_folder, f"{group_name}/{f}"))), None)
         if photo_file_name:
-            print(f"Group {group_name}: Found single photo at {photos_folder}/{group_name}/{photo_file_name}")
+            photo_url = f"{github_raw_base}/Photos/{group_name}/{photo_file_name}"
+            if is_url_accessible(photo_url):
+                print(f"Group {group_name}: Found single photo at {photo_url}")
+            else:
+                print(f"Group {group_name}: Single photo inaccessible at {photo_url}, using placeholder")
+                photo_file_name = None
         else:
             print(f"Group {group_name}: No single photo found in {photos_folder}/{group_name}/")
 
@@ -720,7 +743,7 @@ for chat in chats:
             'total titles': titles_count,
             'html_file': html_file,
             'html_content': html_content,
-            'photo_file_name': f"{github_raw_base}/Photos/{group_name}/{photo_file_name}" if photo_file_name else None
+            'photo_file_name': f"{github_raw_base}/Photos/{group_name}/{photo_file_name}" if photo_file_name else 'https://via.placeholder.com/300'
         })
 
 # Calculate scores
@@ -790,7 +813,7 @@ if up_groups or down_groups or unchanged_groups:
             top_movers_rows += f'<tr><th style="background-color: #b30000;">{title}</th></tr><tr>'
             for entry in group_list:
                 group_name = escape(entry['group name'])
-                photo_src = entry['photo_file_name'] if entry['photo_file_name'] else 'https://via.placeholder.com/300'
+                photo_src = entry['photo_file_name']
                 html_link = f"HTML/{entry['html_file']}"
                 last_rank = entry['last rank']
                 last_rank_date = entry['last rank date']
@@ -821,7 +844,7 @@ else:
 table_rows = ''
 for entry in sorted_data:
     group_name = escape(entry['group name'])
-    photo_src = entry['photo_file_name'] if entry['photo_file_name'] else 'https://via.placeholder.com/300'
+    photo_src = entry['photo_file_name']
     html_link = f"HTML/{entry['html_file']}"
     last_scene = f"{entry['Datedifference']} days" if entry['Datedifference'] != 'N/A' else 'N/A'
     last_rank = entry['last rank']
