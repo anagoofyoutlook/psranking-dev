@@ -17,10 +17,15 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install requests
+      - name: Ensure input files and folders
+        run: |
+          mkdir -p PS Photos docs docs/HTML
+          # Uncomment and update the URL if result.zip is external
+          # wget -O PS/result.zip https://example.com/result.zip || true
       - name: Run ranking script
         run: python main.py
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs 
+          publish_dir: ./docs
