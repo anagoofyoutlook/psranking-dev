@@ -1,3 +1,4 @@
+# html_generator.py (updated with CSS and structure from rank.py)
 import json
 import os
 import csv
@@ -5,6 +6,76 @@ from datetime import datetime
 import utils
 
 def generate_index_html(sorted_data, output_csv_file, history_csv_file, github_raw_base, output_folder):
+    # Sort for top movers (top risers)
+    top_movers = sorted([g for g in sorted_data if g.get('up_down') != 'N/A' and g.get('up_down') > 0], 
+                        key=lambda x: x.get('up_down', 0), reverse=True)[:5]
+
+    # Generate top movers rows
+    top_movers_rows = ''
+    for group in top_movers:
+        group_name = group.get('group_name', 'Unknown')
+        rank = group.get('rank', 'N/A')
+        up_down = group.get('up_down', 'N/A')
+        photo_url = group.get('photo_file_name', '') if utils.is_url_accessible(group.get('photo_file_name', '')) else f"{github_raw_base}/Photos/placeholder.png"
+        html_link = f"HTML/{group.get('html_file', '')}"
+        up_down_str = f'<p style="color: green;">+{up_down} Up</p>' if up_down != 'N/A' else '<p>N/A</p>'
+        top_movers_rows += f'''
+            <tr>
+                <td>
+                    <div class="mover-info">
+                        <p>Rank: {rank}</p>
+                        <p>{group_name}</p>
+                        <img src="{photo_url}" alt="{group_name}" style="width:200px;height:200px;object-fit:cover;">
+                        {up_down_str}
+                    </div>
+                </td>
+            </tr>
+        '''
+
+    # Generate main table rows
+    table_rows = ''
+    for group in sorted_data:
+        group_name = group.get('group_name', 'Unknown')
+        photo_url = group.get('photo_file_name', '') if utils.is_url_accessible(group.get('photo_file_name', '')) else f"{github_raw_base}/Photos/placeholder.png"
+        html_link = f"HTML/{group.get('html_file', '')}"
+        flip_card = f'''
+            <div class="flip-card">
+                <div class="flip-card-inner">
+                    <div class="flip-card-front">
+                        <img src="{photo_url}" alt="{group_name}" style="width:300px;height:300px;object-fit:cover;">
+                    </div>
+                    <div class="flip-card-back">
+                        <a href="{html_link}" target="_blank" style="color: #e6b800; text-decoration: none;"><h1>{group_name}</h1></a>
+                    </div>
+                </div>
+            </div>
+        '''
+        up_down = group.get('up_down', 'N/A')
+        if up_down != 'N/A':
+            color = "green" if up_down > 0 else "red"
+            direction = "Up" if up_down > 0 else "Down"
+            up_down_str = f'<span style="color: {color};">{up_down} {direction}</span>'
+        else:
+            up_down_str = 'N/A'
+        last_scene = group.get('Datedifference', 'N/A')
+        table_rows += f'''
+            <tr>
+                <td>{group.get('rank', 'N/A')}</td>
+                <td>{group.get('last_rank', 'N/A')}</td>
+                <td>{up_down_str}</td>
+                <td><a href="{html_link}" target="_blank">{group_name}</a></td>
+                <td>{flip_card}</td>
+                <td>{last_scene}</td>
+                <td>{group.get('total titles', 'N/A')}</td>
+                <td>{group.get('count of the hashtag "#FIVE"', 0)}</td>
+                <td>{group.get('count of the hashtag "#FOUR"', 0)}</td>
+                <td>{group.get('count of the hashtag "#Three"', 0)}</td>
+                <td>{group.get('count of the hashtag "#SceneType"', 0)}</td>
+                <td>{group.get('score', 0):.2f}</td>
+            </tr>
+        '''
+
+    # HTML content with CSS from rank.py
     ranking_html_content = f"""
     <!DOCTYPE html>
     <html lang="en">
@@ -13,102 +84,125 @@ def generate_index_html(sorted_data, output_csv_file, history_csv_file, github_r
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>PS Ranking - {datetime.now().strftime('%Y-%m-%d')}</title>
         <style>
-            body {{ font-family: Arial, sans-serif; margin: 20px; background-color: #f0f0f0; }}
-            .container {{ max-width: 1200px; margin: auto; }}
-            .tabs {{ overflow: hidden; border-bottom: 1px solid #ccc; margin-bottom: 20px; }}
-            .tablink {{ background-color: #555; color: white; float: left; border: none; outline: none; cursor: pointer; padding: 14px 16px; font-size: 17px; }}
-            .tablink:hover {{ background-color: #777; }}
-            .tabcontent {{ display: none; padding: 6px 12px; border: 1px solid #ccc; border-top: none; }}
-            table {{ width: 100%; border-collapse: collapse; margin-bottom: 20px; }}
-            th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
-            th {{ background-color: #f2f2f2; }}
-            .grid-container {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }}
-            .grid-item {{ background-color: white; border: 1px solid #ddd; padding: 10px; text-align: center; }}
-            .grid-item img {{ max-width: 100%; height: auto; }}
+            body {{ font-family: Arial, sans-serif; background-color: #1e2a44; color: #ffffff; margin: 20px; text-align: center; }}
+            h1, h2 {{ color: #e6b800; }}
+            table {{ width: 80%; margin: 20px auto; border-collapse: collapse; background-color: #2a3a5c; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); }}
+            th, td {{ border: 1px solid #3b4a6b; text-align: center; vertical-align: middle; padding: 15px; color: #ffffff; }}
+            th {{ background-color: #e6b800; color: #1e2a44; cursor: pointer; }}
+            th:hover {{ background-color: #b30000; }}
+            tr:hover {{ background-color: #3b4a6b; }}
+            .up-down-img {{ width: 20px; height: 20px; vertical-align: middle; }}
+            a {{ text-decoration: none; color: #e6b800; }}
+            a:hover {{ color: #b30000; text-decoration: underline; }}
+            .flip-card {{ background-color: transparent; width: 300px; height: 300px; perspective: 1000px; margin: 10px auto; }}
+            .flip-card-inner {{ position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); }}
+            .flip-card:hover .flip-card-inner {{ transform: rotateY(180deg); }}
+            .flip-card-front, .flip-card-back {{ position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 5px; }}
+            .flip-card-front {{ background-color: #2a3a5c; color: #ffffff; }}
+            .flip-card-back {{ background-color: #3b4a6b; color: #e6b800; transform: rotateY(180deg); display: flex; justify-content: center; align-items: center; flex-direction: column; }}
+            .flip-card-back h1 {{ margin: 0; font-size: 24px; word-wrap: break-word; padding: 10px; }}
+            .mover-info {{ display: flex; flex-direction: column; align-items: center; gap: 10px; width: 320px; }}
+            .mover-info p {{ margin: 5px 0; font-size: 16px; }}
+            #topMoversTable td {{ min-width: 340px; }}
+            @keyframes countUp {{ from {{ content: "0"; }} to {{ content: attr(data-rank); }} }}
+            @media only screen and (max-width: 1200px) {{ 
+                table {{ width: 90%; }} 
+                .flip-card {{ width: 200px; height: 200px; }} 
+                .flip-card-back h1 {{ font-size: 18px; }}
+                th, td {{ font-size: 14px; padding: 10px; }}
+                .mover-info {{ width: 220px; }}
+                .mover-info p {{ font-size: 14px; }}
+                #topMoversTable td {{ min-width: 240px; }}
+            }}
+            @media only screen and (max-width: 768px) {{ 
+                table {{ width: 95%; }} 
+                .flip-card {{ width: 150px; height: 150px; }} 
+                .flip-card-back h1 {{ font-size: 16px; }}
+                th, td {{ font-size: 12px; padding: 8px; }}
+                .mover-info {{ width: 170px; }}
+                .mover-info p {{ font-size: 12px; }}
+                #topMoversTable {{ display: block; overflow-x: auto; white-space: nowrap; }}
+            }}
         </style>
     </head>
     <body>
-        <div class="container">
-            <h1>PS Ranking - {datetime.now().strftime('%Y-%m-%d')}</h1>
-            <div class="tabs">
-                <button class="tablink" onclick="openTab(event, 'RankingTableTab')">Ranking Table</button>
-                <button class="tablink" onclick="openTab(event, 'GridViewTab')">Grid View</button>
-            </div>
-            <div id="RankingTableTab" class="tabcontent">
-                <table>
-                    <tr>
-                        <th>Group Name</th>
-                        <th>Rank</th>
-                        <th>Last Rank</th>
-                        <th>Last Rank Date</th>
-                        <th>Rank Change</th>
-                        <th>Last Scene (Days)</th>
-                        <th>Total Titles</th>
-                        <th>#FIVE</th>
-                        <th>#FOUR</th>
-                        <th>#Three</th>
-                        <th>#SceneType</th>
-                        <th>Score</th>
-                    </tr>
-    """
-    for group in sorted_data:
-        group_name = group.get('group_name', 'Unknown')
-        rank_change = (
-            f'<img src="{github_raw_base}/Photos/up.png" alt="Up" width="20">' if isinstance(group.get('up_down'), (int, float)) and group.get('up_down') > 0
-            else f'<img src="{github_raw_base}/Photos/down.png" alt="Down" width="20">' if isinstance(group.get('up_down'), (int, float)) and group.get('up_down') < 0
-            else f'<img src="{github_raw_base}/Photos/0.png" alt="No Change" width="20">'
-        )
-        ranking_html_content += f"""
-                    <tr>
-                        <td><a href="HTML/{group.get('html_file', '')}">{group_name}</a></td>
-                        <td>{group.get('rank', 'N/A')}</td>
-                        <td>{group.get('last_rank', 'N/A')}</td>
-                        <td>{group.get('last_rank_date', 'N/A')}</td>
-                        <td>{rank_change}</td>
-                        <td>{group.get('Datedifference', 'N/A')}</td>
-                        <td>{group.get('total titles', 'N/A')}</td>
-                        <td>{group.get('count of the hashtag "#FIVE"', 0)}</td>
-                        <td>{group.get('count of the hashtag "#FOUR"', 0)}</td>
-                        <td>{group.get('count of the hashtag "#Three"', 0)}</td>
-                        <td>{group.get('count of the hashtag "#SceneType"', 0)}</td>
-                        <td>{group.get('score', 0):.2f}</td>
-                    </tr>
-        """
-    ranking_html_content += """
-                </table>
-            </div>
-            <div id="GridViewTab" class="tabcontent">
-                <div class="grid-container">
-    """
-    for group in sorted_data:
-        group_name = group.get('group_name', 'Unknown')
-        photo_url = group.get('photo_file_name', '') if utils.is_url_accessible(group.get('photo_file_name', '')) else f"{github_raw_base}/Photos/placeholder.png"
-        ranking_html_content += f"""
-                    <div class="grid-item">
-                        <a href="HTML/{group.get('html_file', '')}"><img src="{photo_url}" alt="{group_name}"></a>
-                        <p>{group_name}<br>Rank: {group.get('rank', 'N/A')}<br>Score: {group.get('score', 0):.2f}</p>
-                    </div>
-        """
-    ranking_html_content += """
-                </div>
-            </div>
-            <script>
-                function openTab(evt, tabName) {
-                    var i, tabcontent, tablinks;
-                    tabcontent = document.getElementsByClassName("tabcontent");
-                    for (i = 0; i < tabcontent.length; i++) {
-                        tabcontent[i].style.display = "none";
-                    }
-                    tablinks = document.getElementsByClassName("tablink");
-                    for (i = 0; i < tablinks.length; i++) {
-                        tablinks[i].className = tablinks[i].className.replace(" active", "");
-                    }
-                    document.getElementById(tabName).style.display = "block";
-                    evt.currentTarget.className += " active";
-                }
-                document.getElementsByClassName("tablink")[0].click();
-            </script>
-        </div>
+        <h1>PS Ranking - {datetime.now().strftime('%Y-%m-%d')}</h1>
+        <h2>Top Movers</h2>
+        <table id="topMoversTable">
+            <tbody>
+                {top_movers_rows}
+            </tbody>
+        </table>
+        <h2>Total Number of Groups: {len(sorted_data)}</h2>
+        <table id="rankingTable">
+            <thead>
+                <tr>
+                    <th onclick="sortTable(0)">Rank</th>
+                    <th onclick="sortTable(1)">Last Rank</th>
+                    <th onclick="sortTable(2)">Up Down</th>
+                    <th onclick="sortTable(3)">Group Name</th>
+                    <th>Photo</th>
+                    <th onclick="sortTable(5)">Last Scene</th>
+                    <th onclick="sortTable(6)">Total Titles</th>
+                    <th onclick="sortTable(7)">#FIVE</th>
+                    <th onclick="sortTable(8)">#FOUR</th>
+                    <th onclick="sortTable(9)">#Three</th>
+                    <th onclick="sortTable(10)">#SceneType</th>
+                    <th onclick="sortTable(11)">Score</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                {table_rows}
+            </tbody>
+        </table>
+        <script>
+            let sortDirections = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+            function sortTable(columnIndex) {{
+                if (columnIndex === 4) return;
+                const tbody = document.getElementById('tableBody');
+                const rows = Array.from(tbody.getElementsByTagName('tr'));
+                const isNumeric = [true, true, true, false, false, true, true, true, true, true, true, true];
+                const direction = sortDirections[columnIndex] === 1 ? -1 : 1;
+                rows.sort((a, b) => {{
+                    let aValue = a.cells[columnIndex].textContent;
+                    let bValue = b.cells[columnIndex].textContent;
+                    if (columnIndex === 1) {{ 
+                        if (aValue === 'N/A' && bValue === 'N/A') return 0;
+                        if (aValue === 'N/A') return direction * 1;
+                        if (bValue === 'N/A') return direction * -1;
+                        aValue = parseFloat(aValue.split(' ')[0]);
+                        bValue = parseFloat(bValue.split(' ')[0]);
+                        return direction * (aValue - bValue);
+                    }} else if (columnIndex === 2) {{ 
+                        if (aValue === 'N/A' && bValue === 'N/A') return 0;
+                        if (aValue === 'N/A') return direction * 1;
+                        if (bValue === 'N/A') return direction * -1;
+                        aValue = parseFloat(aValue.split(' ')[0]);
+                        bValue = parseFloat(bValue.split(' ')[0]);
+                        return direction * (aValue - bValue);
+                    }} else if (columnIndex === 5) {{ 
+                        if (aValue === 'N/A' && bValue === 'N/A') return 0;
+                        if (aValue === 'N/A') return direction * 1;
+                        if (bValue === 'N/A') return direction * -1;
+                        aValue = parseInt(aValue);
+                        bValue = parseInt(bValue);
+                        return direction * (aValue - bValue);
+                    }}
+                    if (isNumeric[columnIndex]) {{ 
+                        aValue = parseFloat(aValue) || aValue; 
+                        bValue = parseFloat(bValue) || bValue; 
+                        return direction * (aValue - bValue); 
+                    }}
+                    return direction * aValue.localeCompare(bValue);
+                }});
+                while (tbody.firstChild) {{ 
+                    tbody.removeChild(tbody.firstChild); 
+                }}
+                rows.forEach(row => tbody.appendChild(row));
+                sortDirections[columnIndex] = direction;
+                sortDirections = sortDirections.map((d, i) => i === columnIndex ? d : 0);
+            }}
+        </script>
     </body>
     </html>
     """
