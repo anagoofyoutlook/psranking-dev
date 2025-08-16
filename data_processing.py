@@ -3,6 +3,7 @@ import os
 import math
 import csv
 import zipfile
+import html_generator  # Added import
 from datetime import datetime, timedelta
 import random
 import re
