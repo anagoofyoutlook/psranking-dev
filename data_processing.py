@@ -39,7 +39,7 @@ def load_data(zip_path):
                 }
                 for msg in chat.get('messages', []):
                     if msg.get('type') == 'message':
-                        text = msg.get('text', '')  # Handle missing text
+                        text = msg.get('text', '')
                         if isinstance(text, list):
                             text = ''.join(str(t) for t in text)
                         group_data['messages'].append({
@@ -48,7 +48,7 @@ def load_data(zip_path):
                             'text': text,
                             'media': msg.get('file'),
                             'is_gif': msg.get('media_type') == 'animation',
-                            'action': msg.get('action')  # Include action for debugging
+                            'action': msg.get('action')
                         })
                     elif msg.get('action') == 'topic_created':
                         group_data['messages'].append({
@@ -90,7 +90,7 @@ def process_group_data(group, current_date, github_raw_base):
                 'is_gif': msg.get('is_gif', False),
                 'serial_number': len(titles) + 1
             })
-        text = msg.get('text', '')  # Handle missing text
+        text = msg.get('text', '')
         hashtags = extract_hashtags(text)
         for hashtag in hashtags:
             if hashtag in ratings_hashtags:
@@ -117,11 +117,11 @@ def process_group_data(group, current_date, github_raw_base):
         'telegram_group_id': telegram_group_id
     }
 
-def calculate_scores_and_ranks(all_data, max_messages, date_diffs, history_csv_file, html_subfolder, csv_file):
+def calculate_scores_and_ranks(all_data, max_messages, date_diffs, history_csv_file, html_subfolder, csv_file, github_raw_base):
     current_date = datetime.now()
     groups_data = []
     for group in all_data:
-        group_info = process_group_data(group, current_date, github_raw_base="https://raw.githubusercontent.com/anagoofyoutlook/psranking-dev/main")
+        group_info = process_group_data(group, current_date, github_raw_base)
         group_info['max_messages'] = max_messages
         group_info['date_diffs'] = date_diffs.get(group['id'], [])
         groups_data.append(group_info)
@@ -210,7 +210,7 @@ def calculate_scores_and_ranks(all_data, max_messages, date_diffs, history_csv_f
             scene_types_hashtag_list, other_hashtag_list, len(group['titles']),
             f"{min(group['date_diffs'])} days" if group['date_diffs'] else 'N/A',
             group['total_messages'], group['telegram_group_id'],
-            github_raw_base="https://raw.githubusercontent.com/anagoofyoutlook/psranking-dev/main",
+            github_raw_base=github_raw_base,
             html_subfolder=html_subfolder
         )
 

@@ -37,7 +37,7 @@ def main():
             if date_diff is not None:
                 date_diffs[group['id']].append(date_diff)
 
-    sorted_data = data_processing.calculate_scores_and_ranks(all_data, max_messages, date_diffs, history_csv_file, html_subfolder, output_csv_file)
+    sorted_data = data_processing.calculate_scores_and_ranks(all_data, max_messages, date_diffs, history_csv_file, html_subfolder, output_csv_file, github_raw_base)
     print(f"Generated {len(sorted_data)} group rankings")
     html_generator.generate_index_html(sorted_data, output_csv_file, history_csv_file, github_raw_base, output_folder)
     print("Generated index.html and group HTML files")
