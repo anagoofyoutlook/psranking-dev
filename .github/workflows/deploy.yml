@@ -17,13 +17,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install requests
-      - name: Ensure input files and folders
-        run: |
-          mkdir -p PS Photos docs docs/HTML
-          # Ensure result.zip is present (e.g., download or copy if not in repo)
-          # Example: wget -O PS/result.zip <URL_TO_RESULT_ZIP> (uncomment if needed)
-          # Copy Photos folder content if stored in repo
-          if [ -d "Photos" ]; then cp -r Photos/* Photos/; fi
       - name: Run ranking script
         run: python main.py
       - name: Deploy to GitHub Pages
