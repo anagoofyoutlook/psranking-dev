@@ -2,11 +2,11 @@ import json
 import os
 import math
 import csv
-import zipfile  # Added import
+import zipfile
 from datetime import datetime, timedelta
 import random
 import re
-import utils  # Ensure utils is imported for sanitize_filename
+import utils
 
 def extract_hashtags(text):
     return re.findall(r'#\w+', text)
@@ -39,7 +39,7 @@ def load_data(zip_path):
                 }
                 for msg in chat.get('messages', []):
                     if msg.get('type') == 'message':
-                        text = msg.get('text', '')
+                        text = msg.get('text', '')  # Handle missing text
                         if isinstance(text, list):
                             text = ''.join(str(t) for t in text)
                         group_data['messages'].append({
@@ -47,7 +47,8 @@ def load_data(zip_path):
                             'date': msg.get('date'),
                             'text': text,
                             'media': msg.get('file'),
-                            'is_gif': msg.get('media_type') == 'animation'
+                            'is_gif': msg.get('media_type') == 'animation',
+                            'action': msg.get('action')  # Include action for debugging
                         })
                     elif msg.get('action') == 'topic_created':
                         group_data['messages'].append({
@@ -89,7 +90,8 @@ def process_group_data(group, current_date, github_raw_base):
                 'is_gif': msg.get('is_gif', False),
                 'serial_number': len(titles) + 1
             })
-        hashtags = extract_hashtags(msg['text'])
+        text = msg.get('text', '')  # Handle missing text
+        hashtags = extract_hashtags(text)
         for hashtag in hashtags:
             if hashtag in ratings_hashtags:
                 ratings_hashtags[hashtag] += 1
