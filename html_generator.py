@@ -338,7 +338,7 @@ def generate_group_html(group_name, group_id, titles, history_data, photo_paths,
                             beginAtZero: true, 
                             title: {{ display: true, text: 'Rank', color: '#e6b800' }}, 
                             ticks: {{ stepSize: 1, color: '#ffffff' }}, 
-                            suggestedMax: {len(chats)},
+                            suggestedMax: {len(titles)},
                             grid: {{ color: '#3b4a6b' }}
                         }}, 
                         x: {{ 
@@ -898,5 +898,74 @@ def generate_index_html(sorted_data, csv_file, history_csv_file, github_raw_base
             while (tbody.firstChild) {{ 
                 tbody.removeChild(tbody.firstChild); 
             }}
-            rows.forEach((row, index) => {{
-                row.setAttribute('data-page', Math.floor(index / items
+            rows.forEach(row => tbody.appendChild(row));
+            sortDirections[columnIndex] = direction;
+            sortDirections = sortDirections.map((d, i) => i === columnIndex ? d : 0);
+            sortGrid(columnIndex);
+        }}
+
+        function sortGrid(columnIndex) {{
+            const grid = document.getElementById('rankingGrid');
+            const items = Array.from(grid.getElementsByClassName('grid-item'));
+            const isNumeric = [true, true, true, false, false, true, true, true, true, true, true, true];
+            const direction = sortDirections[columnIndex] === 1 ? -1 : 1;
+            items.sort((a, b) => {{
+                let aValue = a.querySelector(`.data-field[data-column="${{columnIndex}}"]`).textContent;
+                let bValue = b.querySelector(`.data-field[data-column="${{columnIndex}}"]`).textContent;
+                if (columnIndex === 1) {{ 
+                    if (aValue === 'N/A' && bValue === 'N/A') return 0;
+                    if (aValue === 'N/A') return direction * 1;
+                    if (bValue === 'N/A') return direction * -1;
+                    aValue = parseFloat(aValue.split(' ')[0]);
+                    bValue = parseFloat(bValue.split(' ')[0]);
+                    return direction * (aValue - bValue);
+                }} else if (columnIndex === 2) {{ 
+                    if (aValue === 'N/A' && bValue === 'N/A') return 0;
+                    if (aValue === 'N/A') return direction * 1;
+                    if (bValue === 'N/A') return direction * -1;
+                    aValue = parseFloat(aValue.split(' ')[0]);
+                    bValue = parseFloat(bValue.split(' ')[0]);
+                    return direction * (aValue - bValue);
+                }} else if (columnIndex === 5) {{ 
+                    if (aValue === 'N/A' && bValue === 'N/A') return 0;
+                    if (aValue === 'N/A') return direction * 1;
+                    if (bValue === 'N/A') return direction * -1;
+                    aValue = parseInt(aValue);
+                    bValue = parseInt(bValue);
+                    return direction * (aValue - bValue);
+                }}
+                if (isNumeric[columnIndex]) {{ 
+                    aValue = parseFloat(aValue) || aValue; 
+                    bValue = parseFloat(bValue) || bValue; 
+                    return direction * (aValue - bValue); 
+                }}
+                return direction * aValue.localeCompare(bValue);
+            }});
+            while (grid.firstChild) {{ 
+                grid.removeChild(grid.firstChild); 
+            }}
+            items.forEach(item => grid.appendChild(item));
+            sortDirections[columnIndex] = direction;
+            sortDirections = sortDirections.map((d, i) => i === columnIndex ? d : 0);
+            sortTable(columnIndex);
+        }}
+
+        document.addEventListener('DOMContentLoaded', () => {{
+            updatePagination('rankingTable', currentTablePage);
+            const backToTop = document.getElementById('backToTop');
+            window.onscroll = () => {{
+                backToTop.style.display = window.scrollY > 200 ? 'block' : 'none';
+            }};
+            backToTop.onclick = () => {{
+                window.scrollTo({{ top: 0, behavior: 'smooth' }});
+            }};
+        }});
+    </script>
+</body>
+</html>
+"""
+    html_path = os.path.join(output_folder, 'index.html')
+    with open(html_path, 'w', encoding='utf-8') as f:
+        f.write(ranking_html_content)
+    print(f"Wrote HTML file: {html_path}")
+    return ranking_html_content
