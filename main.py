@@ -1,4 +1,3 @@
-# main.py (updated with debugging print statements)
 import os
 import shutil
 import zipfile
@@ -44,7 +43,7 @@ def main():
     # Added debugging
     print("Sorted data contents:")
     for group in sorted_data:
-        print(f"Group: {group.get('group_name', 'Unknown')}, Keys: {list(group.keys())}")
+        print(f"Group: {group.get('group_name', 'Unknown')}, Keys: {list(group.keys())}, up_down: {group.get('up_down', 'N/A')}")
 
     html_generator.generate_index_html(sorted_data, output_csv_file, history_csv_file, github_raw_base, output_folder)
     print("Generated index.html and group HTML files")

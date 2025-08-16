@@ -1,4 +1,3 @@
-# data_processing.py (updated with defaults and .get() in output_data)
 import json
 import os
 import math
@@ -174,16 +173,24 @@ def calculate_scores_and_ranks(all_data, max_messages, date_diffs, history_csv_f
 
     for group in sorted_data:
         group_name = group['group_name']
-        group['last_rank'] = 'N/A'  # Default value
+        group['last_rank'] = 'N/A'
         group['last_rank_date'] = 'N/A'
         group['up_down'] = 'N/A'
         if group_name in history_data and history_data[group_name]:
             try:
                 last_entry = history_data[group_name][-1]
-                group['last_rank'] = last_entry['rank']
-                group['last_rank_date'] = last_entry['date']
-                group['up_down'] = last_entry['rank'] - group['rank']
-                print(f"Set up_down for {group_name}: {group['up_down']}")
+                last_rank = last_entry.get('rank')
+                if not isinstance(last_rank, int):
+                    print(f"Invalid last_rank for {group_name}: {last_rank}")
+                    last_rank = 'N/A'
+                group['last_rank'] = last_rank
+                group['last_rank_date'] = last_entry.get('date', 'N/A')
+                if isinstance(last_rank, int) and isinstance(group['rank'], int):
+                    group['up_down'] = last_rank - group['rank']
+                    print(f"Set up_down for {group_name}: {group['up_down']}")
+                else:
+                    group['up_down'] = 'N/A'
+                    print(f"Set up_down to 'N/A' for {group_name} due to invalid ranks")
             except Exception as e:
                 print(f"Error setting history for {group_name}: {e}")
                 group['last_rank'] = 'N/A'

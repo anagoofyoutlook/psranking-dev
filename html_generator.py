@@ -1,4 +1,3 @@
-# html_generator.py (updated with CSS and structure from rank.py)
 import json
 import os
 import csv
@@ -7,8 +6,10 @@ import utils
 
 def generate_index_html(sorted_data, output_csv_file, history_csv_file, github_raw_base, output_folder):
     # Sort for top movers (top risers)
-    top_movers = sorted([g for g in sorted_data if g.get('up_down') != 'N/A' and g.get('up_down') > 0], 
-                        key=lambda x: x.get('up_down', 0), reverse=True)[:5]
+    top_movers = sorted(
+        [g for g in sorted_data if g.get('up_down') != 'N/A' and isinstance(g.get('up_down'), (int, float)) and g.get('up_down') > 0],
+        key=lambda x: x.get('up_down', 0), reverse=True
+    )[:5]
 
     # Generate top movers rows
     top_movers_rows = ''
@@ -18,7 +19,7 @@ def generate_index_html(sorted_data, output_csv_file, history_csv_file, github_r
         up_down = group.get('up_down', 'N/A')
         photo_url = group.get('photo_file_name', '') if utils.is_url_accessible(group.get('photo_file_name', '')) else f"{github_raw_base}/Photos/placeholder.png"
         html_link = f"HTML/{group.get('html_file', '')}"
-        up_down_str = f'<p style="color: green;">+{up_down} Up</p>' if up_down != 'N/A' else '<p>N/A</p>'
+        up_down_str = f'<p style="color: green;">+{up_down} Up</p>' if isinstance(up_down, (int, float)) and up_down > 0 else '<p>N/A</p>'
         top_movers_rows += f'''
             <tr>
                 <td>
@@ -51,7 +52,7 @@ def generate_index_html(sorted_data, output_csv_file, history_csv_file, github_r
             </div>
         '''
         up_down = group.get('up_down', 'N/A')
-        if up_down != 'N/A':
+        if up_down != 'N/A' and isinstance(up_down, (int, float)):
             color = "green" if up_down > 0 else "red"
             direction = "Up" if up_down > 0 else "Down"
             up_down_str = f'<span style="color: {color};">{up_down} {direction}</span>'
