@@ -909,7 +909,7 @@ for i, entry in enumerate(sorted_data):
     </tr>
     """
 
-# Generate ranking HTML with pagination
+# Generate ranking HTML with pagination and back-to-top button
 total_groups = len(sorted_data)
 ranking_html_content = f"""<!DOCTYPE html>
 <html lang="en">
@@ -925,6 +925,9 @@ ranking_html_content = f"""<!DOCTYPE html>
         th {{ background-color: #e6b800; color: #1e2a44; cursor: pointer; }}
         th:hover {{ background-color: #b30000; }}
         tr:hover {{ background-color: #3b4a6b; }}
+        #rankingTable thead tr {{ display: table-row !important; }}
+        #rankingTable tbody tr {{ display: none; }}
+        #rankingTable tbody tr[data-page="1"] {{ display: table-row; }}
         .up-down-img {{ width: 20px; height: 20px; vertical-align: middle; }}
         a {{ text-decoration: none; color: #e6b800; }}
         a:hover {{ color: #b30000; text-decoration: underline; }}
@@ -938,8 +941,6 @@ ranking_html_content = f"""<!DOCTYPE html>
         .mover-info {{ display: flex; flex-direction: column; align-items: center; gap: 10px; width: 320px; }}
         .mover-info p {{ margin: 5px 0; font-size: 16px; }}
         #topMoversTable td {{ min-width: 340px; }}
-        tr {{ display: none; }}
-        tr[data-page="1"] {{ display: table-row; }}
         .pagination {{ margin: 20px auto; text-align: center; }}
         .pagination button {{ 
             background-color: #2a3a5c; 
@@ -954,6 +955,23 @@ ranking_html_content = f"""<!DOCTYPE html>
         .pagination button:hover {{ background-color: #b30000; }}
         .pagination button.active {{ background-color: #e6b800; color: #1e2a44; }}
         .pagination button:disabled {{ opacity: 0.5; cursor: not-allowed; }}
+        #backToTop {{
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            background-color: #e6b800;
+            color: #1e2a44;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }}
+        #backToTop:hover {{
+            background-color: #b30000;
+        }}
         @keyframes countUp {{ from {{ content: "0"; }} to {{ content: attr(data-rank); }} }}
         @media only screen and (max-width: 1200px) {{ 
             table {{ width: 90%; }} 
@@ -964,6 +982,7 @@ ranking_html_content = f"""<!DOCTYPE html>
             .mover-info p {{ font-size: 14px; }}
             #topMoversTable td {{ min-width: 240px; }}
             .pagination button {{ padding: 8px 12px; font-size: 14px; }}
+            #backToTop {{ padding: 8px 12px; font-size: 14px; }}
         }}
         @media only screen and (max-width: 768px) {{ 
             table {{ width: 95%; }} 
@@ -976,6 +995,7 @@ ranking_html_content = f"""<!DOCTYPE html>
             #topMoversTable {{ display: block; overflow-x: auto; white-space: nowrap; }}
             #rankingTable {{ display: block; overflow-x: auto; white-space: nowrap; }}
             .pagination button {{ padding: 6px 10px; font-size: 12px; }}
+            #backToTop {{ padding: 6px 10px; font-size: 12px; }}
         }}
     </style>
 </head>
@@ -1014,6 +1034,7 @@ ranking_html_content = f"""<!DOCTYPE html>
         <span id="pageButtons"></span>
         <button onclick="changePage(1)" id="nextPage">Next</button>
     </div>
+    <button id="backToTop" title="Back to Top">↑ Top</button>
     <script>
         let sortDirections = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         let currentPage = 1;
@@ -1106,6 +1127,13 @@ ranking_html_content = f"""<!DOCTYPE html>
 
         document.addEventListener('DOMContentLoaded', function() {{
             updatePagination();
+            window.onscroll = function() {{
+                const backToTopButton = document.getElementById('backToTop');
+                backToTopButton.style.display = window.scrollY > 100 ? 'block' : 'none';
+            }};
+            document.getElementById('backToTop').onclick = function() {{
+                window.scrollTo({{ top: 0, behavior: 'smooth' }});
+            }};
         }});
     </script>
 </body>
