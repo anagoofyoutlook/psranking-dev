@@ -215,25 +215,47 @@ def generate_index_html(sorted_data, output_csv_file, history_csv_file, github_r
 def generate_group_html(group_name, group_id, titles, history_data, photo_paths, ratings_hashtag_list, scene_types_hashtag_list, other_hashtag_list, total_titles, last_scene_days, total_messages, telegram_group_id, github_raw_base, html_subfolder):
     group_name = group_name or 'Unknown'  # Ensure group_name is not None
     history_data_json = json.dumps(history_data.get(group_name, []))
-    # Generate title cards with flip effect
+    
+    # Generate title cards with flip effect, falling back to photo_paths if titles is empty
     title_cards = ''
-    for title in titles:
-        title_text = title.get('title', 'No Title')
-        media_path = title.get('media_path', f"{github_raw_base}/Photos/placeholder.png")
-        media_path = media_path if utils.is_url_accessible(media_path) else f"{github_raw_base}/Photos/placeholder.png"
-        title_cards += f'''
-            <div class="flip-card">
-                <div class="flip-card-inner">
-                    <div class="flip-card-front">
-                        <img src="{media_path}" alt="{title_text}" style="width:300px;height:300px;object-fit:cover;">
-                    </div>
-                    <div class="flip-card-back">
-                        <h3 style="color: #e6b800; margin: 0; font-size: 20px; word-wrap: break-word; padding: 10px;">{title_text}</h3>
-                        <p style="color: #ffffff; font-size: 14px;">Date: {title.get('date', 'N/A')}</p>
+    if titles:
+        print(f"Generating title cards for group {group_name}: {len(titles)} titles found")
+        for title in titles:
+            title_text = title.get('title', 'No Title')
+            media_path = title.get('media_path', f"{github_raw_base}/Photos/placeholder.png")
+            accessible = utils.is_url_accessible(media_path)
+            print(f"Title: {title_text}, Media: {media_path}, Accessible: {accessible}")
+            media_path = media_path if accessible else f"{github_raw_base}/Photos/placeholder.png"
+            title_cards += f'''
+                <div class="flip-card">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="{media_path}" alt="{title_text}" style="width:300px;height:300px;object-fit:cover;">
+                        </div>
+                        <div class="flip-card-back">
+                            <h3 style="color: #e6b800; margin: 0; font-size: 20px; word-wrap: break-word; padding: 10px;">{title_text}</h3>
+                            <p style="color: #ffffff; font-size: 14px;">Date: {title.get('date', 'N/A')}</p>
+                        </div>
                     </div>
                 </div>
-            </div>
-        '''
+            '''
+    else:
+        print(f"No titles found for group {group_name}, falling back to photo_paths: {len(photo_paths)} photos")
+        for photo in photo_paths:
+            photo_path = photo if utils.is_url_accessible(photo) else f"{github_raw_base}/Photos/placeholder.png"
+            print(f"Photo: {photo_path}, Accessible: {utils.is_url_accessible(photo_path)}")
+            title_cards += f'''
+                <div class="flip-card">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="{photo_path}" alt="Group Photo" style="width:300px;height:300px;object-fit:cover;">
+                        </div>
+                        <div class="flip-card-back">
+                            <h3 style="color: #e6b800; margin: 0; font-size: 20px; word-wrap: break-word; padding: 10px;">Group Photo</h3>
+                        </div>
+                    </div>
+                </div>
+            '''
 
     # Use the same CSS as rank.py
     group_html_content = f"""
@@ -281,9 +303,9 @@ def generate_group_html(group_name, group_id, titles, history_data, photo_paths,
         <p>Total Titles: {total_titles}</p>
         <p>Last Scene: {last_scene_days}</p>
         <p>Total Messages: {total_messages}</p>
-        <h2>Titles</h2>
+        <h2>{'Titles' if titles else 'Photos'}</h2>
         <div class="photo-gallery">
-            {title_cards}
+            {title_cards if title_cards else '<p>No titles or photos available.</p>'}
         </div>
         <h2>Hashtags</h2>
         <ul class="hashtag-list">

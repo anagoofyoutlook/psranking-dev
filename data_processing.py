@@ -60,6 +60,8 @@ def load_data(zip_path):
                             'id': msg.get('id'),
                             'date': msg.get('date'),
                             'title': msg.get('title', 'No Title'),
+                            'media': msg.get('file'),
+                            'is_gif': msg.get('media_type') == 'animation',
                             'is_topic': True
                         })
                 all_data.append(group_data)
@@ -81,22 +83,29 @@ def process_group_data(group, current_date, github_raw_base):
     other_hashtags = {}
     photo_paths = []
     telegram_group_id = str(group['id']).replace('-100', '')
+    group_name = group['name']
+    media_files = [msg.get('media') for msg in messages if msg.get('media') and not msg.get('is_gif')]
 
     for msg in messages:
         date_diff = get_date_difference(msg['date'], current_date)
         if date_diff is not None:
             date_diffs.append(date_diff)
         if msg.get('is_topic'):
-            media_path = f"{github_raw_base}/Photos/placeholder.png"
-            if msg.get('media'):
-                media_path = f"{github_raw_base}/Photos/{msg['media']}" if not msg.get('is_gif') else f"{github_raw_base}/Photos/{msg['media']}"
+            media = msg.get('media')
+            serial_number = len(titles) + 1
+            if media:
+                matched_media = utils.find_serial_match_media(str(serial_number), media_files, group_name, github_raw_base)
+                media_path = f"{github_raw_base}/Photos/{group_name}/thumbs/{matched_media}" if matched_media else f"{github_raw_base}/Photos/placeholder.png"
+            else:
+                media_path = f"{github_raw_base}/Photos/placeholder.png"
+            print(f"Title for {group_name}: {msg.get('title', 'No Title')}, Serial: {serial_number}, Media: {media_path}")
             titles.append({
                 'message_id': msg['id'],
-                'title': msg['title'],
+                'title': msg.get('title', 'No Title'),
                 'date': msg['date'].split('T')[0],
                 'media_path': media_path,
                 'is_gif': msg.get('is_gif', False),
-                'serial_number': len(titles) + 1
+                'serial_number': serial_number
             })
         text = msg.get('text', '')
         hashtags = extract_hashtags(text)
@@ -107,7 +116,7 @@ def process_group_data(group, current_date, github_raw_base):
                 scene_types_hashtags[hashtag] += 1
             else:
                 other_hashtags[hashtag] = other_hashtags.get(hashtag, 0) + 1
-        if msg.get('media') and not msg.get('is_topic'):
+        if msg.get('media') and not msg.get('is_topic') and not msg.get('is_gif'):
             photo_path = f"{github_raw_base}/Photos/{msg['media']}"
             if photo_path not in photo_paths:
                 photo_paths.append(photo_path)
@@ -124,7 +133,7 @@ def process_group_data(group, current_date, github_raw_base):
         'photo_paths': photo_paths,
         'telegram_group_id': telegram_group_id
     }
-    print(f"Processed group: {group_info['group_name']} (ID: {group_info['group_id']})")
+    print(f"Processed group: {group_info['group_name']} (ID: {group_info['group_id']}), Titles: {len(titles)}, Photos: {len(photo_paths)}")
     return group_info
 
 def calculate_scores_and_ranks(all_data, max_messages, date_diffs, history_csv_file, html_subfolder, csv_file, github_raw_base):
