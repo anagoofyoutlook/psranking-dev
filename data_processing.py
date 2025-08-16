@@ -1,3 +1,4 @@
+
 import json
 import os
 import math
@@ -34,10 +35,11 @@ def load_data(zip_path):
         for chat in chats:
             if chat.get('type') == 'private_supergroup':
                 group_data = {
-                    'id': chat.get('id'),
-                    'name': chat.get('name', 'Unknown'),
+                    'id': chat.get('id', 0),  # Ensure id is set
+                    'name': chat.get('name', 'Unknown'),  # Ensure name is set
                     'messages': []
                 }
+                print(f"Loaded group: {group_data['name']} (ID: {group_data['id']})")
                 for msg in chat.get('messages', []):
                     if msg.get('type') == 'message':
                         text = msg.get('text', '')
@@ -65,6 +67,9 @@ def load_data(zip_path):
     return all_data
 
 def process_group_data(group, current_date, github_raw_base):
+    if not group.get('name'):
+        print(f"Warning: Group missing name, setting to 'Unknown': {group}")
+        group['name'] = 'Unknown'
     messages = group.get('messages', [])
     total_messages = len(messages)
     date_diffs = []
@@ -105,7 +110,7 @@ def process_group_data(group, current_date, github_raw_base):
             if photo_path not in photo_paths:
                 photo_paths.append(photo_path)
 
-    return {
+    group_info = {
         'group_id': group['id'],
         'group_name': group['name'],
         'total_messages': total_messages,
@@ -117,6 +122,8 @@ def process_group_data(group, current_date, github_raw_base):
         'photo_paths': photo_paths,
         'telegram_group_id': telegram_group_id
     }
+    print(f"Processed group: {group_info['group_name']} (ID: {group_info['group_id']})")
+    return group_info
 
 def calculate_scores_and_ranks(all_data, max_messages, date_diffs, history_csv_file, html_subfolder, csv_file, github_raw_base):
     current_date = datetime.now()
@@ -138,6 +145,9 @@ def calculate_scores_and_ranks(all_data, max_messages, date_diffs, history_csv_f
     sorted_data = sorted(groups_data, key=lambda x: x['score'], reverse=True)
     for i, group in enumerate(sorted_data, 1):
         group['rank'] = i
+        if 'group_name' not in group:
+            print(f"Error: group_name missing in sorted_data: {group}")
+            group['group_name'] = 'Unknown'
 
     history_data = {}
     if os.path.exists(history_csv_file):
@@ -145,7 +155,7 @@ def calculate_scores_and_ranks(all_data, max_messages, date_diffs, history_csv_f
             with open(history_csv_file, 'r', encoding='utf-8') as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    group_name = row['group name']
+                    group_name = row.get('group name', 'Unknown')
                     history_data[group_name] = history_data.get(group_name, [])
                     try:
                         history_data[group_name].append({
@@ -162,7 +172,7 @@ def calculate_scores_and_ranks(all_data, max_messages, date_diffs, history_csv_f
         group_name = group['group_name']
         group['last_rank'] = 'N/A'
         group['last_rank_date'] = 'N/A'
-        group['up_down'] = 'N/A'  # Ensure up_down is always set
+        group['up_down'] = 'N/A'
         if group_name in history_data and history_data[group_name]:
             try:
                 last_entry = history_data[group_name][-1]
@@ -172,7 +182,7 @@ def calculate_scores_and_ranks(all_data, max_messages, date_diffs, history_csv_f
                 print(f"Set up_down for {group_name}: {group['up_down']}")
             except Exception as e:
                 print(f"Error setting history for {group_name}: {e}")
-                group['up_down'] = 'N/A'  # Fallback if history processing fails
+                group['up_down'] = 'N/A'
 
     with open(history_csv_file, 'a', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
@@ -227,4 +237,5 @@ def calculate_scores_and_ranks(all_data, max_messages, date_diffs, history_csv_f
             html_subfolder=html_subfolder
         )
 
+    print(f"Returning {len(sorted_data)} groups in sorted_data")
     return output_data

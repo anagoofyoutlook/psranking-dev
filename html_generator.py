@@ -1,4 +1,3 @@
-
 import json
 import os
 import csv
@@ -53,6 +52,7 @@ def generate_index_html(sorted_data, output_csv_file, history_csv_file, github_r
                     </tr>
     """
     for group in sorted_data:
+        group_name = group.get('group_name', 'Unknown')
         rank_change = (
             f'<img src="{github_raw_base}/Photos/up.png" alt="Up" width="20">' if isinstance(group.get('up_down'), (int, float)) and group['up_down'] > 0
             else f'<img src="{github_raw_base}/Photos/down.png" alt="Down" width="20">' if isinstance(group.get('up_down'), (int, float)) and group['up_down'] < 0
@@ -60,7 +60,7 @@ def generate_index_html(sorted_data, output_csv_file, history_csv_file, github_r
         )
         ranking_html_content += f"""
                     <tr>
-                        <td><a href="HTML/{group['html_file']}">{group['group_name']}</a></td>
+                        <td><a href="HTML/{group['html_file']}">{group_name}</a></td>
                         <td>{group['rank']}</td>
                         <td>{group['last_rank']}</td>
                         <td>{group['last_rank_date']}</td>
@@ -81,11 +81,12 @@ def generate_index_html(sorted_data, output_csv_file, history_csv_file, github_r
                 <div class="grid-container">
     """
     for group in sorted_data:
+        group_name = group.get('group_name', 'Unknown')
         photo_url = group['photo_file_name'] if utils.is_url_accessible(group['photo_file_name']) else f"{github_raw_base}/Photos/placeholder.png"
         ranking_html_content += f"""
                     <div class="grid-item">
-                        <a href="HTML/{group['html_file']}"><img src="{photo_url}" alt="{group['group_name']}"></a>
-                        <p>{group['group_name']}<br>Rank: {group['rank']}<br>Score: {group['score']:.2f}</p>
+                        <a href="HTML/{group['html_file']}"><img src="{photo_url}" alt="{group_name}"></a>
+                        <p>{group_name}<br>Rank: {group['rank']}<br>Score: {group['score']:.2f}</p>
                     </div>
         """
     ranking_html_content += """
@@ -117,6 +118,7 @@ def generate_index_html(sorted_data, output_csv_file, history_csv_file, github_r
     print(f"Wrote HTML file: {index_path}")
 
 def generate_group_html(group_name, group_id, titles, history_data, photo_paths, ratings_hashtag_list, scene_types_hashtag_list, other_hashtag_list, total_titles, last_scene_days, total_messages, telegram_group_id, github_raw_base, html_subfolder):
+    group_name = group_name or 'Unknown'  # Ensure group_name is not None
     history_data_json = json.dumps(history_data.get(group_name, []))
     group_html_content = f"""
     <!DOCTYPE html>
