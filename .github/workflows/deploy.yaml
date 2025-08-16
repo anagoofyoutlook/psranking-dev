@@ -1,0 +1,33 @@
+name: Deploy PS Ranking
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+      - name: Ensure input files and folders
+        run: |
+          mkdir -p PS Photos docs docs/HTML
+          # Ensure result.zip is present (e.g., download or copy if not in repo)
+          # Example: wget -O PS/result.zip <URL_TO_RESULT_ZIP> (uncomment if needed)
+          # Copy Photos folder content if stored in repo
+          if [ -d "Photos" ]; then cp -r Photos/* Photos/; fi
+      - name: Run ranking script
+        run: python main.py
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
