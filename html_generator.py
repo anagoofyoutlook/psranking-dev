@@ -1,4 +1,5 @@
-import json  # Added import
+
+import json
 import os
 import csv
 from datetime import datetime
@@ -52,7 +53,11 @@ def generate_index_html(sorted_data, output_csv_file, history_csv_file, github_r
                     </tr>
     """
     for group in sorted_data:
-        rank_change = f'<img src="{github_raw_base}/Photos/up.png" alt="Up" width="20">' if group['up_down'] > 0 else f'<img src="{github_raw_base}/Photos/down.png" alt="Down" width="20">' if group['up_down'] < 0 else f'<img src="{github_raw_base}/Photos/0.png" alt="No Change" width="20">'
+        rank_change = (
+            f'<img src="{github_raw_base}/Photos/up.png" alt="Up" width="20">' if isinstance(group.get('up_down'), (int, float)) and group['up_down'] > 0
+            else f'<img src="{github_raw_base}/Photos/down.png" alt="Down" width="20">' if isinstance(group.get('up_down'), (int, float)) and group['up_down'] < 0
+            else f'<img src="{github_raw_base}/Photos/0.png" alt="No Change" width="20">'
+        )
         ranking_html_content += f"""
                     <tr>
                         <td><a href="HTML/{group['html_file']}">{group['group_name']}</a></td>

@@ -3,7 +3,7 @@ import os
 import math
 import csv
 import zipfile
-import html_generator  # Added import
+import html_generator
 from datetime import datetime, timedelta
 import random
 import re
@@ -141,26 +141,38 @@ def calculate_scores_and_ranks(all_data, max_messages, date_diffs, history_csv_f
 
     history_data = {}
     if os.path.exists(history_csv_file):
-        with open(history_csv_file, 'r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                group_name = row['group name']
-                history_data[group_name] = history_data.get(group_name, [])
-                history_data[group_name].append({
-                    'date': row['date'],
-                    'rank': int(row['rank'])
-                })
+        try:
+            with open(history_csv_file, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    group_name = row['group name']
+                    history_data[group_name] = history_data.get(group_name, [])
+                    try:
+                        history_data[group_name].append({
+                            'date': row['date'],
+                            'rank': int(row['rank'])
+                        })
+                    except (ValueError, KeyError) as e:
+                        print(f"Error processing history row for {group_name}: {e}")
+                        continue
+        except Exception as e:
+            print(f"Error reading history_csv_file: {e}")
 
     for group in sorted_data:
         group_name = group['group_name']
         group['last_rank'] = 'N/A'
         group['last_rank_date'] = 'N/A'
-        group['up_down'] = 'N/A'
+        group['up_down'] = 'N/A'  # Ensure up_down is always set
         if group_name in history_data and history_data[group_name]:
-            last_entry = history_data[group_name][-1]
-            group['last_rank'] = last_entry['rank']
-            group['last_rank_date'] = last_entry['date']
-            group['up_down'] = last_entry['rank'] - group['rank']
+            try:
+                last_entry = history_data[group_name][-1]
+                group['last_rank'] = last_entry['rank']
+                group['last_rank_date'] = last_entry['date']
+                group['up_down'] = last_entry['rank'] - group['rank']
+                print(f"Set up_down for {group_name}: {group['up_down']}")
+            except Exception as e:
+                print(f"Error setting history for {group_name}: {e}")
+                group['up_down'] = 'N/A'  # Fallback if history processing fails
 
     with open(history_csv_file, 'a', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
