@@ -1,3 +1,4 @@
+```python
 import json
 import csv
 import os
@@ -8,6 +9,7 @@ import zipfile
 import random
 from html import escape
 import requests
+import math  # Added to fix the NameError
 
 # Define folder paths
 input_folder = 'PS'
@@ -1361,106 +1363,4 @@ ranking_html_content = f"""<!DOCTYPE html>
                     const bNum = parseFloat(bValue.split(' ')[0]);
                     return direction * (aNum - bNum);
                 }} else if (columnIndex === 2) {{ 
-                    if (aValue === 'N/A' && bValue === 'N/A') return 0;
-                    if (aValue === 'N/A') return direction * 1;
-                    if (bValue === 'N/A') return direction * -1;
-                    const aNum = parseFloat(aValue.split(' ')[0]);
-                    const bNum = parseFloat(bValue.split(' ')[0]);
-                    return direction * (aNum - bNum);
-                }} else if (columnIndex === 5) {{ 
-                    if (aValue === 'N/A' && bValue === 'N/A') return 0;
-                    if (aValue === 'N/A') return direction * 1;
-                    if (bValue === 'N/A') return direction * -1;
-                    const aNum = parseInt(aValue);
-                    const bNum = parseInt(bValue);
-                    return direction * (aNum - bNum);
-                }}
-                if (isNumeric[columnIndex]) {{ 
-                    const aNum = parseFloat(aValue);
-                    const bNum = parseFloat(bValue);
-                    return direction * (aNum - bNum);
-                }}
-                return direction * aValue.localeCompare(bValue);
-            }});
-            while (grid.firstChild) {{ 
-                grid.removeChild(grid.firstChild); 
-            }}
-            items.forEach((item, index) => {{
-                item.setAttribute('data-page', Math.floor(index / itemsPerPage) + 1);
-                grid.appendChild(item);
-            }});
-            currentGridPage = 1;
-            updatePagination('rankingGrid', 1);
-        }}
-
-        function syncTableSort(columnIndex, direction) {{
-            const tbody = document.getElementById('tableBody');
-            const rows = Array.from(tbody.getElementsByTagName('tr'));
-            const isNumeric = [true, true, true, false, false, true, true, true, true, true, true, true];
-            rows.sort((a, b) => {{
-                let aValue = a.cells[columnIndex].textContent;
-                let bValue = b.cells[columnIndex].textContent;
-                if (columnIndex === 1) {{ 
-                    if (aValue === 'N/A' && bValue === 'N/A') return 0;
-                    if (aValue === 'N/A') return direction * 1;
-                    if (bValue === 'N/A') return direction * -1;
-                    aValue = parseFloat(aValue.split(' ')[0]);
-                    bValue = parseFloat(bValue.split(' ')[0]);
-                    return direction * (aValue - bValue);
-                }} else if (columnIndex === 2) {{ 
-                    if (aValue === 'N/A' && bValue === 'N/A') return 0;
-                    if (aValue === 'N/A') return direction * 1;
-                    if (bValue === 'N/A') return direction * -1;
-                    aValue = parseFloat(aValue.split(' ')[0]);
-                    bValue = parseFloat(bValue.split(' ')[0]);
-                    return direction * (aValue - bValue);
-                }} else if (columnIndex === 5) {{ 
-                    if (aValue === 'N/A' && bValue === 'N/A') return 0;
-                    if (aValue === 'N/A') return direction * 1;
-                    if (bValue === 'N/A') return direction * -1;
-                    aValue = parseInt(aValue);
-                    bValue = parseInt(bValue);
-                    return direction * (aValue - bValue);
-                }}
-                if (isNumeric[columnIndex]) {{ 
-                    aValue = parseFloat(aValue) || aValue; 
-                    bValue = parseFloat(bValue) or bValue; 
-                    return direction * (aValue - bValue); 
-                }}
-                return direction * aValue.localeCompare(bValue);
-            }});
-            while (tbody.firstChild) {{ 
-                tbody.removeChild(tbody.firstChild);
-            }}
-            rows.forEach((row, index) => {{
-                row.setAttribute('data-page', Math.floor(index / itemsPerPage) + 1);
-                tbody.appendChild(row);
-            }});
-            currentTablePage = 1;
-            updatePagination('rankingTable', 1);
-        }}
-
-        document.addEventListener('DOMContentLoaded', function() {{
-            updatePagination('rankingTable', 1);
-            updatePagination('rankingGrid', 1);
-            openTab({{ currentTarget: document.querySelector('.tablinks.active') }}, 'RankingTableTab');
-            window.onscroll = function() {{
-                const backToTopButton = document.getElementById('backToTop');
-                backToTopButton.style.display = window.scrollY > 100 ? 'block' : 'none';
-            }};
-            document.getElementById('backToTop').onclick = function() {{
-                window.scrollTo({{ top: 0, behavior: 'smooth' }});
-            }};
-        }});
-    </script>
-</body>
-</html>
-"""
-
-# Write ranking HTML file
-ranking_html_file = os.path.join(output_folder, 'index.html')
-with open(ranking_html_file, 'w', encoding='utf-8') as f:
-    f.write(ranking_html_content)
-print(f"\nWrote ranking HTML file: {ranking_html_file}")
-
-print(f"\nProcessed {len(chats)} groups. Output written to {output_folder}")
+                    if (aValue === 'N/A' && bValue === 'N/A') return
