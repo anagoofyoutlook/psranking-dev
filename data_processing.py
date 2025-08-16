@@ -2,9 +2,11 @@ import json
 import os
 import math
 import csv
+import zipfile  # Added import
 from datetime import datetime, timedelta
 import random
 import re
+import utils  # Ensure utils is imported for sanitize_filename
 
 def extract_hashtags(text):
     return re.findall(r'#\w+', text)
@@ -57,6 +59,7 @@ def load_data(zip_path):
                 all_data.append(group_data)
     except Exception as e:
         print(f"Error loading data: {e}")
+        return all_data
     return all_data
 
 def process_group_data(group, current_date, github_raw_base):

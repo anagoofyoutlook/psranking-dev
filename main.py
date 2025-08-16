@@ -4,6 +4,7 @@ import zipfile
 import data_processing
 import html_generator
 import utils
+from datetime import datetime
 
 def main():
     output_folder = 'docs'
@@ -17,7 +18,13 @@ def main():
         shutil.rmtree(output_folder)
     os.makedirs(html_subfolder, exist_ok=True)
 
+    print(f"Checking for result.zip at: {zip_path}")
+    if not os.path.exists(zip_path):
+        print(f"Error: {zip_path} not found")
+        return
+
     all_data = data_processing.load_data(zip_path)
+    print(f"Loaded {len(all_data)} groups from result.zip")
     if not all_data:
         print("No data loaded, exiting.")
         return
@@ -31,7 +38,11 @@ def main():
                 date_diffs[group['id']].append(date_diff)
 
     sorted_data = data_processing.calculate_scores_and_ranks(all_data, max_messages, date_diffs, history_csv_file, html_subfolder, output_csv_file)
+    print(f"Generated {len(sorted_data)} group rankings")
     html_generator.generate_index_html(sorted_data, output_csv_file, history_csv_file, github_raw_base, output_folder)
+    print("Generated index.html and group HTML files")
+    print(f"Listing files in {output_folder}:")
+    os.system(f"ls -R {output_folder}")
 
 if __name__ == '__main__':
     main()

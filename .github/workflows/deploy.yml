@@ -22,6 +22,8 @@ jobs:
           mkdir -p PS Photos docs docs/HTML
           # Uncomment and update the URL if result.zip is external
           # wget -O PS/result.zip https://raw.githubusercontent.com/anagoofyoutlook/psranking-dev/main/result.zip || true
+          echo "Listing input files:"
+          ls -l PS Photos
       - name: Run ranking script
         run: |
           python main.py
@@ -32,4 +34,4 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs
-          force_orphan: true  # Ensure clean gh-pages branch
+          force_orphan: true
