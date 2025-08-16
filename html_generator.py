@@ -18,6 +18,7 @@ def generate_index_html(sorted_data, output_csv_file, history_csv_file, github_r
         rank = group.get('rank', 'N/A')
         up_down = group.get('up_down', 'N/A')
         photo_url = group.get('photo_file_name', '') if utils.is_url_accessible(group.get('photo_file_name', '')) else f"{github_raw_base}/Photos/placeholder.png"
+        print(f"Main page - Group: {group_name}, Photo URL: {photo_url}, Accessible: {utils.is_url_accessible(photo_url)}")
         html_link = f"HTML/{group.get('html_file', '')}"
         up_down_str = f'<p style="color: green;">+{up_down} Up</p>' if isinstance(up_down, (int, float)) and up_down > 0 else '<p>N/A</p>'
         top_movers_rows += f'''
@@ -38,6 +39,7 @@ def generate_index_html(sorted_data, output_csv_file, history_csv_file, github_r
     for group in sorted_data:
         group_name = group.get('group_name', 'Unknown')
         photo_url = group.get('photo_file_name', '') if utils.is_url_accessible(group.get('photo_file_name', '')) else f"{github_raw_base}/Photos/placeholder.png"
+        print(f"Main page table - Group: {group_name}, Photo URL: {photo_url}, Accessible: {utils.is_url_accessible(photo_url)}")
         html_link = f"HTML/{group.get('html_file', '')}"
         flip_card = f'''
             <div class="flip-card">
@@ -216,7 +218,7 @@ def generate_group_html(group_name, group_id, titles, history_data, photo_paths,
     group_name = group_name or 'Unknown'  # Ensure group_name is not None
     history_data_json = json.dumps(history_data.get(group_name, []))
     
-    # Generate title cards with flip effect, falling back to photo_paths if titles is empty
+    # Generate title cards with flip effect, falling back to photo_paths or group-named photo
     title_cards = ''
     if titles:
         print(f"Generating title cards for group {group_name}: {len(titles)} titles found")
@@ -224,7 +226,7 @@ def generate_group_html(group_name, group_id, titles, history_data, photo_paths,
             title_text = title.get('title', 'No Title')
             media_path = title.get('media_path', f"{github_raw_base}/Photos/placeholder.png")
             accessible = utils.is_url_accessible(media_path)
-            print(f"Title: {title_text}, Media: {media_path}, Accessible: {accessible}")
+            print(f"Group page - Title: {title_text}, Media: {media_path}, Accessible: {accessible}")
             media_path = media_path if accessible else f"{github_raw_base}/Photos/placeholder.png"
             title_cards += f'''
                 <div class="flip-card">
@@ -240,18 +242,38 @@ def generate_group_html(group_name, group_id, titles, history_data, photo_paths,
                 </div>
             '''
     else:
-        print(f"No titles found for group {group_name}, falling back to photo_paths: {len(photo_paths)} photos")
-        for photo in photo_paths:
-            photo_path = photo if utils.is_url_accessible(photo) else f"{github_raw_base}/Photos/placeholder.png"
-            print(f"Photo: {photo_path}, Accessible: {utils.is_url_accessible(photo_path)}")
-            title_cards += f'''
+        print(f"No titles found for group {group_name}, checking photo_paths: {len(photo_paths)} photos")
+        if photo_paths:
+            for photo in photo_paths:
+                accessible = utils.is_url_accessible(photo)
+                photo_path = photo if accessible else f"{github_raw_base}/Photos/placeholder.png"
+                print(f"Group page - Photo: {photo_path}, Accessible: {accessible}")
+                title_cards += f'''
+                    <div class="flip-card">
+                        <div class="flip-card-inner">
+                            <div class="flip-card-front">
+                                <img src="{photo_path}" alt="Group Photo" style="width:300px;height:300px;object-fit:cover;">
+                            </div>
+                            <div class="flip-card-back">
+                                <h3 style="color: #e6b800; margin: 0; font-size: 20px; word-wrap: break-word; padding: 10px;">Group Photo</h3>
+                            </div>
+                        </div>
+                    </div>
+                '''
+        else:
+            # Fall back to group-named photo
+            group_photo = f"{github_raw_base}/Photos/{utils.sanitize_filename(group_name)}.jpg"
+            accessible = utils.is_url_accessible(group_photo)
+            print(f"Group page - No titles or photos, trying group-named photo: {group_photo}, Accessible: {accessible}")
+            group_photo = group_photo if accessible else f"{github_raw_base}/Photos/placeholder.png"
+            title_cards = f'''
                 <div class="flip-card">
                     <div class="flip-card-inner">
                         <div class="flip-card-front">
-                            <img src="{photo_path}" alt="Group Photo" style="width:300px;height:300px;object-fit:cover;">
+                            <img src="{group_photo}" alt="{group_name}" style="width:300px;height:300px;object-fit:cover;">
                         </div>
                         <div class="flip-card-back">
-                            <h3 style="color: #e6b800; margin: 0; font-size: 20px; word-wrap: break-word; padding: 10px;">Group Photo</h3>
+                            <h3 style="color: #e6b800; margin: 0; font-size: 20px; word-wrap: break-word; padding: 10px;">{group_name}</h3>
                         </div>
                     </div>
                 </div>

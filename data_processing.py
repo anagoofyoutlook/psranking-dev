@@ -98,7 +98,7 @@ def process_group_data(group, current_date, github_raw_base):
                 media_path = f"{github_raw_base}/Photos/{group_name}/thumbs/{matched_media}" if matched_media else f"{github_raw_base}/Photos/placeholder.png"
             else:
                 media_path = f"{github_raw_base}/Photos/placeholder.png"
-            print(f"Title for {group_name}: {msg.get('title', 'No Title')}, Serial: {serial_number}, Media: {media_path}")
+            print(f"Title for {group_name}: {msg.get('title', 'No Title')}, Serial: {serial_number}, Media: {media_path}, Accessible: {utils.is_url_accessible(media_path)}")
             titles.append({
                 'message_id': msg['id'],
                 'title': msg.get('title', 'No Title'),
@@ -214,7 +214,10 @@ def calculate_scores_and_ranks(all_data, max_messages, date_diffs, history_csv_f
 
     output_data = []
     for group in sorted_data:
-        photo_file_name = group['photo_paths'][0] if group['photo_paths'] else f"{github_raw_base}/Photos/placeholder.png"
+        # Use group-named photo for main page
+        group_photo = f"{github_raw_base}/Photos/{utils.sanitize_filename(group['group_name'])}.jpg"
+        photo_file_name = group_photo if utils.is_url_accessible(group_photo) else f"{github_raw_base}/Photos/placeholder.png"
+        print(f"Main page - Group: {group['group_name']}, photo_file_name: {photo_file_name}, Accessible: {utils.is_url_accessible(photo_file_name)}")
         html_file = f"{utils.sanitize_filename(group['group_name'])}_{group['group_id']}.html"
         last_scene_days = min(group['date_diffs']) if group['date_diffs'] else 'N/A'
         output_data.append({
