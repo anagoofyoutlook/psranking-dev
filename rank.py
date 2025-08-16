@@ -518,7 +518,7 @@ for chat in chats:
             width: 50%; 
         }}
         .tab button:hover {{ background-color: #b30000; }}
-        .tab button.active {{ background-color: #3b4a6b; }}
+        .tab button.active {{ background-color: #e6b800; color: #1e2a44; }}
         .tabcontent {{ 
             display: none; 
             padding: 6px 12px; 
@@ -909,7 +909,7 @@ for i, entry in enumerate(sorted_data):
     </tr>
     """
 
-# Generate ranking HTML with pagination and back-to-top button
+# Generate ranking HTML with tabs, pagination, and back-to-top button
 total_groups = len(sorted_data)
 ranking_html_content = f"""<!DOCTYPE html>
 <html lang="en">
@@ -972,6 +972,37 @@ ranking_html_content = f"""<!DOCTYPE html>
         #backToTop:hover {{
             background-color: #b30000;
         }}
+        .tab {{ 
+            overflow: hidden; 
+            margin: 20px auto; 
+            width: 80%; 
+            background-color: #2a3a5c; 
+            border-radius: 5px 5px 0 0; 
+        }}
+        .tab button {{ 
+            background-color: #2a3a5c; 
+            color: #e6b800; 
+            float: left; 
+            border: none; 
+            outline: none; 
+            cursor: pointer; 
+            padding: 14px 16px; 
+            transition: 0.3s; 
+            font-size: 17px; 
+            width: 50%; 
+        }}
+        .tab button:hover {{ background-color: #b30000; }}
+        .tab button.active {{ background-color: #e6b800; color: #1e2a44; }}
+        .tabcontent {{ 
+            display: none; 
+            padding: 6px 12px; 
+            border-top: none; 
+            background-color: #2a3a5c; 
+            margin: 0 auto; 
+            width: 80%; 
+            border-radius: 0 0 5px 5px; 
+        }}
+        #RankingTableTab {{ display: block; }}
         @keyframes countUp {{ from {{ content: "0"; }} to {{ content: attr(data-rank); }} }}
         @media only screen and (max-width: 1200px) {{ 
             table {{ width: 90%; }} 
@@ -981,6 +1012,7 @@ ranking_html_content = f"""<!DOCTYPE html>
             .mover-info {{ width: 220px; }}
             .mover-info p {{ font-size: 14px; }}
             #topMoversTable td {{ min-width: 240px; }}
+            .tab, .tabcontent {{ width: 90%; }}
             .pagination button {{ padding: 8px 12px; font-size: 14px; }}
             #backToTop {{ padding: 8px 12px; font-size: 14px; }}
         }}
@@ -994,6 +1026,8 @@ ranking_html_content = f"""<!DOCTYPE html>
             #topMoversTable td {{ min-width: 190px; }}
             #topMoversTable {{ display: block; overflow-x: auto; white-space: nowrap; }}
             #rankingTable {{ display: block; overflow-x: auto; white-space: nowrap; }}
+            .tab, .tabcontent {{ width: 95%; }}
+            .tab button {{ font-size: 14px; padding: 10px; }}
             .pagination button {{ padding: 6px 10px; font-size: 12px; }}
             #backToTop {{ padding: 6px 10px; font-size: 12px; }}
         }}
@@ -1001,38 +1035,46 @@ ranking_html_content = f"""<!DOCTYPE html>
 </head>
 <body>
     <h1>PS Ranking - {current_date}</h1>
-    <h2>Top Movers</h2>
-    <table id="topMoversTable">
-        <tbody>
-            {top_movers_rows}
-        </tbody>
-    </table>
-    <h2>Total Number of Groups: {total_groups}</h2>
-    <table id="rankingTable">
-        <thead>
-            <tr>
-                <th onclick="sortTable(0)">Rank</th>
-                <th onclick="sortTable(1)">Last Rank</th>
-                <th onclick="sortTable(2)">Up Down</th>
-                <th onclick="sortTable(3)">Group Name</th>
-                <th>Photo</th>
-                <th onclick="sortTable(5)">Last Scene</th>
-                <th onclick="sortTable(6)">Total Titles</th>
-                <th onclick="sortTable(7)">#FIVE</th>
-                <th onclick="sortTable(8)">#FOUR</th>
-                <th onclick="sortTable(9)">#Three</th>
-                <th onclick="sortTable(10)">Thumbnails</th>
-                <th onclick="sortTable(11)">Score</th>
-            </tr>
-        </thead>
-        <tbody id="tableBody">
-            {table_rows}
-        </tbody>
-    </table>
-    <div class="pagination" id="pagination">
-        <button onclick="changePage(-1)" id="prevPage" disabled>Previous</button>
-        <span id="pageButtons"></span>
-        <button onclick="changePage(1)" id="nextPage">Next</button>
+    <div class="tab">
+        <button class="tablinks" onclick="openTab(event, 'TopMoversTab')">Top Movers</button>
+        <button class="tablinks active" onclick="openTab(event, 'RankingTableTab')">Ranking Table</button>
+    </div>
+    <div id="TopMoversTab" class="tabcontent">
+        <h2>Top Movers</h2>
+        <table id="topMoversTable">
+            <tbody>
+                {top_movers_rows}
+            </tbody>
+        </table>
+    </div>
+    <div id="RankingTableTab" class="tabcontent">
+        <h2>Total Number of Groups: {total_groups}</h2>
+        <table id="rankingTable">
+            <thead>
+                <tr>
+                    <th onclick="sortTable(0)">Rank</th>
+                    <th onclick="sortTable(1)">Last Rank</th>
+                    <th onclick="sortTable(2)">Up Down</th>
+                    <th onclick="sortTable(3)">Group Name</th>
+                    <th>Photo</th>
+                    <th onclick="sortTable(5)">Last Scene</th>
+                    <th onclick="sortTable(6)">Total Titles</th>
+                    <th onclick="sortTable(7)">#FIVE</th>
+                    <th onclick="sortTable(8)">#FOUR</th>
+                    <th onclick="sortTable(9)">#Three</th>
+                    <th onclick="sortTable(10)">Thumbnails</th>
+                    <th onclick="sortTable(11)">Score</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                {table_rows}
+            </tbody>
+        </table>
+        <div class="pagination" id="pagination">
+            <button onclick="changePage(-1)" id="prevPage" disabled>Previous</button>
+            <span id="pageButtons"></span>
+            <button onclick="changePage(1)" id="nextPage">Next</button>
+        </div>
     </div>
     <button id="backToTop" title="Back to Top">↑ Top</button>
     <script>
@@ -1040,6 +1082,20 @@ ranking_html_content = f"""<!DOCTYPE html>
         let currentPage = 1;
         const itemsPerPage = 50;
         const totalPages = {total_pages};
+
+        function openTab(evt, tabName) {{
+            let i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {{
+                tabcontent[i].style.display = "none";
+            }}
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {{
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }}
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }}
 
         function updatePagination() {{
             const rows = document.querySelectorAll('#tableBody tr');
@@ -1127,6 +1183,7 @@ ranking_html_content = f"""<!DOCTYPE html>
 
         document.addEventListener('DOMContentLoaded', function() {{
             updatePagination();
+            openTab({{ currentTarget: document.querySelector('.tablinks.active') }}, 'RankingTableTab');
             window.onscroll = function() {{
                 const backToTopButton = document.getElementById('backToTop');
                 backToTopButton.style.display = window.scrollY > 100 ? 'block' : 'none';
