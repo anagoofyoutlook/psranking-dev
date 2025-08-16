@@ -8,7 +8,6 @@ import zipfile
 import random
 from html import escape
 import requests
-import math
 
 # Define folder paths
 input_folder = 'PS'
@@ -866,10 +865,11 @@ if up_groups or down_groups or unchanged_groups:
 else:
     top_movers_rows = '<tr><td>No significant rank changes</td></tr>'
 
-# Generate ranking table rows with pagination
+# Generate ranking table rows and grid items with pagination
 items_per_page = 50
 total_pages = math.ceil(len(sorted_data) / items_per_page)
 table_rows = ''
+grid_items = ''
 for i, entry in enumerate(sorted_data):
     group_name = escape(entry['group name'])
     photo_src = entry['photo_file_name']
@@ -891,7 +891,7 @@ for i, entry in enumerate(sorted_data):
             zero_url = f"{github_raw_base}/Photos/0.png"
             up_down_img = zero_url if is_url_accessible(zero_url) else up_down_img
     page_number = (i // items_per_page) + 1
-    print(f"Ranking Table: Group {group_name}, Photo: {photo_src}, Up Down image: {up_down_img}, Page: {page_number}")
+    print(f"Ranking Table/Grid: Group {group_name}, Photo: {photo_src}, Up Down image: {up_down_img}, Page: {page_number}")
     table_rows += f"""
     <tr data-page="{page_number}">
         <td>{entry['rank']}</td>
@@ -907,6 +907,22 @@ for i, entry in enumerate(sorted_data):
         <td>{entry['count of the hashtag "#SceneType"']}</td>
         <td>{entry['score']:.2f}</td>
     </tr>
+    """
+    grid_items += f"""
+    <div class="grid-item" data-page="{page_number}">
+        <div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="{photo_src}" alt="{group_name}" style="width:100%;height:300px;object-fit:cover;"></div><div class="flip-card-back"><a href="{html_link}" target="_blank" style="color: #e6b800; text-decoration: none;"><h1>{group_name}</h1></a></div></div></div>
+        <p><strong>Rank:</strong> <span class="data-field" data-column="0">{entry['rank']}</span></p>
+        <p><strong>Last Rank:</strong> <span class="data-field" data-column="1">{last_rank_display}</span></p>
+        <p><strong>Up Down:</strong> <span class="data-field" data-column="2">{up_down} <img src="{up_down_img}" alt="Up Down" class="up-down-img"></span></p>
+        <p><strong>Group Name:</strong> <span class="data-field" data-column="3"><a href="{html_link}" target="_blank">{group_name}</a></span></p>
+        <p><strong>Last Scene:</strong> <span class="data-field" data-column="5">{last_scene}</span></p>
+        <p><strong>Total Titles:</strong> <span class="data-field" data-column="6">{entry['total titles']}</span></p>
+        <p><strong>#FIVE:</strong> <span class="data-field" data-column="7">{entry['count of the hashtag "#FIVE"']}</span></p>
+        <p><strong>#FOUR:</strong> <span class="data-field" data-column="8">{entry['count of the hashtag "#FOUR"']}</span></p>
+        <p><strong>#Three:</strong> <span class="data-field" data-column="9">{entry['count of the hashtag "#Three"']}</span></p>
+        <p><strong>Thumbnails:</strong> <span class="data-field" data-column="10">{entry['count of the hashtag "#SceneType"']}</span></p>
+        <p><strong>Score:</strong> <span class="data-field" data-column="11">{entry['score']:.2f}</span></p>
+    </div>
     """
 
 # Generate ranking HTML with tabs, pagination, and back-to-top button
@@ -989,7 +1005,7 @@ ranking_html_content = f"""<!DOCTYPE html>
             padding: 14px 16px; 
             transition: 0.3s; 
             font-size: 17px; 
-            width: 50%; 
+            width: 33.33%; 
         }}
         .tab button:hover {{ background-color: #b30000; }}
         .tab button.active {{ background-color: #e6b800; color: #1e2a44; }}
@@ -1003,6 +1019,46 @@ ranking_html_content = f"""<!DOCTYPE html>
             border-radius: 0 0 5px 5px; 
         }}
         #RankingTableTab {{ display: block; }}
+        .ranking-grid {{ 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
+            gap: 20px; 
+            margin: 20px 0; 
+            width: 100%; 
+            box-sizing: border-box; 
+        }}
+        .grid-item {{ 
+            background-color: #2a3a5c; 
+            padding: 10px; 
+            border-radius: 5px; 
+            text-align: center; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            width: 100%; 
+            box-sizing: border-box; 
+        }}
+        .grid-item p {{ margin: 5px 0; font-size: 14px; }}
+        .grid-item .flip-card {{ width: 100%; height: 300px; }}
+        .grid-header {{ 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 10px; 
+            justify-content: center; 
+            margin-bottom: 20px; 
+        }}
+        .grid-header span {{ 
+            background-color: #e6b800; 
+            color: #1e2a44; 
+            padding: 10px 15px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 14px; 
+            text-align: center; 
+            min-width: 80px; 
+        }}
+        .grid-header span:hover {{ background-color: #b30000; }}
+        .grid-item img {{ width: 100%; height: 300px; object-fit: cover; border-radius: 5px; }}
         @keyframes countUp {{ from {{ content: "0"; }} to {{ content: attr(data-rank); }} }}
         @media only screen and (max-width: 1200px) {{ 
             table {{ width: 90%; }} 
@@ -1015,6 +1071,10 @@ ranking_html_content = f"""<!DOCTYPE html>
             .tab, .tabcontent {{ width: 90%; }}
             .pagination button {{ padding: 8px 12px; font-size: 14px; }}
             #backToTop {{ padding: 8px 12px; font-size: 14px; }}
+            .ranking-grid {{ grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }}
+            .grid-item .flip-card {{ height: 200px; }}
+            .grid-item img {{ height: 200px; }}
+            .grid-header span {{ font-size: 12px; padding: 8px 10px; min-width: 60px; }}
         }}
         @media only screen and (max-width: 768px) {{ 
             table {{ width: 95%; }} 
@@ -1027,9 +1087,13 @@ ranking_html_content = f"""<!DOCTYPE html>
             #topMoversTable {{ display: block; overflow-x: auto; white-space: nowrap; }}
             #rankingTable {{ display: block; overflow-x: auto; white-space: nowrap; }}
             .tab, .tabcontent {{ width: 95%; }}
-            .tab button {{ font-size: 14px; padding: 10px; }}
+            .tab button {{ font-size: 14px; padding: 10px; width: 33.33%; }}
             .pagination button {{ padding: 6px 10px; font-size: 12px; }}
             #backToTop {{ padding: 6px 10px; font-size: 12px; }}
+            .ranking-grid {{ grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }}
+            .grid-item .flip-card {{ height: 150px; }}
+            .grid-item img {{ height: 150px; }}
+            .grid-header span {{ font-size: 10px; padding: 6px 8px; min-width: 50px; }}
         }}
     </style>
 </head>
@@ -1038,6 +1102,7 @@ ranking_html_content = f"""<!DOCTYPE html>
     <div class="tab">
         <button class="tablinks" onclick="openTab(event, 'TopMoversTab')">Top Movers</button>
         <button class="tablinks active" onclick="openTab(event, 'RankingTableTab')">Ranking Table</button>
+        <button class="tablinks" onclick="openTab(event, 'GridViewTab')">Grid View</button>
     </div>
     <div id="TopMoversTab" class="tabcontent">
         <h2>Top Movers</h2>
@@ -1071,15 +1136,41 @@ ranking_html_content = f"""<!DOCTYPE html>
             </tbody>
         </table>
         <div class="pagination" id="pagination">
-            <button onclick="changePage(-1)" id="prevPage" disabled>Previous</button>
+            <button onclick="changePage(-1, 'rankingTable')" id="prevPage" disabled>Previous</button>
             <span id="pageButtons"></span>
-            <button onclick="changePage(1)" id="nextPage">Next</button>
+            <button onclick="changePage(1, 'rankingTable')" id="nextPage">Next</button>
+        </div>
+    </div>
+    <div id="GridViewTab" class="tabcontent">
+        <h2>Total Number of Groups: {total_groups}</h2>
+        <div class="grid-header">
+            <span onclick="sortGrid(0)">Rank</span>
+            <span onclick="sortGrid(1)">Last Rank</span>
+            <span onclick="sortGrid(2)">Up Down</span>
+            <span onclick="sortGrid(3)">Group Name</span>
+            <span style="cursor: default;">Photo</span>
+            <span onclick="sortGrid(5)">Last Scene</span>
+            <span onclick="sortGrid(6)">Total Titles</span>
+            <span onclick="sortGrid(7)">#FIVE</span>
+            <span onclick="sortGrid(8)">#FOUR</span>
+            <span onclick="sortGrid(9)">#Three</span>
+            <span onclick="sortGrid(10)">Thumbnails</span>
+            <span onclick="sortGrid(11)">Score</span>
+        </div>
+        <div class="ranking-grid" id="rankingGrid">
+            {grid_items}
+        </div>
+        <div class="pagination" id="gridPagination">
+            <button onclick="changePage(-1, 'rankingGrid')" id="gridPrevPage" disabled>Previous</button>
+            <span id="gridPageButtons"></span>
+            <button onclick="changePage(1, 'rankingGrid')" id="gridNextPage">Next</button>
         </div>
     </div>
     <button id="backToTop" title="Back to Top">↑ Top</button>
     <script>
         let sortDirections = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-        let currentPage = 1;
+        let currentTablePage = 1;
+        let currentGridPage = 1;
         const itemsPerPage = 50;
         const totalPages = {total_pages};
 
@@ -1095,39 +1186,60 @@ ranking_html_content = f"""<!DOCTYPE html>
             }}
             document.getElementById(tabName).style.display = "block";
             evt.currentTarget.className += " active";
+            if (tabName === 'RankingTableTab') {{
+                updatePagination('rankingTable', currentTablePage);
+            }} else if (tabName === 'GridViewTab') {{
+                updatePagination('rankingGrid', currentGridPage);
+            }}
         }}
 
-        function updatePagination() {{
-            const rows = document.querySelectorAll('#tableBody tr');
-            rows.forEach(row => {{
-                row.style.display = 'none';
-                if (parseInt(row.getAttribute('data-page')) === currentPage) {{
-                    row.style.display = 'table-row';
+        function updatePagination(containerId, page) {{
+            const isTable = containerId === 'rankingTable';
+            const currentPage = isTable ? (currentTablePage = page) : (currentGridPage = page);
+            const items = isTable 
+                ? document.querySelectorAll('#tableBody tr')
+                : document.querySelectorAll('#rankingGrid .grid-item');
+            items.forEach(item => {{
+                item.style.display = 'none';
+                if (parseInt(item.getAttribute('data-page')) === currentPage) {{
+                    item.style.display = isTable ? 'table-row' : 'flex';
                 }}
             }});
-            const prevButton = document.getElementById('prevPage');
-            const nextButton = document.getElementById('nextPage');
+            const prevButton = document.getElementById(isTable ? 'prevPage' : 'gridPrevPage');
+            const nextButton = document.getElementById(isTable ? 'nextPage' : 'gridNextPage');
+            const pageButtons = document.getElementById(isTable ? 'pageButtons' : 'gridPageButtons');
             prevButton.disabled = currentPage === 1;
             nextButton.disabled = currentPage === totalPages;
-            const pageButtons = document.getElementById('pageButtons');
             pageButtons.innerHTML = '';
             for (let i = 1; i <= totalPages; i++) {{
                 const button = document.createElement('button');
                 button.textContent = i;
                 button.className = i === currentPage ? 'active' : '';
                 button.onclick = () => {{
-                    currentPage = i;
-                    updatePagination();
+                    if (isTable) {{
+                        currentTablePage = i;
+                        updatePagination('rankingTable', i);
+                    }} else {{
+                        currentGridPage = i;
+                        updatePagination('rankingGrid', i);
+                    }}
                 }};
                 pageButtons.appendChild(button);
             }}
         }}
 
-        function changePage(delta) {{
+        function changePage(delta, containerId) {{
+            const isTable = containerId === 'rankingTable';
+            let currentPage = isTable ? currentTablePage : currentGridPage;
             currentPage += delta;
             if (currentPage < 1) currentPage = 1;
             if (currentPage > totalPages) currentPage = totalPages;
-            updatePagination();
+            if (isTable) {{
+                currentTablePage = currentPage;
+            }} else {{
+                currentGridPage = currentPage;
+            }}
+            updatePagination(containerId, currentPage);
         }}
 
         function sortTable(columnIndex) {{
@@ -1177,12 +1289,160 @@ ranking_html_content = f"""<!DOCTYPE html>
             }});
             sortDirections[columnIndex] = direction;
             sortDirections = sortDirections.map((d, i) => i === columnIndex ? d : 0);
-            currentPage = 1;
-            updatePagination();
+            currentTablePage = 1;
+            updatePagination('rankingTable', 1);
+            syncGridSort(columnIndex, direction);
+        }}
+
+        function sortGrid(columnIndex) {{
+            if (columnIndex === 4) return;
+            const grid = document.getElementById('rankingGrid');
+            const items = Array.from(grid.getElementsByClassName('grid-item'));
+            const isNumeric = [true, true, true, false, false, true, true, true, true, true, true, true];
+            const direction = sortDirections[columnIndex] === 1 ? -1 : 1;
+            items.sort((a, b) => {{
+                const aValue = a.querySelector(`.data-field[data-column="${columnIndex}"]`).textContent;
+                const bValue = b.querySelector(`.data-field[data-column="${columnIndex}"]`).textContent;
+                if (columnIndex === 1) {{ 
+                    if (aValue === 'N/A' && bValue === 'N/A') return 0;
+                    if (aValue === 'N/A') return direction * 1;
+                    if (bValue === 'N/A') return direction * -1;
+                    const aNum = parseFloat(aValue.split(' ')[0]);
+                    const bNum = parseFloat(bValue.split(' ')[0]);
+                    return direction * (aNum - bNum);
+                }} else if (columnIndex === 2) {{ 
+                    if (aValue === 'N/A' && bValue === 'N/A') return 0;
+                    if (aValue === 'N/A') return direction * 1;
+                    if (bValue === 'N/A') return direction * -1;
+                    const aNum = parseFloat(aValue.split(' ')[0]);
+                    const bNum = parseFloat(bValue.split(' ')[0]);
+                    return direction * (aNum - bNum);
+                }} else if (columnIndex === 5) {{ 
+                    if (aValue === 'N/A' && bValue === 'N/A') return 0;
+                    if (aValue === 'N/A') return direction * 1;
+                    if (bValue === 'N/A') return direction * -1;
+                    const aNum = parseInt(aValue);
+                    const bNum = parseInt(bValue);
+                    return direction * (aNum - bNum);
+                }}
+                if (isNumeric[columnIndex]) {{ 
+                    const aNum = parseFloat(aValue);
+                    const bNum = parseFloat(bValue);
+                    return direction * (aNum - bNum);
+                }}
+                return direction * aValue.localeCompare(bValue);
+            }});
+            while (grid.firstChild) {{ 
+                grid.removeChild(grid.firstChild); 
+            }}
+            items.forEach((item, index) => {{
+                item.setAttribute('data-page', Math.floor(index / itemsPerPage) + 1);
+                grid.appendChild(item);
+            }});
+            sortDirections[columnIndex] = direction;
+            sortDirections = sortDirections.map((d, i) => i === columnIndex ? d : 0);
+            currentGridPage = 1;
+            updatePagination('rankingGrid', 1);
+            syncTableSort(columnIndex, direction);
+        }}
+
+        function syncGridSort(columnIndex, direction) {{
+            const grid = document.getElementById('rankingGrid');
+            const items = Array.from(grid.getElementsByClassName('grid-item'));
+            const isNumeric = [true, true, true, false, false, true, true, true, true, true, true, true];
+            items.sort((a, b) => {{
+                const aValue = a.querySelector(`.data-field[data-column="${columnIndex}"]`).textContent;
+                const bValue = b.querySelector(`.data-field[data-column="${columnIndex}"]`).textContent;
+                if (columnIndex === 1) {{ 
+                    if (aValue === 'N/A' && bValue === 'N/A') return 0;
+                    if (aValue === 'N/A') return direction * 1;
+                    if (bValue === 'N/A') return direction * -1;
+                    const aNum = parseFloat(aValue.split(' ')[0]);
+                    const bNum = parseFloat(bValue.split(' ')[0]);
+                    return direction * (aNum - bNum);
+                }} else if (columnIndex === 2) {{ 
+                    if (aValue === 'N/A' && bValue === 'N/A') return 0;
+                    if (aValue === 'N/A') return direction * 1;
+                    if (bValue === 'N/A') return direction * -1;
+                    const aNum = parseFloat(aValue.split(' ')[0]);
+                    const bNum = parseFloat(bValue.split(' ')[0]);
+                    return direction * (aNum - bNum);
+                }} else if (columnIndex === 5) {{ 
+                    if (aValue === 'N/A' && bValue === 'N/A') return 0;
+                    if (aValue === 'N/A') return direction * 1;
+                    if (bValue === 'N/A') return direction * -1;
+                    const aNum = parseInt(aValue);
+                    const bNum = parseInt(bValue);
+                    return direction * (aNum - bNum);
+                }}
+                if (isNumeric[columnIndex]) {{ 
+                    const aNum = parseFloat(aValue);
+                    const bNum = parseFloat(bValue);
+                    return direction * (aNum - bNum);
+                }}
+                return direction * aValue.localeCompare(bValue);
+            }});
+            while (grid.firstChild) {{ 
+                grid.removeChild(grid.firstChild); 
+            }}
+            items.forEach((item, index) => {{
+                item.setAttribute('data-page', Math.floor(index / itemsPerPage) + 1);
+                grid.appendChild(item);
+            }});
+            currentGridPage = 1;
+            updatePagination('rankingGrid', 1);
+        }}
+
+        function syncTableSort(columnIndex, direction) {{
+            const tbody = document.getElementById('tableBody');
+            const rows = Array.from(tbody.getElementsByTagName('tr'));
+            const isNumeric = [true, true, true, false, false, true, true, true, true, true, true, true];
+            rows.sort((a, b) => {{
+                let aValue = a.cells[columnIndex].textContent;
+                let bValue = b.cells[columnIndex].textContent;
+                if (columnIndex === 1) {{ 
+                    if (aValue === 'N/A' && bValue === 'N/A') return 0;
+                    if (aValue === 'N/A') return direction * 1;
+                    if (bValue === 'N/A') return direction * -1;
+                    aValue = parseFloat(aValue.split(' ')[0]);
+                    bValue = parseFloat(bValue.split(' ')[0]);
+                    return direction * (aValue - bValue);
+                }} else if (columnIndex === 2) {{ 
+                    if (aValue === 'N/A' && bValue === 'N/A') return 0;
+                    if (aValue === 'N/A') return direction * 1;
+                    if (bValue === 'N/A') return direction * -1;
+                    aValue = parseFloat(aValue.split(' ')[0]);
+                    bValue = parseFloat(bValue.split(' ')[0]);
+                    return direction * (aValue - bValue);
+                }} else if (columnIndex === 5) {{ 
+                    if (aValue === 'N/A' && bValue === 'N/A') return 0;
+                    if (aValue === 'N/A') return direction * 1;
+                    if (bValue === 'N/A') return direction * -1;
+                    aValue = parseInt(aValue);
+                    bValue = parseInt(bValue);
+                    return direction * (aValue - bValue);
+                }}
+                if (isNumeric[columnIndex]) {{ 
+                    aValue = parseFloat(aValue) || aValue; 
+                    bValue = parseFloat(bValue) or bValue; 
+                    return direction * (aValue - bValue); 
+                }}
+                return direction * aValue.localeCompare(bValue);
+            }});
+            while (tbody.firstChild) {{ 
+                tbody.removeChild(tbody.firstChild);
+            }}
+            rows.forEach((row, index) => {{
+                row.setAttribute('data-page', Math.floor(index / itemsPerPage) + 1);
+                tbody.appendChild(row);
+            }});
+            currentTablePage = 1;
+            updatePagination('rankingTable', 1);
         }}
 
         document.addEventListener('DOMContentLoaded', function() {{
-            updatePagination();
+            updatePagination('rankingTable', 1);
+            updatePagination('rankingGrid', 1);
             openTab({{ currentTarget: document.querySelector('.tablinks.active') }}, 'RankingTableTab');
             window.onscroll = function() {{
                 const backToTopButton = document.getElementById('backToTop');
