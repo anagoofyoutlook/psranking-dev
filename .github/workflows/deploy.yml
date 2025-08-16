@@ -1,3 +1,4 @@
+# deploy.yml (updated with step to copy existing history.csv)
 name: Deploy PS Ranking
 on:
   push:
@@ -24,6 +25,11 @@ jobs:
           # wget -O PS/result.zip https://raw.githubusercontent.com/anagoofyoutlook/psranking-dev/main/result.zip || true
           echo "Listing input files:"
           ls -l PS Photos
+      - name: Copy existing history.csv
+        run: |
+          if [ -f history.csv ]; then
+            cp history.csv docs/history.csv
+          fi
       - name: Run ranking script
         run: |
           python main.py

@@ -1,4 +1,4 @@
-
+# data_processing.py (updated with defaults and .get() in output_data)
 import json
 import os
 import math
@@ -32,6 +32,9 @@ def load_data(zip_path):
         with open(json_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
         chats = data.get('chats', {}).get('list', [])
+        if not chats:
+            print("Error: No chats found in result.json")
+            return all_data
         for chat in chats:
             if chat.get('type') == 'private_supergroup':
                 group_data = {
@@ -165,12 +168,13 @@ def calculate_scores_and_ranks(all_data, max_messages, date_diffs, history_csv_f
                     except (ValueError, KeyError) as e:
                         print(f"Error processing history row for {group_name}: {e}")
                         continue
+            print(f"History data loaded: {history_data}")
         except Exception as e:
             print(f"Error reading history_csv_file: {e}")
 
     for group in sorted_data:
         group_name = group['group_name']
-        group['last_rank'] = 'N/A'
+        group['last_rank'] = 'N/A'  # Default value
         group['last_rank_date'] = 'N/A'
         group['up_down'] = 'N/A'
         if group_name in history_data and history_data[group_name]:
@@ -182,6 +186,7 @@ def calculate_scores_and_ranks(all_data, max_messages, date_diffs, history_csv_f
                 print(f"Set up_down for {group_name}: {group['up_down']}")
             except Exception as e:
                 print(f"Error setting history for {group_name}: {e}")
+                group['last_rank'] = 'N/A'
                 group['up_down'] = 'N/A'
 
     with open(history_csv_file, 'a', newline='', encoding='utf-8') as f:
@@ -199,9 +204,9 @@ def calculate_scores_and_ranks(all_data, max_messages, date_diffs, history_csv_f
         output_data.append({
             'group name': group['group_name'],
             'rank': group['rank'],
-            'last rank': group['last_rank'],
-            'last rank date': group['last_rank_date'],
-            'up down': group['up_down'],
+            'last rank': group.get('last_rank', 'N/A'),
+            'last rank date': group.get('last_rank_date', 'N/A'),
+            'up down': group.get('up_down', 'N/A'),
             'photo_file_name': photo_file_name,
             'html_file': html_file,
             'Datedifference': last_scene_days,

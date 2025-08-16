@@ -1,3 +1,4 @@
+# main.py (updated with debugging print statements)
 import os
 import shutil
 import zipfile
@@ -39,6 +40,12 @@ def main():
 
     sorted_data = data_processing.calculate_scores_and_ranks(all_data, max_messages, date_diffs, history_csv_file, html_subfolder, output_csv_file, github_raw_base)
     print(f"Generated {len(sorted_data)} group rankings")
+
+    # Added debugging
+    print("Sorted data contents:")
+    for group in sorted_data:
+        print(f"Group: {group.get('group_name', 'Unknown')}, Keys: {list(group.keys())}")
+
     html_generator.generate_index_html(sorted_data, output_csv_file, history_csv_file, github_raw_base, output_folder)
     print("Generated index.html and group HTML files")
     print(f"Listing files in {output_folder}:")

@@ -1,3 +1,4 @@
+# html_generator.py (updated with .get() for safe key access)
 import json
 import os
 import csv
@@ -54,24 +55,24 @@ def generate_index_html(sorted_data, output_csv_file, history_csv_file, github_r
     for group in sorted_data:
         group_name = group.get('group_name', 'Unknown')
         rank_change = (
-            f'<img src="{github_raw_base}/Photos/up.png" alt="Up" width="20">' if isinstance(group.get('up_down'), (int, float)) and group['up_down'] > 0
-            else f'<img src="{github_raw_base}/Photos/down.png" alt="Down" width="20">' if isinstance(group.get('up_down'), (int, float)) and group['up_down'] < 0
+            f'<img src="{github_raw_base}/Photos/up.png" alt="Up" width="20">' if isinstance(group.get('up_down'), (int, float)) and group.get('up_down') > 0
+            else f'<img src="{github_raw_base}/Photos/down.png" alt="Down" width="20">' if isinstance(group.get('up_down'), (int, float)) and group.get('up_down') < 0
             else f'<img src="{github_raw_base}/Photos/0.png" alt="No Change" width="20">'
         )
         ranking_html_content += f"""
                     <tr>
-                        <td><a href="HTML/{group['html_file']}">{group_name}</a></td>
-                        <td>{group['rank']}</td>
-                        <td>{group['last_rank']}</td>
-                        <td>{group['last_rank_date']}</td>
+                        <td><a href="HTML/{group.get('html_file', '')}">{group_name}</a></td>
+                        <td>{group.get('rank', 'N/A')}</td>
+                        <td>{group.get('last_rank', 'N/A')}</td>
+                        <td>{group.get('last_rank_date', 'N/A')}</td>
                         <td>{rank_change}</td>
-                        <td>{group['Datedifference']}</td>
-                        <td>{group['total titles']}</td>
-                        <td>{group['count of the hashtag "#FIVE"']}</td>
-                        <td>{group['count of the hashtag "#FOUR"']}</td>
-                        <td>{group['count of the hashtag "#Three"']}</td>
-                        <td>{group['count of the hashtag "#SceneType"']}</td>
-                        <td>{group['score']:.2f}</td>
+                        <td>{group.get('Datedifference', 'N/A')}</td>
+                        <td>{group.get('total titles', 'N/A')}</td>
+                        <td>{group.get('count of the hashtag "#FIVE"', 0)}</td>
+                        <td>{group.get('count of the hashtag "#FOUR"', 0)}</td>
+                        <td>{group.get('count of the hashtag "#Three"', 0)}</td>
+                        <td>{group.get('count of the hashtag "#SceneType"', 0)}</td>
+                        <td>{group.get('score', 0):.2f}</td>
                     </tr>
         """
     ranking_html_content += """
@@ -82,11 +83,11 @@ def generate_index_html(sorted_data, output_csv_file, history_csv_file, github_r
     """
     for group in sorted_data:
         group_name = group.get('group_name', 'Unknown')
-        photo_url = group['photo_file_name'] if utils.is_url_accessible(group['photo_file_name']) else f"{github_raw_base}/Photos/placeholder.png"
+        photo_url = group.get('photo_file_name', '') if utils.is_url_accessible(group.get('photo_file_name', '')) else f"{github_raw_base}/Photos/placeholder.png"
         ranking_html_content += f"""
                     <div class="grid-item">
-                        <a href="HTML/{group['html_file']}"><img src="{photo_url}" alt="{group_name}"></a>
-                        <p>{group_name}<br>Rank: {group['rank']}<br>Score: {group['score']:.2f}</p>
+                        <a href="HTML/{group.get('html_file', '')}"><img src="{photo_url}" alt="{group_name}"></a>
+                        <p>{group_name}<br>Rank: {group.get('rank', 'N/A')}<br>Score: {group.get('score', 0):.2f}</p>
                     </div>
         """
     ranking_html_content += """
@@ -163,34 +164,4 @@ def generate_group_html(group_name, group_id, titles, history_data, photo_paths,
             <canvas id="rankHistoryChart"></canvas>
             <script>
                 const historyData = {history_data_json};
-                const ctx = document.getElementById('rankHistoryChart').getContext('2d');
-                new Chart(ctx, {{
-                    type: 'line',
-                    data: {{
-                        labels: historyData.map(data => data.date),
-                        datasets: [{{
-                            label: 'Rank',
-                            data: historyData.map(data => data.rank),
-                            borderColor: '#007bff',
-                            fill: false
-                        }}]
-                    }},
-                    options: {{
-                        scales: {{
-                            y: {{
-                                reverse: true,
-                                beginAtZero: false
-                            }}
-                        }}
-                    }}
-                }});
-            </script>
-        </div>
-    </body>
-    </html>
-    """
-    html_file = f"{utils.sanitize_filename(group_name)}_{group_id}.html"
-    html_path = os.path.join(html_subfolder, html_file)
-    with open(html_path, 'w', encoding='utf-8') as f:
-        f.write(group_html_content)
-    print(f"Wrote HTML file: {html_path}")
+                const
