@@ -215,7 +215,27 @@ def generate_index_html(sorted_data, output_csv_file, history_csv_file, github_r
 def generate_group_html(group_name, group_id, titles, history_data, photo_paths, ratings_hashtag_list, scene_types_hashtag_list, other_hashtag_list, total_titles, last_scene_days, total_messages, telegram_group_id, github_raw_base, html_subfolder):
     group_name = group_name or 'Unknown'  # Ensure group_name is not None
     history_data_json = json.dumps(history_data.get(group_name, []))
-    # Use a single triple-quoted string with consistent indentation
+    # Generate title cards with flip effect
+    title_cards = ''
+    for title in titles:
+        title_text = title.get('title', 'No Title')
+        media_path = title.get('media_path', f"{github_raw_base}/Photos/placeholder.png")
+        media_path = media_path if utils.is_url_accessible(media_path) else f"{github_raw_base}/Photos/placeholder.png"
+        title_cards += f'''
+            <div class="flip-card">
+                <div class="flip-card-inner">
+                    <div class="flip-card-front">
+                        <img src="{media_path}" alt="{title_text}" style="width:300px;height:300px;object-fit:cover;">
+                    </div>
+                    <div class="flip-card-back">
+                        <h3 style="color: #e6b800; margin: 0; font-size: 20px; word-wrap: break-word; padding: 10px;">{title_text}</h3>
+                        <p style="color: #ffffff; font-size: 14px;">Date: {title.get('date', 'N/A')}</p>
+                    </div>
+                </div>
+            </div>
+        '''
+
+    # Use the same CSS as rank.py
     group_html_content = f"""
 <!DOCTYPE html>
 <html lang="en">
@@ -224,13 +244,33 @@ def generate_group_html(group_name, group_id, titles, history_data, photo_paths,
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{group_name} - PS Ranking</title>
     <style>
-        body {{ font-family: Arial, sans-serif; margin: 20px; background-color: #f0f0f0; }}
+        body {{ font-family: Arial, sans-serif; background-color: #1e2a44; color: #ffffff; margin: 20px; text-align: center; }}
+        h1, h2, h3 {{ color: #e6b800; }}
         .container {{ max-width: 1200px; margin: auto; }}
-        .photo-gallery {{ display: flex; flex-wrap: wrap; gap: 10px; }}
-        .photo-gallery img {{ max-width: 200px; height: auto; }}
-        .hashtag-list {{ list-style-type: none; padding: 0; }}
-        .hashtag-item {{ margin: 5px 0; }}
-        canvas {{ margin-top: 20px; }}
+        .photo-gallery {{ display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }}
+        .hashtag-list {{ list-style-type: none; padding: 0; text-align: left; max-width: 600px; margin: 20px auto; }}
+        .hashtag-item {{ margin: 5px 0; font-size: 16px; }}
+        canvas {{ margin-top: 20px; max-width: 100%; }}
+        a {{ text-decoration: none; color: #e6b800; }}
+        a:hover {{ color: #b30000; text-decoration: underline; }}
+        .flip-card {{ background-color: transparent; width: 300px; height: 300px; perspective: 1000px; margin: 10px; }}
+        .flip-card-inner {{ position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); }}
+        .flip-card:hover .flip-card-inner {{ transform: rotateY(180deg); }}
+        .flip-card-front, .flip-card-back {{ position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 5px; }}
+        .flip-card-front {{ background-color: #2a3a5c; color: #ffffff; }}
+        .flip-card-back {{ background-color: #3b4a6b; color: #e6b800; transform: rotateY(180deg); display: flex; justify-content: center; align-items: center; flex-direction: column; }}
+        .flip-card-back h3 {{ margin: 0; font-size: 20px; word-wrap: break-word; padding: 10px; }}
+        .flip-card-back p {{ margin: 5px 0; font-size: 14px; color: #ffffff; }}
+        @media only screen and (max-width: 1200px) {{ 
+            .flip-card {{ width: 200px; height: 200px; }} 
+            .flip-card-back h3 {{ font-size: 16px; }}
+            .flip-card-back p {{ font-size: 12px; }}
+        }}
+        @media only screen and (max-width: 768px) {{ 
+            .flip-card {{ width: 150px; height: 150px; }} 
+            .flip-card-back h3 {{ font-size: 14px; }}
+            .flip-card-back p {{ font-size: 10px; }}
+        }}
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -241,9 +281,9 @@ def generate_group_html(group_name, group_id, titles, history_data, photo_paths,
         <p>Total Titles: {total_titles}</p>
         <p>Last Scene: {last_scene_days}</p>
         <p>Total Messages: {total_messages}</p>
-        <h2>Photos</h2>
+        <h2>Titles</h2>
         <div class="photo-gallery">
-            {"".join(f'<img src="{photo if utils.is_url_accessible(photo) else f"{github_raw_base}/Photos/placeholder.png"}" alt="Group Photo">' for photo in photo_paths)}
+            {title_cards}
         </div>
         <h2>Hashtags</h2>
         <ul class="hashtag-list">
