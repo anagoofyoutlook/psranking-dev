@@ -1,4 +1,3 @@
-# html_generator.py (updated with .get() for safe key access)
 import json
 import os
 import csv
@@ -121,47 +120,74 @@ def generate_index_html(sorted_data, output_csv_file, history_csv_file, github_r
 def generate_group_html(group_name, group_id, titles, history_data, photo_paths, ratings_hashtag_list, scene_types_hashtag_list, other_hashtag_list, total_titles, last_scene_days, total_messages, telegram_group_id, github_raw_base, html_subfolder):
     group_name = group_name or 'Unknown'  # Ensure group_name is not None
     history_data_json = json.dumps(history_data.get(group_name, []))
+    # Use a single triple-quoted string with consistent indentation
     group_html_content = f"""
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{group_name} - PS Ranking</title>
-        <style>
-            body {{ font-family: Arial, sans-serif; margin: 20px; background-color: #f0f0f0; }}
-            .container {{ max-width: 1200px; margin: auto; }}
-            .photo-gallery {{ display: flex; flex-wrap: wrap; gap: 10px; }}
-            .photo-gallery img {{ max-width: 200px; height: auto; }}
-            .hashtag-list {{ list-style-type: none; padding: 0; }}
-            .hashtag-item {{ margin: 5px 0; }}
-            canvas {{ margin-top: 20px; }}
-        </style>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    </head>
-    <body>
-        <div class="container">
-            <h1>{group_name}</h1>
-            <p><a href="https://t.me/{telegram_group_id}" target="_blank">Join Telegram Group</a></p>
-            <p>Total Titles: {total_titles}</p>
-            <p>Last Scene: {last_scene_days}</p>
-            <p>Total Messages: {total_messages}</p>
-            <h2>Photos</h2>
-            <div class="photo-gallery">
-    """
-    for photo in photo_paths:
-        photo_url = photo if utils.is_url_accessible(photo) else f"{github_raw_base}/Photos/placeholder.png"
-        group_html_content += f'<img src="{photo_url}" alt="Group Photo">'
-    group_html_content += """
-            </div>
-            <h2>Hashtags</h2>
-            <ul class="hashtag-list">
-                {ratings_hashtag_list}
-                {scene_types_hashtag_list}
-                {other_hashtag_list}
-            </ul>
-            <h2>Rank History</h2>
-            <canvas id="rankHistoryChart"></canvas>
-            <script>
-                const historyData = {history_data_json};
-                const
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{group_name} - PS Ranking</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; margin: 20px; background-color: #f0f0f0; }}
+        .container {{ max-width: 1200px; margin: auto; }}
+        .photo-gallery {{ display: flex; flex-wrap: wrap; gap: 10px; }}
+        .photo-gallery img {{ max-width: 200px; height: auto; }}
+        .hashtag-list {{ list-style-type: none; padding: 0; }}
+        .hashtag-item {{ margin: 5px 0; }}
+        canvas {{ margin-top: 20px; }}
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>{group_name}</h1>
+        <p><a href="https://t.me/{telegram_group_id}" target="_blank">Join Telegram Group</a></p>
+        <p>Total Titles: {total_titles}</p>
+        <p>Last Scene: {last_scene_days}</p>
+        <p>Total Messages: {total_messages}</p>
+        <h2>Photos</h2>
+        <div class="photo-gallery">
+            {"".join(f'<img src="{photo if utils.is_url_accessible(photo) else f"{github_raw_base}/Photos/placeholder.png"}" alt="Group Photo">' for photo in photo_paths)}
+        </div>
+        <h2>Hashtags</h2>
+        <ul class="hashtag-list">
+            {ratings_hashtag_list}
+            {scene_types_hashtag_list}
+            {other_hashtag_list}
+        </ul>
+        <h2>Rank History</h2>
+        <canvas id="rankHistoryChart"></canvas>
+        <script>
+            const historyData = {history_data_json};
+            const ctx = document.getElementById('rankHistoryChart').getContext('2d');
+            new Chart(ctx, {{
+                type: 'line',
+                data: {{
+                    labels: historyData.map(data => data.date),
+                    datasets: [{{
+                        label: 'Rank',
+                        data: historyData.map(data => data.rank),
+                        borderColor: '#007bff',
+                        fill: false
+                    }}]
+                }},
+                options: {{
+                    scales: {{
+                        y: {{
+                            reverse: true,
+                            beginAtZero: false
+                        }}
+                    }}
+                }}
+            }});
+        </script>
+    </div>
+</body>
+</html>
+"""
+    html_file = f"{utils.sanitize_filename(group_name)}_{group_id}.html"
+    html_path = os.path.join(html_subfolder, html_file)
+    with open(html_path, 'w', encoding='utf-8') as f:
+        f.write(group_html_content)
+    print(f"Wrote HTML file: {html_path}")
