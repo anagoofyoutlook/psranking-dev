@@ -21,12 +21,57 @@ def main():
     print(f"Checking for result.zip at: {zip_path}")
     if not os.path.exists(zip_path):
         print(f"Error: {zip_path} not found")
+        # Generate a minimal index.html to avoid 404
+        minimal_html = f"""
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>PS Ranking - {datetime.now().strftime('%Y-%m-%d')}</title>
+            <style>
+                body {{ font-family: Arial, sans-serif; background-color: #1e2a44; color: #ffffff; margin: 20px; text-align: center; }}
+                h1 {{ color: #e6b800; }}
+            </style>
+        </head>
+        <body>
+            <h1>PS Ranking - {datetime.now().strftime('%Y-%m-%d')}</h1>
+            <p>No data available. Please check the input data (result.zip).</p>
+        </body>
+        </html>
+        """
+        index_path = os.path.join(output_folder, 'index.html')
+        with open(index_path, 'w', encoding='utf-8') as f:
+            f.write(minimal_html)
+        print(f"Wrote minimal HTML file: {index_path}")
         return
 
     all_data = data_processing.load_data(zip_path)
     print(f"Loaded {len(all_data)} groups from result.zip")
     if not all_data:
-        print("No data loaded, exiting.")
+        print("No data loaded, generating minimal index.html")
+        minimal_html = f"""
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>PS Ranking - {datetime.now().strftime('%Y-%m-%d')}</title>
+            <style>
+                body {{ font-family: Arial, sans-serif; background-color: #1e2a44; color: #ffffff; margin: 20px; text-align: center; }}
+                h1 {{ color: #e6b800; }}
+            </style>
+        </head>
+        <body>
+            <h1>PS Ranking - {datetime.now().strftime('%Y-%m-%d')}</h1>
+            <p>No groups found in result.json. Please verify the data format.</p>
+        </body>
+        </html>
+        """
+        index_path = os.path.join(output_folder, 'index.html')
+        with open(index_path, 'w', encoding='utf-8') as f:
+            f.write(minimal_html)
+        print(f"Wrote minimal HTML file: {index_path}")
         return
 
     max_messages = max(len(group['messages']) for group in all_data) if all_data else 1
@@ -43,7 +88,7 @@ def main():
     # Added debugging
     print("Sorted data contents:")
     for group in sorted_data:
-        print(f"Group: {group.get('group_name', 'Unknown')}, Keys: {list(group.keys())}, up_down: {group.get('up_down', 'N/A')}")
+        print(f"Group: {group.get('group_name', 'Unknown')}, Keys: {list(group.keys())}, up_down: {group.get('up_down', 'N/A')}, Titles: {len(group.get('titles', []))}")
 
     html_generator.generate_index_html(sorted_data, output_csv_file, history_csv_file, github_raw_base, output_folder)
     print("Generated index.html and group HTML files")

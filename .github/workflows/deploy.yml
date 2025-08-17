@@ -1,4 +1,3 @@
-# deploy.yml (updated with step to copy existing history.csv)
 name: Deploy PS Ranking
 on:
   push:
@@ -29,15 +28,29 @@ jobs:
         run: |
           if [ -f history.csv ]; then
             cp history.csv docs/history.csv
+            echo "Copied history.csv to docs/history.csv"
+          else
+            echo "No history.csv found"
           fi
       - name: Run ranking script
         run: |
           python main.py
-          echo "Listing generated files:"
+          echo "Listing generated files before deployment:"
           ls -R docs
+          if [ -f docs/index.html ]; then
+            echo "index.html found in docs"
+          else
+            echo "Error: index.html not found in docs"
+          fi
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs
           force_orphan: true
+        env:
+          ACTIONS_STEP_DEBUG: true  # Enable debug logs
+      - name: List deployed files
+        run: |
+          echo "Listing files in deployed gh-pages branch:"
+          ls -R docs
