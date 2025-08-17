@@ -1,0 +1,60 @@
+name: Deploy PS Ranking
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+      - name: Ensure input files and folders
+        run: |
+          mkdir -p PS Photos docs docs/HTML
+          echo "Listing input files:"
+          ls -l PS Photos
+          if [ -f PS/result.zip ]; then
+            echo "result.zip found, listing contents:"
+            unzip -l PS/result.zip
+          else
+            echo "Error: PS/result.zip not found"
+          fi
+      - name: Copy existing history.csv
+        run: |
+          if [ -f history.csv ]; then
+            cp history.csv docs/history.csv
+            echo "Copied history.csv to docs/history.csv"
+          else
+            echo "No history.csv found"
+          fi
+      - name: Run ranking script
+        run: |
+          python main.py
+          echo "Listing generated files before deployment:"
+          ls -R docs
+          if [ -f docs/index.html ]; then
+            echo "index.html found in docs"
+          else
+            echo "Error: index.html not found in docs"
+          fi
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          force_orphan: true
+        env:
+          ACTIONS_STEP_DEBUG: true
+      - name: List deployed files
+        run: |
+          echo "Listing files in deployed gh-pages branch:"
+          ls -R docs

@@ -1,60 +1,91 @@
-name: Deploy PS Ranking
+name: Build and Deploy to GitHub Pages
+
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages
+          fetch-depth: 0
+
+      - name: Copy existing history.csv
+        run: |
+          mkdir -p docs
+          if [ -f gh-pages/history.csv ]; then
+            cp gh-pages/history.csv docs/history.csv
+            echo "Copied history.csv from gh-pages"
+            cat docs/history.csv
+          else
+            echo "No existing history.csv found in gh-pages"
+          fi
+
+      - name: Check disk space before running script
+        run: |
+          echo "Disk space before running script:"
+          df -h
+
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install requests
-      - name: Ensure input files and folders
+          echo "Verifying requests installation..."
+          python -c "import requests; print('requests version:', requests.__version__)"
+
+      - name: Run script
+        run: python rank.py
+
+      - name: List output files
         run: |
-          mkdir -p PS Photos docs docs/HTML
-          echo "Listing input files:"
-          ls -l PS Photos
-          if [ -f PS/result.zip ]; then
-            echo "result.zip found, listing contents:"
-            unzip -l PS/result.zip
-          else
-            echo "Error: PS/result.zip not found"
-          fi
-      - name: Copy existing history.csv
+          echo "Contents of docs/:"
+          ls -R docs/ || echo "No files found in docs/"
+          echo "Contents of history.csv:"
+          cat docs/history.csv || echo "history.csv is empty"
+          echo "Size of docs/ folder:"
+          du -sh docs/
+
+      - name: Verify GitHub token permissions
         run: |
-          if [ -f history.csv ]; then
-            cp history.csv docs/history.csv
-            echo "Copied history.csv to docs/history.csv"
-          else
-            echo "No history.csv found"
-          fi
-      - name: Run ranking script
-        run: |
-          python main.py
-          echo "Listing generated files before deployment:"
-          ls -R docs
-          if [ -f docs/index.html ]; then
-            echo "index.html found in docs"
-          else
-            echo "Error: index.html not found in docs"
-          fi
+          echo "Checking GITHUB_TOKEN permissions..."
+          curl -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               https://api.github.com/repos/anagoofyoutlook/psranking-dev | jq .permissions
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs
-          force_orphan: true
-        env:
-          ACTIONS_STEP_DEBUG: true
-      - name: List deployed files
+          publish_branch: gh-pages
+          keep_files: true
+          exclude_assets: 'Photos/**'
+
+      - name: Check disk space after deployment
         run: |
-          echo "Listing files in deployed gh-pages branch:"
-          ls -R docs
+          echo "Disk space after deployment:"
+          df -h
