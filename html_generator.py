@@ -5,13 +5,11 @@ from datetime import datetime
 import utils
 
 def generate_index_html(sorted_data, output_csv_file, history_csv_file, github_raw_base, output_folder):
-    # Sort for top movers (top risers)
     top_movers = sorted(
         [g for g in sorted_data if g.get('up_down') != 'N/A' and isinstance(g.get('up_down'), (int, float)) and g.get('up_down') > 0],
         key=lambda x: x.get('up_down', 0), reverse=True
     )[:5]
 
-    # Generate top movers rows
     top_movers_rows = ''
     for group in top_movers:
         group_name = group.get('group_name', 'Unknown')
@@ -34,7 +32,6 @@ def generate_index_html(sorted_data, output_csv_file, history_csv_file, github_r
             </tr>
         '''
 
-    # Generate main table rows
     table_rows = ''
     for group in sorted_data:
         group_name = group.get('group_name', 'Unknown')
@@ -78,7 +75,6 @@ def generate_index_html(sorted_data, output_csv_file, history_csv_file, github_r
             </tr>
         '''
 
-    # HTML content with CSS from rank.py
     ranking_html_content = f"""
     <!DOCTYPE html>
     <html lang="en">
@@ -215,10 +211,9 @@ def generate_index_html(sorted_data, output_csv_file, history_csv_file, github_r
     print(f"Wrote HTML file: {index_path}")
 
 def generate_group_html(group_name, group_id, titles, history_data, photo_paths, ratings_hashtag_list, scene_types_hashtag_list, other_hashtag_list, total_titles, last_scene_days, total_messages, telegram_group_id, github_raw_base, html_subfolder):
-    group_name = group_name or 'Unknown'  # Ensure group_name is not None
+    group_name = group_name or 'Unknown'
     history_data_json = json.dumps(history_data.get(group_name, []))
     
-    # Generate title cards with flip effect, falling back to photo_paths or group-named photo
     title_cards = ''
     if titles:
         print(f"Generating title cards for group {group_name}: {len(titles)} titles found")
@@ -261,7 +256,6 @@ def generate_group_html(group_name, group_id, titles, history_data, photo_paths,
                     </div>
                 '''
         else:
-            # Fall back to group-named photo
             group_photo = f"{github_raw_base}/Photos/{group_name}.jpg"
             accessible = utils.is_url_accessible(group_photo)
             print(f"Group page - No titles or photos, trying group-named photo: {group_photo}, Accessible: {accessible}")
@@ -279,7 +273,6 @@ def generate_group_html(group_name, group_id, titles, history_data, photo_paths,
                 </div>
             '''
 
-    # Use the same CSS as rank.py
     group_html_content = f"""
 <!DOCTYPE html>
 <html lang="en">

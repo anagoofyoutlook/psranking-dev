@@ -21,7 +21,6 @@ def main():
     print(f"Checking for result.zip at: {zip_path}")
     if not os.path.exists(zip_path):
         print(f"Error: {zip_path} not found")
-        # Generate a minimal index.html to avoid 404
         minimal_html = f"""
         <!DOCTYPE html>
         <html lang="en">
@@ -36,7 +35,63 @@ def main():
         </head>
         <body>
             <h1>PS Ranking - {datetime.now().strftime('%Y-%m-%d')}</h1>
-            <p>No data available. Please check the input data (result.zip).</p>
+            <p>Error: result.zip not found in PS folder.</p>
+        </body>
+        </html>
+        """
+        index_path = os.path.join(output_folder, 'index.html')
+        with open(index_path, 'w', encoding='utf-8') as f:
+            f.write(minimal_html)
+        print(f"Wrote minimal HTML file: {index_path}")
+        return
+
+    # Log zip file contents
+    try:
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_contents = zip_ref.namelist()
+            print(f"Contents of {zip_path}: {zip_contents}")
+            if 'result.json' not in zip_contents:
+                print("Error: result.json not found in result.zip")
+                minimal_html = f"""
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>PS Ranking - {datetime.now().strftime('%Y-%m-%d')}</title>
+                    <style>
+                        body {{ font-family: Arial, sans-serif; background-color: #1e2a44; color: #ffffff; margin: 20px; text-align: center; }}
+                        h1 {{ color: #e6b800; }}
+                    </style>
+                </head>
+                <body>
+                    <h1>PS Ranking - {datetime.now().strftime('%Y-%m-%d')}</h1>
+                    <p>Error: result.json not found in result.zip.</p>
+                </body>
+                </html>
+                """
+                index_path = os.path.join(output_folder, 'index.html')
+                with open(index_path, 'w', encoding='utf-8') as f:
+                    f.write(minimal_html)
+                print(f"Wrote minimal HTML file: {index_path}")
+                return
+    except zipfile.BadZipFile as e:
+        print(f"Error: Failed to read {zip_path}: {e}")
+        minimal_html = f"""
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>PS Ranking - {datetime.now().strftime('%Y-%m-%d')}</title>
+            <style>
+                body {{ font-family: Arial, sans-serif; background-color: #1e2a44; color: #ffffff; margin: 20px; text-align: center; }}
+                h1 {{ color: #e6b800; }}
+            </style>
+        </head>
+        <body>
+            <h1>PS Ranking - {datetime.now().strftime('%Y-%m-%d')}</h1>
+            <p>Error: Failed to read result.zip: {e}</p>
         </body>
         </html>
         """

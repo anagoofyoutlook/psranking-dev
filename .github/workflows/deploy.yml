@@ -20,10 +20,14 @@ jobs:
       - name: Ensure input files and folders
         run: |
           mkdir -p PS Photos docs docs/HTML
-          # Uncomment and update the URL if result.zip is external
-          # wget -O PS/result.zip https://raw.githubusercontent.com/anagoofyoutlook/psranking-dev/main/result.zip || true
           echo "Listing input files:"
           ls -l PS Photos
+          if [ -f PS/result.zip ]; then
+            echo "result.zip found, listing contents:"
+            unzip -l PS/result.zip
+          else
+            echo "Error: PS/result.zip not found"
+          fi
       - name: Copy existing history.csv
         run: |
           if [ -f history.csv ]; then
@@ -49,7 +53,7 @@ jobs:
           publish_dir: ./docs
           force_orphan: true
         env:
-          ACTIONS_STEP_DEBUG: true  # Enable debug logs
+          ACTIONS_STEP_DEBUG: true
       - name: List deployed files
         run: |
           echo "Listing files in deployed gh-pages branch:"

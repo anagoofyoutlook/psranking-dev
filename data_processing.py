@@ -21,15 +21,26 @@ def get_date_difference(date_str, current_date):
 
 def load_data(zip_path):
     all_data = []
+    print(f"Attempting to load data from: {zip_path}")
+    if not os.path.exists(zip_path):
+        print(f"Error: {zip_path} does not exist")
+        return all_data
     try:
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            print(f"Extracting {zip_path} to PS folder")
             zip_ref.extractall('PS')
+            print(f"Files extracted: {zip_ref.namelist()}")
         json_path = os.path.join('PS', 'result.json')
         if not os.path.exists(json_path):
             print(f"Error: {json_path} not found after extraction")
             return all_data
         with open(json_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
+            print(f"Reading {json_path}")
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError as e:
+                print(f"Error: Failed to parse {json_path}: {e}")
+                return all_data
         chats = data.get('chats', {}).get('list', [])
         if not chats:
             print("Error: No chats found in result.json")
@@ -37,11 +48,11 @@ def load_data(zip_path):
         for chat in chats:
             if chat.get('type') == 'private_supergroup':
                 group_data = {
-                    'id': chat.get('id', 0),  # Ensure id is set
-                    'name': chat.get('name', 'Unknown'),  # Ensure name is set
+                    'id': chat.get('id', 0),
+                    'name': chat.get('name', 'Unknown'),
                     'messages': []
                 }
-                print(f"Loaded group: {group_data['name']} (ID: {group_data['id']})")
+                print(f"Processing group: {group_data['name']} (ID: {group_data['id']})")
                 for msg in chat.get('messages', []):
                     if msg.get('type') == 'message':
                         text = msg.get('text', '')
@@ -69,9 +80,13 @@ def load_data(zip_path):
                             'reply_to_message_id': msg.get('reply_to_message_id')
                         })
                 all_data.append(group_data)
+    except zipfile.BadZipFile as e:
+        print(f"Error: Failed to extract {zip_path}: {e}")
+        return all_data
     except Exception as e:
         print(f"Error loading data: {e}")
         return all_data
+    print(f"Loaded {len(all_data)} groups from result.json")
     return all_data
 
 def process_group_data(group, current_date, github_raw_base):
@@ -114,7 +129,6 @@ def process_group_data(group, current_date, github_raw_base):
             if thumbnail:
                 media_path = f"{github_raw_base}/Photos/{group_name}/thumbs/{thumbnail}"
             elif media:
-                # Convert video file to jpg for thumbnail
                 media_base = os.path.splitext(media)[0]
                 media_path = f"{github_raw_base}/Photos/{group_name}/thumbs/{media_base}.jpg"
             else:
@@ -237,7 +251,6 @@ def calculate_scores_and_ranks(all_data, max_messages, date_diffs, history_csv_f
 
     output_data = []
     for group in sorted_data:
-        # Use raw group name for main page photo
         group_photo = f"{github_raw_base}/Photos/{group['group_name']}.jpg"
         photo_file_name = group_photo if utils.is_url_accessible(group_photo) else f"{github_raw_base}/Photos/placeholder.png"
         print(f"Main page - Group: {group['group_name']}, photo_file_name: {photo_file_name}, Accessible: {utils.is_url_accessible(photo_file_name)}")
