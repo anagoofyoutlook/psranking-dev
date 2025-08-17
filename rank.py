@@ -99,24 +99,27 @@ history_columns = ['date', 'group name', 'rank']
 history_data = {}
 current_date = datetime.now().strftime('%Y-%m-%d')
 if os.path.exists(history_csv_file):
-    with open(history_csv_file, 'r', encoding='utf-8') as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            group = row.get('group name', 'Unknown')
-            date = row.get('date', '')
-            try:
-                rank = int(row.get('rank', '0'))
-                if group not in history_data:
-                    history_data[group] = {}
-                if date != current_date:
-                    if date not in history_data[group] or rank < history_data[group][date]['rank']:
-                        history_data[group][date] = {'date': date, 'rank': rank}
-            except (ValueError, TypeError) as e:
-                print(f"Skipping invalid rank for group '{group}' on date '{date}': {row}. Error: {e}")
-    for group in history_data:
-        history_data[group] = list(history_data[group].values())
-        history_data[group].sort(key=lambda x: x['date'])
-    print(f"Loaded {sum(len(v) for v in history_data.values())} history entries from {history_csv_file}")
+    try:
+        with open(history_csv_file, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                group = row.get('group name', 'Unknown')
+                date = row.get('date', '')
+                try:
+                    rank = int(row.get('rank', '0'))
+                    if group not in history_data:
+                        history_data[group] = {}
+                    if date != current_date:
+                        if date not in history_data[group] or rank < history_data[group][date]['rank']:
+                            history_data[group][date] = {'date': date, 'rank': rank}
+                except (ValueError, TypeError) as e:
+                    print(f"Skipping invalid rank for group '{group}' on date '{date}': {row}. Error: {e}")
+        for group in history_data:
+            history_data[group] = list(history_data[group].values())
+            history_data[group].sort(key=lambda x: x['date'])
+        print(f"Loaded {sum(len(v) for v in history_data.values())} history entries from {history_csv_file}")
+    except Exception as e:
+        print(f"Error reading history_csv_file: {e}")
 else:
     print(f"No existing {history_csv_file} found")
 
@@ -127,6 +130,7 @@ date_diffs = []
 
 # Function to sanitize filenames
 def sanitize_filename(name):
+    name = name or 'Unknown'  # Ensure name is not None
     name = re.sub(r'[^\w\s-]', '', name)
     name = re.sub(r'\s+', '_', name)
     return name.lower()
@@ -167,7 +171,7 @@ def find_serial_match_media(serial_number, media_files):
 for chat in chats:
     if chat.get('type') == 'private_supergroup':
         group_name = chat.get('name', 'Unknown Group')
-        group_id = str(chat['id'])
+        group_id = str(chat.get('id', '0'))
         telegram_group_id = group_id[4:] if group_id.startswith('-100') else group_id
         messages = chat.get('messages', [])
         print(f"Processing group: {group_name} (ID: {group_id})")
@@ -789,7 +793,10 @@ sorted_data = sorted(all_data, key=lambda x: x['score'], reverse=True)
 for i, entry in enumerate(sorted_data, 1):
     entry['rank'] = i
     if entry['last rank'] != 'N/A':
-        entry['up down'] = int(entry['last rank']) - i
+        try:
+            entry['up down'] = int(entry['last rank']) - i
+        except (ValueError, TypeError):
+            entry['up down'] = 'N/A'
     history_data[entry['group name']].append({'date': current_date, 'rank': i})
     html_content_with_rank = entry['html_content'].replace('RANK_PLACEHOLDER', str(i))
     html_path = os.path.join(html_subfolder, entry['html_file'])
@@ -820,9 +827,9 @@ else:
     print(f"No new history entries to append to {history_csv_file}")
 
 # Generate top 5 up, down, and unchanged table
-up_groups = [entry for entry in sorted_data if entry['up down'] != 'N/A' and entry['up down'] > 0]
-down_groups = [entry for entry in sorted_data if entry['up down'] != 'N/A' and entry['up down'] < 0]
-unchanged_groups = [entry for entry in sorted_data if entry['up down'] == 0]
+up_groups = [entry for entry in sorted_data if entry['up down'] != 'N/A' and isinstance(entry['up down'], (int, float)) and entry['up down'] > 0]
+down_groups = [entry for entry in sorted_data if entry['up down'] != 'N/A' and isinstance(entry['up down'], (int, float)) and entry['up down'] < 0]
+unchanged_groups = [entry for entry in sorted_data if entry['up down'] == 0 or entry['up down'] == 'N/A']
 up_groups = sorted(up_groups, key=lambda x: (x['up down'], -x['rank']), reverse=True)[:5]
 down_groups = sorted(down_groups, key=lambda x: (x['up down'], -x['rank']), reverse=True)[:5]
 unchanged_groups = sorted(unchanged_groups, key=lambda x: x['rank'])[:5]
@@ -833,7 +840,7 @@ if up_groups or down_groups or unchanged_groups:
         if group_list:
             top_movers_rows += f'<tr><th style="background-color: #b30000;">{title}</th></tr><tr>'
             for entry in group_list:
-                group_name = escape(entry['group name'])
+                group_name = escape(entry['group name'] or 'Unknown')
                 photo_src = entry['photo_file_name']
                 html_link = f"HTML/{entry['html_file']}"
                 last_rank = entry['last rank']
@@ -841,15 +848,16 @@ if up_groups or down_groups or unchanged_groups:
                 last_rank_display = f"{last_rank} ({last_rank_date})" if last_rank != 'N/A' else 'N/A'
                 up_down = entry['up down']
                 up_down_img = 'https://via.placeholder.com/20'
-                if up_down > 0:
-                    up_url = f"{github_raw_base}/Photos/up.png"
-                    up_down_img = up_url if is_url_accessible(up_url) else up_down_img
-                elif up_down < 0:
-                    down_url = f"{github_raw_base}/Photos/down.png"
-                    up_down_img = down_url if is_url_accessible(down_url) else up_down_img
-                else:
-                    zero_url = f"{github_raw_base}/Photos/0.png"
-                    up_down_img = zero_url if is_url_accessible(zero_url) else up_down_img
+                if isinstance(up_down, (int, float)):
+                    if up_down > 0:
+                        up_url = f"{github_raw_base}/Photos/up.png"
+                        up_down_img = up_url if is_url_accessible(up_url) else up_down_img
+                    elif up_down < 0:
+                        down_url = f"{github_raw_base}/Photos/down.png"
+                        up_down_img = down_url if is_url_accessible(down_url) else up_down_img
+                    else:
+                        zero_url = f"{github_raw_base}/Photos/0.png"
+                        up_down_img = zero_url if is_url_accessible(zero_url) else up_down_img
                 print(f"Top Movers: Group {group_name}, Up Down image: {up_down_img}")
                 top_movers_rows += f"""
                     <td>
@@ -871,7 +879,7 @@ items_per_page = 50
 total_pages = math.ceil(len(sorted_data) / items_per_page)
 table_rows = ''
 for i, entry in enumerate(sorted_data):
-    group_name = escape(entry['group name'])
+    group_name = escape(entry['group name'] or 'Unknown')
     photo_src = entry['photo_file_name']
     html_link = f"HTML/{entry['html_file']}"
     last_scene = f"{entry['Datedifference']} days" if entry['Datedifference'] != 'N/A' else 'N/A'
@@ -880,7 +888,7 @@ for i, entry in enumerate(sorted_data):
     last_rank_display = f"{last_rank} ({last_rank_date})" if last_rank != 'N/A' else 'N/A'
     up_down = entry['up down']
     up_down_img = 'https://via.placeholder.com/20'
-    if up_down != 'N/A':
+    if isinstance(up_down, (int, float)):
         if up_down > 0:
             up_url = f"{github_raw_base}/Photos/up.png"
             up_down_img = up_url if is_url_accessible(up_url) else up_down_img
