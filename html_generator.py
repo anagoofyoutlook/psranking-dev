@@ -262,7 +262,7 @@ def generate_group_html(group_name, group_id, titles, history_data, photo_paths,
                 '''
         else:
             # Fall back to group-named photo
-            group_photo = f"{github_raw_base}/Photos/{utils.sanitize_filename(group_name)}.jpg"
+            group_photo = f"{github_raw_base}/Photos/{group_name}.jpg"
             accessible = utils.is_url_accessible(group_photo)
             print(f"Group page - No titles or photos, trying group-named photo: {group_photo}, Accessible: {accessible}")
             group_photo = group_photo if accessible else f"{github_raw_base}/Photos/placeholder.png"

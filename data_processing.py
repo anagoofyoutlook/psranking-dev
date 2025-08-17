@@ -46,14 +46,16 @@ def load_data(zip_path):
                     if msg.get('type') == 'message':
                         text = msg.get('text', '')
                         if isinstance(text, list):
-                            text = ''.join(str(t) for t in text)
+                            text = ''.join(str(t.get('text', '')) for t in text)
                         group_data['messages'].append({
                             'id': msg.get('id'),
                             'date': msg.get('date'),
                             'text': text,
                             'media': msg.get('file'),
+                            'thumbnail': msg.get('thumbnail'),
                             'is_gif': msg.get('media_type') == 'animation',
-                            'action': msg.get('action')
+                            'action': msg.get('action'),
+                            'reply_to_message_id': msg.get('reply_to_message_id')
                         })
                     elif msg.get('action') == 'topic_created':
                         group_data['messages'].append({
@@ -61,8 +63,10 @@ def load_data(zip_path):
                             'date': msg.get('date'),
                             'title': msg.get('title', 'No Title'),
                             'media': msg.get('file'),
+                            'thumbnail': msg.get('thumbnail'),
                             'is_gif': msg.get('media_type') == 'animation',
-                            'is_topic': True
+                            'is_topic': True,
+                            'reply_to_message_id': msg.get('reply_to_message_id')
                         })
                 all_data.append(group_data)
     except Exception as e:
@@ -84,21 +88,40 @@ def process_group_data(group, current_date, github_raw_base):
     photo_paths = []
     telegram_group_id = str(group['id']).replace('-100', '')
     group_name = group['name']
-    media_files = [msg.get('media') for msg in messages if msg.get('media') and not msg.get('is_gif')]
+    media_files = [msg.get('media') or msg.get('thumbnail') for msg in messages if (msg.get('media') or msg.get('thumbnail')) and not msg.get('is_gif')]
+
+    # Map topic messages to their replies
+    topic_replies = {}
+    for msg in messages:
+        if msg.get('reply_to_message_id') and any(t['id'] == msg['reply_to_message_id'] for t in messages if t.get('is_topic')):
+            topic_replies[msg['reply_to_message_id']] = msg
 
     for msg in messages:
         date_diff = get_date_difference(msg['date'], current_date)
         if date_diff is not None:
             date_diffs.append(date_diff)
         if msg.get('is_topic'):
-            media = msg.get('media')
             serial_number = len(titles) + 1
-            if media:
-                matched_media = utils.find_serial_match_media(str(serial_number), media_files, group_name, github_raw_base)
-                media_path = f"{github_raw_base}/Photos/{group_name}/thumbs/{matched_media}" if matched_media else f"{github_raw_base}/Photos/placeholder.png"
+            media = msg.get('media')
+            thumbnail = msg.get('thumbnail')
+            # Check for reply message with media/thumbnail
+            reply_msg = topic_replies.get(msg['id'])
+            if reply_msg:
+                media = media or reply_msg.get('media')
+                thumbnail = thumbnail or reply_msg.get('thumbnail')
+                print(f"Found reply for topic {msg.get('title', 'No Title')}: Media={media}, Thumbnail={thumbnail}")
+            # Prefer thumbnail over media
+            if thumbnail:
+                media_path = f"{github_raw_base}/Photos/{group_name}/thumbs/{thumbnail}"
+            elif media:
+                # Convert video file to jpg for thumbnail
+                media_base = os.path.splitext(media)[0]
+                media_path = f"{github_raw_base}/Photos/{group_name}/thumbs/{media_base}.jpg"
             else:
-                media_path = f"{github_raw_base}/Photos/placeholder.png"
-            print(f"Title for {group_name}: {msg.get('title', 'No Title')}, Serial: {serial_number}, Media: {media_path}, Accessible: {utils.is_url_accessible(media_path)}")
+                media_path = f"{github_raw_base}/Photos/{group_name}.jpg"
+            accessible = utils.is_url_accessible(media_path)
+            print(f"Title for {group_name}: {msg.get('title', 'No Title')}, Serial: {serial_number}, Media: {media_path}, Accessible: {accessible}")
+            media_path = media_path if accessible else f"{github_raw_base}/Photos/placeholder.png"
             titles.append({
                 'message_id': msg['id'],
                 'title': msg.get('title', 'No Title'),
@@ -116,8 +139,8 @@ def process_group_data(group, current_date, github_raw_base):
                 scene_types_hashtags[hashtag] += 1
             else:
                 other_hashtags[hashtag] = other_hashtags.get(hashtag, 0) + 1
-        if msg.get('media') and not msg.get('is_topic') and not msg.get('is_gif'):
-            photo_path = f"{github_raw_base}/Photos/{msg['media']}"
+        if (msg.get('media') or msg.get('thumbnail')) and not msg.get('is_topic') and not msg.get('is_gif'):
+            photo_path = f"{github_raw_base}/Photos/{msg.get('thumbnail') or msg.get('media')}"
             if photo_path not in photo_paths:
                 photo_paths.append(photo_path)
 
@@ -214,8 +237,8 @@ def calculate_scores_and_ranks(all_data, max_messages, date_diffs, history_csv_f
 
     output_data = []
     for group in sorted_data:
-        # Use group-named photo for main page
-        group_photo = f"{github_raw_base}/Photos/{utils.sanitize_filename(group['group_name'])}.jpg"
+        # Use raw group name for main page photo
+        group_photo = f"{github_raw_base}/Photos/{group['group_name']}.jpg"
         photo_file_name = group_photo if utils.is_url_accessible(group_photo) else f"{github_raw_base}/Photos/placeholder.png"
         print(f"Main page - Group: {group['group_name']}, photo_file_name: {photo_file_name}, Accessible: {utils.is_url_accessible(photo_file_name)}")
         html_file = f"{utils.sanitize_filename(group['group_name'])}_{group['group_id']}.html"
