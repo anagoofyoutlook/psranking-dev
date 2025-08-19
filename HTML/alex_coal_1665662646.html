@@ -220,7 +220,7 @@
             <div class="caption-container"><p id="caption"></p></div>
             <div class="row">
         <div class="column"><img class="demo cursor" src="https://raw.githubusercontent.com/anagoofyoutlook/psranking-dev/main/Photos/Alex Coal/10180-set-1x.jpg" style="width:100%" onclick="currentSlide(1)" alt="Alex Coal Photo 1"></div><div class="column"><img class="demo cursor" src="https://raw.githubusercontent.com/anagoofyoutlook/psranking-dev/main/Photos/Alex Coal/BR.jpg" style="width:100%" onclick="currentSlide(2)" alt="Alex Coal Photo 2"></div><div class="column"><img class="demo cursor" src="https://raw.githubusercontent.com/anagoofyoutlook/psranking-dev/main/Photos/Alex Coal/advd.jpg" style="width:100%" onclick="currentSlide(3)" alt="Alex Coal Photo 3"></div></div></div>
-    <div class="info"><p>Scenes: 9832</p><p>Last Scene: 33 days</p></div>
+    <div class="info"><p>Scenes: 9832</p><p>Last Scene: 35 days</p></div>
     <div class="info">
         <h2>Rating Hashtag Counts (#FIVE, #FOUR, #Three)</h2><ul class="hashtags"><li class="hashtag-item">#FIVE: 42</li>
 <li class="hashtag-item">#FOUR: 20</li>
@@ -742,7 +742,7 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             const ctx = document.getElementById('rankChart').getContext('2d');
-            const historyData = [];
+            const historyData = [{"date": "2025-08-17", "rank": 1}];
             const dates = historyData.map(entry => entry.date);
             const ranks = historyData.map(entry => entry.rank);
             new Chart(ctx, {

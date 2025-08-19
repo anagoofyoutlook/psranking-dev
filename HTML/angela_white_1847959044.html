@@ -220,7 +220,7 @@
             <div class="caption-container"><p id="caption"></p></div>
             <div class="row">
         <div class="column"><img class="demo cursor" src="https://raw.githubusercontent.com/anagoofyoutlook/psranking-dev/main/Photos/Angela White/D.jpg" style="width:100%" onclick="currentSlide(1)" alt="Angela White Photo 1"></div><div class="column"><img class="demo cursor" src="https://raw.githubusercontent.com/anagoofyoutlook/psranking-dev/main/Photos/Angela White/1267947.jpg" style="width:100%" onclick="currentSlide(2)" alt="Angela White Photo 2"></div><div class="column"><img class="demo cursor" src="https://raw.githubusercontent.com/anagoofyoutlook/psranking-dev/main/Photos/Angela White/blacked-angela-white_1920x800.jpeg" style="width:100%" onclick="currentSlide(3)" alt="Angela White Photo 3"></div><div class="column"><img class="demo cursor" src="https://raw.githubusercontent.com/anagoofyoutlook/psranking-dev/main/Photos/Angela White/BR.jpg" style="width:100%" onclick="currentSlide(4)" alt="Angela White Photo 4"></div><div class="column"><img class="demo cursor" src="https://raw.githubusercontent.com/anagoofyoutlook/psranking-dev/main/Photos/Angela White/TR.jpg" style="width:100%" onclick="currentSlide(5)" alt="Angela White Photo 5"></div><div class="column"><img class="demo cursor" src="https://raw.githubusercontent.com/anagoofyoutlook/psranking-dev/main/Photos/Angela White/12644-set-1x.jpg" style="width:100%" onclick="currentSlide(6)" alt="Angela White Photo 6"></div><div class="column"><img class="demo cursor" src="https://raw.githubusercontent.com/anagoofyoutlook/psranking-dev/main/Photos/Angela White/advd.jpg" style="width:100%" onclick="currentSlide(7)" alt="Angela White Photo 7"></div><div class="column"><img class="demo cursor" src="https://raw.githubusercontent.com/anagoofyoutlook/psranking-dev/main/Photos/Angela White/V.jpg" style="width:100%" onclick="currentSlide(8)" alt="Angela White Photo 8"></div></div></div>
-    <div class="info"><p>Scenes: 988</p><p>Last Scene: 47 days</p></div>
+    <div class="info"><p>Scenes: 988</p><p>Last Scene: 49 days</p></div>
     <div class="info">
         <h2>Rating Hashtag Counts (#FIVE, #FOUR, #Three)</h2><ul class="hashtags"><li class="hashtag-item">#FIVE: 3</li>
 <li class="hashtag-item">#FOUR: 12</li>
@@ -394,7 +394,7 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             const ctx = document.getElementById('rankChart').getContext('2d');
-            const historyData = [];
+            const historyData = [{"date": "2025-08-17", "rank": 66}];
             const dates = historyData.map(entry => entry.date);
             const ranks = historyData.map(entry => entry.rank);
             new Chart(ctx, {
