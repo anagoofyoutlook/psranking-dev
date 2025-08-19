@@ -875,7 +875,7 @@ else:
     top_movers_rows = '<tr><td>No significant rank changes</td></tr>'
 
 # Generate ranking table rows with pagination
-items_per_page = 50
+items_per_page = 20
 total_pages = math.ceil(len(sorted_data) / items_per_page)
 table_rows = ''
 for i, entry in enumerate(sorted_data):
@@ -1057,6 +1057,11 @@ ranking_html_content = f"""<!DOCTYPE html>
     </div>
     <div id="RankingTableTab" class="tabcontent">
         <h2>Total Number of Groups: {total_groups}</h2>
+                <div class="pagination" id="pagination">
+            <button onclick="changePage(-1)" id="prevPage" disabled>Previous</button>
+            <span id="pageButtons"></span>
+            <button onclick="changePage(1)" id="nextPage">Next</button>
+        </div>
         <table id="rankingTable">
             <thead>
                 <tr>
